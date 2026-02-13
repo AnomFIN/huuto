@@ -1,17 +1,17 @@
 # Huuto - Suomalainen Huutokauppa-alusta
 
-Moderni verkkohuutokauppa-alusta rakennettu PHP:llä ja MySQL:llä. Sisältää täyden huutokauppatoiminnallisuuden mukaan lukien tarjoukset, kategoriat ja tuotelistat.
+Moderni verkkohuutokauppa-alustan prototyyppi rakennettu PHP:llä ja MySQL:llä. Sisältää peruslistaukset ja kategoriat, sekä alustavan arkkitehtuurin huutokauppa-, haku- ja tarjouslogiikalle.
 
 ## Ominaisuudet
 
 - 🏠 **Kategoriat**: 8 pääkategoriaa (Kiinteistöt, Ajoneuvot, Elektroniikka, jne.)
-- 💰 **Huutokauppatoiminnot**: Reaaliaikaiset tarjoukset, lähtöhinta, osta heti -hinnat
-- ⏱️ **Countdown-ajastimet**: Näyttää jäljellä olevan ajan
+- 💰 **Huutokauppatoiminnot (backend)**: Lähtöhinta ja osta heti -hinnat mallinnettu tietokantaan ja PHP-luokkiin. Täysi reaaliaikainen tarjous-UI ja erilliset `/search.php`, `/auctions.php`, `/categories.php`-reitit eivät vielä ole käytössä.
+- ⏱️ **Countdown-ajastimet**: Näyttää jäljellä olevan ajan kohteen näkymässä
 - 📱 **Responsiivinen**: Toimii kaikilla laitteilla (Tailwind CSS)
-- 🔍 **Haku**: Etsi kohteita otsikon tai kuvauksen perusteella
-- 📊 **Tilastot**: Tarjousmäärät, katselukerrat, seuraajat
-- 🖼️ **Kuvagalleria**: Useat kuvat per kohde
-- 🤖 **AI-tuotekuvausgeneraattori**: Luo automaattisesti tuotekuvaukset kuvista
+- 🔍 **Haku (suunniteltu)**: Hakuotsikko ja hakulogiikka ovat osittain toteutettuina, mutta erillinen haku-sivu ja -reitit eivät vielä ole valmiit.
+- 📊 **Tilastot (osittain toteutettu)**: Peruslukujen näyttäminen (esim. tarjousmäärä) on tuettu datatasolla, mutta laajemmat tilastot ja raportointi eivät ole vielä mukana.
+- 🖼️ **Kuvagalleria (suunniteltu)**: Tuki useille kuville per kohde on suunnitteilla; nykyinen käyttöliittymä saattaa näyttää vain yhden kuvan.
+- 🤖 **AI-tuotekuvausgeneraattori (kokeellinen)**: AI-pohjainen tuotekuvausten generointi on konseptoitu, mutta ei oletuksena käytössä valmiina käyttöliittymäominaisuutena.
 - ➕ **Helppo tuotteen lisäys**: Ei vaadi kirjautumista, täydellinen testaukseen
 
 ## Teknologiat
