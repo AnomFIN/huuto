@@ -12,7 +12,7 @@ $categorySlug = isset($_GET['slug']) ? $_GET['slug'] : null;
 if ($categorySlug) {
     $category = $categoryModel->getCategoryBySlug($categorySlug);
     if (!$category) {
-        header('Location: /categories.php');
+        header('Location: /category.php');
         exit;
     }
     $auctions = $auctionModel->getAuctionsByCategory($categorySlug);
