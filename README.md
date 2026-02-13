@@ -65,8 +65,10 @@ Moderni verkkohuutokauppa-alustan prototyyppi rakennettu PHP:llä ja MySQL:llä.
 
 6. **Avaa selaimessa**
    
-   - Käytä asennusohjelmaa: http://localhost:8000/asennus.php
+   - Käytä asennusohjelmaa: http://localhost:8000/asennus.php (tai http://yourserver/asennus.php jos DocumentRoot on repo-juuri)
    - Tai käytä suoraan: http://localhost:8000
+   
+   **Huom:** Jos web-palvelimen DocumentRoot on repositorion juuri, asennusohjelma löytyy osoitteesta `/asennus.php` (rewrite-säännön ansiosta). Jos DocumentRoot on `public_html`, käytä `/asennus.php` suoraan.
 
 ## Projektin rakenne
 

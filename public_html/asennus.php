@@ -24,6 +24,11 @@ if (!isset($_SESSION['setup_token'])) {
 }
 
 function testDbConnection($host, $dbname, $user, $pass) {
+    // Validate database name - only allow alphanumeric and underscores
+    if (!preg_match('/^[A-Za-z0-9_]+$/', $dbname)) {
+        return ['success' => false, 'error' => 'Invalid database name. Only letters, numbers, and underscores are allowed.'];
+    }
+    
     try {
         $dsn = "mysql:host=$host;charset=utf8mb4";
         $pdo = new PDO($dsn, $user, $pass, [
@@ -42,11 +47,16 @@ function testDbConnection($host, $dbname, $user, $pass) {
 }
 
 function createTables($pdo) {
-    $schema = file_get_contents(__DIR__ . '/../schema.sql');
+    // Use database/schema.sql which matches the public_html app structure
+    $schema = file_get_contents(__DIR__ . '/../database/schema.sql');
+    // Remove the CREATE DATABASE and USE statements from the schema file
+    $schema = preg_replace('/^CREATE DATABASE.*?;/mi', '', $schema);
+    $schema = preg_replace('/^USE .*?;/mi', '', $schema);
+    
     $statements = array_filter(array_map('trim', explode(';', $schema)));
     
     foreach ($statements as $statement) {
-        if (!empty($statement)) {
+        if (!empty($statement) && !preg_match('/^\s*--/', $statement)) {
             $pdo->exec($statement);
         }
     }
@@ -88,10 +98,14 @@ function createSeedListings($pdo) {
     $categories = $pdo->query("SELECT id FROM categories")->fetchAll(PDO::FETCH_COLUMN);
     
     // Get admin user
-    $adminId = $pdo->query("SELECT id FROM users WHERE role = 'admin' LIMIT 1")->fetchColumn();
+    $adminId = $pdo->query("SELECT id FROM users LIMIT 1")->fetchColumn();
+    
+    if (!$adminId) {
+        return; // Skip seeding if no users exist
+    }
     
     $regions = ['Uusimaa', 'Pirkanmaa', 'Varsinais-Suomi', 'Pohjois-Pohjanmaa', 'Kanta-Häme', 'Satakunta'];
-    $conditions = ['Uusi', 'Erinomainen', 'Hyvä', 'Tyydyttävä', 'Korjattava'];
+    $conditions = ['new', 'excellent', 'good', 'fair', 'poor'];
     
     $sampleListings = [
         'Laadukas sohva - mukava ja hyväkuntoinen',
@@ -104,66 +118,36 @@ function createSeedListings($pdo) {
     foreach ($categories as $catId) {
         for ($i = 0; $i < 3; $i++) {
             $title = $sampleListings[array_rand($sampleListings)] . " #" . rand(1000, 9999);
-            $slug = strtolower(preg_replace('/[^a-z0-9]+/i', '-', $title));
             $startPrice = rand(10, 500);
             $currentPrice = $startPrice + (rand(0, 5) * 10);
-            $minIncrement = 5.00;
-            $buyNow = rand(0, 1) ? ($currentPrice * 2) : null;
-            $endsAt = date('Y-m-d H:i:s', strtotime('+' . rand(1, 30) . ' days'));
+            $buyNowPrice = rand(0, 1) ? ($currentPrice * 2) : null;
+            $endTime = date('Y-m-d H:i:s', strtotime('+' . rand(1, 30) . ' days'));
             
             $description = "Myydään tämä kohde huutokauppaan. Noudettavissa sovitusti.\n\n";
             $description .= "Kunto: " . $conditions[array_rand($conditions)] . "\n";
             $description .= "Sijainti: " . $regions[array_rand($regions)] . "\n";
             $description .= "Lisätietoja: Ota yhteyttä myyjään.";
             
+            // Using auctions table schema from database/schema.sql
             $stmt = $pdo->prepare("
-                INSERT INTO listings (user_id, category_id, title, slug, description, `condition`, region, 
-                    start_price, buy_now_price, min_increment, current_price, ends_at, status)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active')
+                INSERT INTO auctions (user_id, category_id, title, description, start_price, 
+                    current_price, buy_now_price, end_time, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')
             ");
             
             $stmt->execute([
-                $adminId, $catId, $title, $slug, $description,
-                $conditions[array_rand($conditions)],
-                $regions[array_rand($regions)],
-                $startPrice, $buyNow, $minIncrement, $currentPrice, $endsAt
+                $adminId, $catId, $title, $description,
+                $startPrice, $currentPrice, $buyNowPrice, $endTime
             ]);
             
-            // Add placeholder images
-            $listingId = $pdo->lastInsertId();
-            $numImages = rand(2, 4);
-            for ($j = 0; $j < $numImages; $j++) {
-                $pdo->prepare("INSERT INTO listing_images (listing_id, path, sort_order) VALUES (?, ?, ?)")
-                    ->execute([$listingId, '', $j]);
-            }
+            // Don't add placeholder images since they don't exist in the repository
+            // Images can be added manually by users after installation
         }
     }
 }
 
-function createStaticPages($pdo) {
-    $pages = [
-        ['tietoa-palvelusta', 'Tietoa palvelusta', '<h2>Tietoa Huuto-palvelusta</h2><p>Huuto on moderni suomalainen huutokauppa-alusta.</p>'],
-        ['tietoa-huutajalle', 'Tietoa huutajalle', '<h2>Ohjeita huutajalle</h2><p>Täältä löydät ohjeita huutamiseen.</p>'],
-        ['kayttoehdot', 'Käyttöehdot', '<h2>Käyttöehdot</h2><p>Palvelun käyttöehdot.</p>'],
-        ['aloita-myyminen', 'Aloita myyminen', '<h2>Aloita myyminen</h2><p>Ohjeita myyjälle.</p>'],
-        ['myyntiehdot', 'Myyntiehdot', '<h2>Myyntiehdot</h2><p>Myyntiin liittyvät ehdot.</p>'],
-        ['hinnasto', 'Hinnasto', '<h2>Hinnasto</h2><p>Palvelumaksut.</p>'],
-        ['maksutavat', 'Maksutavat', '<h2>Maksutavat</h2><p>Tuetut maksutavat.</p>'],
-        ['asiakaspalvelu', 'Asiakaspalvelu', '<h2>Asiakaspalvelu</h2><p>Ota yhteyttä.</p>'],
-        ['ohjeet', 'Ohjeet ja vinkit', '<h2>Ohjeet</h2><p>Vinkkejä käyttöön.</p>'],
-        ['yritys', 'Tietoa meistä', '<h2>Yritys</h2><p>Tietoa yrityksestämme.</p>'],
-        ['tyopaikat', 'Meille töihin', '<h2>Työpaikat</h2><p>Avoimet työpaikat.</p>'],
-        ['media', 'Medialle', '<h2>Medialle</h2><p>Lehdistötiedotteet ja mediamateriaalit.</p>'],
-        ['tietosuoja', 'Tietosuojaseloste', '<h2>Tietosuoja</h2><p>Henkilötietojen käsittely.</p>'],
-        ['saavutettavuus', 'Saavutettavuusseloste', '<h2>Saavutettavuus</h2><p>Saavutettavuusseloste.</p>'],
-        ['lapinakyvyys', 'Läpinäkyvyysraportti', '<h2>Läpinäkyvyys</h2><p>Läpinäkyvyysraportti.</p>']
-    ];
-    
-    $stmt = $pdo->prepare("INSERT IGNORE INTO pages (slug, title, content_html) VALUES (?, ?, ?)");
-    foreach ($pages as $page) {
-        $stmt->execute($page);
-    }
-}
+// Note: Static pages table doesn't exist in database/schema.sql
+// Pages can be added manually or through a separate content management system
 
 // Handle form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -193,12 +177,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         } elseif ($step == 2) {
             // Create admin and install
+            // Guard: Check if session has DB config
+            if (!isset($_SESSION['db_config'])) {
+                header('Location: asennus.php?step=1');
+                exit;
+            }
+            
             if (empty($_POST['admin_email']) || empty($_POST['admin_password'])) {
                 $error = 'Admin email and password required';
             } else {
                 try {
                     $db = $_SESSION['db_config'];
                     $result = testDbConnection($db['host'], $db['name'], $db['user'], $db['pass']);
+                    
+                    if (!$result['success']) {
+                        throw new Exception('Database connection failed: ' . $result['error']);
+                    }
+                    
                     $pdo = $result['pdo'];
                     
                     // Create tables
@@ -207,13 +202,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Insert categories (use INSERT IGNORE for idempotency)
                     insertCategories($pdo);
                     
-                    // Create admin user
+                    // Create admin user (using database/schema.sql structure)
                     $adminEmail = $_POST['admin_email'];
-                    $stmt = $pdo->prepare("INSERT IGNORE INTO users (email, password_hash, name, role, status) VALUES (?, ?, ?, 'admin', 'active')");
+                    $adminName = $_POST['admin_name'] ?: 'Admin';
+                    $username = strtolower(preg_replace('/[^a-z0-9]+/i', '', $adminName)) . rand(1000, 9999);
+                    
+                    $stmt = $pdo->prepare("INSERT IGNORE INTO users (username, email, password_hash, full_name) VALUES (?, ?, ?, ?)");
                     $stmt->execute([
+                        $username,
                         $adminEmail,
                         password_hash($_POST['admin_password'], PASSWORD_DEFAULT),
-                        $_POST['admin_name'] ?: 'Admin'
+                        $adminName
                     ]);
                     
                     $adminId = $pdo->lastInsertId();
@@ -225,8 +224,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     
                     // Create demo user (use INSERT IGNORE)
-                    $stmt = $pdo->prepare("INSERT IGNORE INTO users (email, password_hash, name, role, status) VALUES (?, ?, ?, 'user', 'active')");
+                    $stmt = $pdo->prepare("INSERT IGNORE INTO users (username, email, password_hash, full_name) VALUES (?, ?, ?, ?)");
                     $stmt->execute([
+                        'demouser',
                         'demo@huuto.local',
                         password_hash('demo123', PASSWORD_DEFAULT),
                         'Demo User'
@@ -235,28 +235,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Create seed listings
                     createSeedListings($pdo);
                     
-                    // Create static pages (use INSERT IGNORE)
-                    createStaticPages($pdo);
-                    
                     // Store admin email for display on completion page
                     $_SESSION['admin_email'] = $adminEmail;
                     
-                    // Create config file
+                    // Write to config/database.php instead of overwriting config/config.php
                     $configContent = "<?php\n";
+                    $configContent .= "// Database configuration\n";
                     $configContent .= "return [\n";
-                    $configContent .= "    'db' => [\n";
-                    $configContent .= "        'host' => " . var_export($db['host'], true) . ",\n";
-                    $configContent .= "        'name' => " . var_export($db['name'], true) . ",\n";
-                    $configContent .= "        'user' => " . var_export($db['user'], true) . ",\n";
-                    $configContent .= "        'pass' => " . var_export($db['pass'], true) . ",\n";
-                    $configContent .= "    ],\n";
-                    $configContent .= "    'site' => [\n";
-                    $configContent .= "        'name' => 'Huuto',\n";
-                    $configContent .= "        'url' => 'http://localhost',\n";
-                    $configContent .= "    ]\n";
+                    $configContent .= "    'host' => " . var_export($db['host'], true) . ",\n";
+                    $configContent .= "    'dbname' => " . var_export($db['name'], true) . ",\n";
+                    $configContent .= "    'username' => " . var_export($db['user'], true) . ",\n";
+                    $configContent .= "    'password' => " . var_export($db['pass'], true) . ",\n";
+                    $configContent .= "    'charset' => 'utf8mb4'\n";
                     $configContent .= "];\n";
 
-                    $configPath = __DIR__ . '/../config/config.php';
+                    $configPath = __DIR__ . '/../config/database.php';
                     $configDir  = dirname($configPath);
 
                     if (!is_dir($configDir)) {
@@ -737,22 +730,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             
             <?php
-            // Reconnect to database to show statistics
-            $db = $_SESSION['db_config'];
-            $result = testDbConnection($db['host'], $db['name'], $db['user'], $db['pass']);
-            if ($result['success']) {
-                $pdo = $result['pdo'];
-                $categoryCount = $pdo->query("SELECT COUNT(*) as count FROM categories")->fetch()['count'];
-                $listingCount = $pdo->query("SELECT COUNT(*) as count FROM listings")->fetch()['count'];
-                $pageCount = $pdo->query("SELECT COUNT(*) as count FROM pages")->fetch()['count'];
+            // Reconnect to database to show statistics (if session has db_config)
+            if (isset($_SESSION['db_config'])) {
+                $db = $_SESSION['db_config'];
+                $result = testDbConnection($db['host'], $db['name'], $db['user'], $db['pass']);
+                if ($result['success']) {
+                    $pdo = $result['pdo'];
+                    $categoryCount = $pdo->query("SELECT COUNT(*) as count FROM categories")->fetch()['count'];
+                    $auctionCount = $pdo->query("SELECT COUNT(*) as count FROM auctions")->fetch()['count'];
             ?>
             <div class="info">
                 <strong>Tiedot:</strong><br>
                 • Luotu <?= $categoryCount ?> kategoriaa<br>
-                • Luotu <?= $listingCount ?> ilmoitusta<br>
-                • Luotu <?= $pageCount ?> staattista sivua<br>
+                • Luotu <?= $auctionCount ?> huutokauppaa<br>
             </div>
-            <?php } ?>
+            <?php 
+                }
+            } 
+            ?>
             
             <a href="/" style="display: inline-block; margin-top: 20px; text-align: center; width: 100%; padding: 14px; background: #667eea; color: white; border-radius: 6px; text-decoration: none;">
                 Siirry sivustolle →

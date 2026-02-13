@@ -1,4 +1,9 @@
 RewriteEngine On
+
+# Explicit rule for installation wizard
+RewriteRule ^asennus\.php$ public_html/asennus.php [QSA,L]
+
+# Default routing for other requests
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^asennus\.php$ public_html/asennus.php [QSA,L]
