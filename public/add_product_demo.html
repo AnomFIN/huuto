@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lisää tuote - Huuto Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .image-preview {
+            display: inline-block;
+            position: relative;
+            margin: 10px;
+        }
+        .image-preview img {
+            max-width: 150px;
+            max-height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+        }
+        .image-preview .remove-image {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .ai-generating {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <nav class="bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="demo.html" class="text-2xl font-bold text-blue-600">Huuto</a>
+                    <span class="ml-2 text-gray-500 text-sm">Suomalainen Huutokauppa</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="demo.html" class="text-gray-700 hover:text-blue-600">Kohteet</a>
+                    <a href="#" class="text-gray-700 hover:text-blue-600">Kategoriat</a>
+                    <a href="add_product_demo.html" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-semibold">
+                        + Lisää tuote
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">Lisää uusi tuote</h1>
+            <p class="text-xl text-gray-600">Helppo työkalu tuotteiden lisäämiseen testaustarkoituksiin</p>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <form id="addProductForm" onsubmit="handleSubmit(event)">
+                <!-- Image Upload Section with AI -->
+                <div class="mb-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border-2 border-blue-200">
+                    <label class="block text-lg font-semibold text-gray-900 mb-2">
+                        📸 Kuvat (AI luo kuvauksen automaattisesti)
+                    </label>
+                    <p class="text-sm text-gray-600 mb-4">Lataa kuvia ja AI generoi tuotteen otsikon ja kuvauksen automaattisesti!</p>
+                    
+                    <div class="flex items-center space-x-4">
+                        <label class="cursor-pointer bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors shadow-md">
+                            <span>📁 Valitse kuvat</span>
+                            <input type="file" id="imageInput" multiple accept="image/*" class="hidden" onchange="handleImageSelection(event)">
+                        </label>
+                        <button type="button" onclick="generateAIDescription()" id="aiButton" class="bg-gradient-to-r from-green-600 to-green-500 text-white px-6 py-3 rounded-lg hover:from-green-700 hover:to-green-600 transition-colors shadow-md">
+                            🤖 Generoi AI-kuvaus
+                        </button>
+                    </div>
+
+                    <div id="imagePreview" class="mt-4"></div>
+                    <div id="aiStatus" class="mt-4 text-sm font-medium"></div>
+                </div>
+
+                <!-- Basic Information -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Otsikko * <span class="text-xs text-gray-500">(AI täyttää automaattisesti)</span>
+                        </label>
+                        <input type="text" id="title" required
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="esim. iPhone 14 Pro 256GB">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Kategoria *</label>
+                        <select id="category" required onchange="suggestPrice()"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Valitse kategoria</option>
+                            <option value="1">🏠 Kiinteistöt</option>
+                            <option value="2">🚗 Ajoneuvot</option>
+                            <option value="3">💻 Elektroniikka</option>
+                            <option value="4">🏡 Kodin tavarat</option>
+                            <option value="5">⚽ Urheilu</option>
+                            <option value="6">👕 Vaatteet</option>
+                            <option value="7">🎨 Keräily</option>
+                            <option value="8">📦 Muut</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Description -->
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        Kuvaus <span class="text-xs text-gray-500">(AI täyttää automaattisesti)</span>
+                    </label>
+                    <textarea id="description" rows="6"
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                              placeholder="Tuotteen yksityiskohtainen kuvaus..."></textarea>
+                </div>
+
+                <!-- Pricing -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Aloitushinta * (€)</label>
+                        <input type="number" id="starting_price" step="0.01" min="0" required
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="0.00">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Varausmäärä (€)</label>
+                        <input type="number" id="reserve_price" step="0.01" min="0"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Valinnainen">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Osta heti -hinta (€)</label>
+                        <input type="number" id="buy_now_price" step="0.01" min="0"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="Valinnainen">
+                    </div>
+                </div>
+
+                <!-- Additional Details -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Tarjouksen lisäys (€)</label>
+                        <input type="number" id="bid_increment" step="0.01" min="0.01" value="1.00"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Kesto (päivää)</label>
+                        <select id="duration_days"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="1">1 päivä</option>
+                            <option value="3">3 päivää</option>
+                            <option value="7" selected>7 päivää</option>
+                            <option value="14">14 päivää</option>
+                            <option value="30">30 päivää</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Sijainti</label>
+                        <input type="text" id="location"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               placeholder="esim. Helsinki">
+                    </div>
+                </div>
+
+                <!-- Condition -->
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Kunto</label>
+                    <select id="condition"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">Valitse kunto</option>
+                        <option value="Uusi">Uusi</option>
+                        <option value="Erinomainen">Erinomainen</option>
+                        <option value="Hyvä">Hyvä</option>
+                        <option value="Tyydyttävä">Tyydyttävä</option>
+                        <option value="Välttävä">Välttävä</option>
+                    </select>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="flex space-x-4">
+                    <button type="submit"
+                            class="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-md">
+                        ✨ Luo tuote
+                    </button>
+                    <a href="demo.html"
+                       class="bg-gray-200 text-gray-700 px-8 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-colors inline-block">
+                        Peruuta
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Success Message (hidden by default) -->
+        <div id="successMessage" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg p-8 max-w-md shadow-2xl">
+                <div class="text-center">
+                    <div class="text-6xl mb-4">✅</div>
+                    <h2 class="text-2xl font-bold text-gray-900 mb-2">Tuote lisätty!</h2>
+                    <p class="text-gray-600 mb-6">Tuote on nyt aktiivinen huutokaupassa.</p>
+                    <button onclick="closeSuccess()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                        OK
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Huuto</h3>
+                    <p class="text-gray-300">Suomalainen verkkohuutokauppa-alusta</p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Linkit</h3>
+                    <ul class="space-y-2">
+                        <li><a href="demo.html" class="text-gray-300 hover:text-white">Etusivu</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Kohteet</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Kategoriat</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Tietoa</h3>
+                    <p class="text-gray-300">© 2026 Huuto. Kaikki oikeudet pidätetään.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        let selectedFiles = [];
+
+        function handleImageSelection(event) {
+            const files = Array.from(event.target.files);
+            selectedFiles = files;
+            displayImagePreviews(files);
+        }
+
+        function displayImagePreviews(files) {
+            const previewContainer = document.getElementById('imagePreview');
+            previewContainer.innerHTML = '';
+
+            if (files.length === 0) return;
+
+            files.forEach((file, index) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.createElement('div');
+                    preview.className = 'image-preview';
+                    preview.innerHTML = `
+                        <img src="${e.target.result}" alt="Preview ${index + 1}">
+                        <div class="remove-image" onclick="removeImage(${index})">×</div>
+                    `;
+                    previewContainer.appendChild(preview);
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function removeImage(index) {
+            selectedFiles.splice(index, 1);
+            displayImagePreviews(selectedFiles);
+            
+            const dataTransfer = new DataTransfer();
+            selectedFiles.forEach(file => dataTransfer.items.add(file));
+            document.getElementById('imageInput').files = dataTransfer.files;
+        }
+
+        async function generateAIDescription() {
+            if (selectedFiles.length === 0) {
+                alert('Valitse ensin vähintään yksi kuva!');
+                return;
+            }
+
+            const aiButton = document.getElementById('aiButton');
+            const aiStatus = document.getElementById('aiStatus');
+            
+            aiButton.disabled = true;
+            aiButton.classList.add('ai-generating');
+            aiButton.innerHTML = '⏳ Generoidaan...';
+            aiStatus.innerHTML = '<span class="text-blue-600 animate-pulse">🤖 AI analysoi kuvia ja luo kuvausta...</span>';
+
+            try {
+                await new Promise(resolve => setTimeout(resolve, 2500));
+
+                const templates = [
+                    {
+                        title: 'Laadukas {item} - Erinomainen kunto',
+                        description: 'Tarjolla tämä upea {item}. Tuote on erinomaisessa kunnossa ja huolella hoidettu. Kaikki toiminnot testattu ja toimivat moitteettomasti. Mukana alkuperäispakkaus ja tarvikkeet.\n\nTuote on käytetty vain vähän ja näyttää lähes uudelta. Ei naarmuja tai kolhuja. Ihanteellinen valinta laadun ja toimivuuden arvostajalle.\n\nNopea toimitus ja turvallinen maksu.'
+                    },
+                    {
+                        title: '{item} - Hieno lisä kotiin',
+                        description: 'Myydään toimiva {item}. Käytetty säännöllisesti, mutta hyvin huollettu. Toimii täydellisesti ja on valmis uuteen kotiin.\n\nTuote on pestty ja huollettu ammattimaisesti. Muutama pieni käytön jälki, mutta ei vaikuta toimivuuteen. Hinta-laatusuhteeltaan erinomainen!\n\nKysy rohkeasti lisätietoja!'
+                    },
+                    {
+                        title: 'Tyylikäs {item} myytävänä',
+                        description: 'Myynnissä tämä kaunis {item}. Ostettu muutama vuosi sitten, mutta edelleen hyvässä kunnossa. Laadukas ja kestävä.\n\nTilaa vapautunut, siksi myyntiin. Toimitetaan puhtaana ja valmiina käyttöön. Katso kuvat tarkemmin!\n\nMaksu- ja toimitusvaihtoehdot sovittavissa.'
+                    },
+                    {
+                        title: 'Huippulaatuinen {item}',
+                        description: 'Tarjoan tämän erinomaisen {item}n myyntiin. Alkuperäisessä pakkauksessa, käytännössä käyttämätön. Huipputason laatu ja suorituskyky.\n\nTäydellinen valinta vaativille käyttäjille. Kaikki alkuperäiset varusteet mukana. Ostaja saa käyttöoppaan ja takuutiedot.\n\nNouto tai postitus mahdollinen.'
+                    }
+                ];
+
+                const items = ['tuote', 'esine', 'kohde', 'kappale', 'laite', 'väline', 'tavara'];
+                const randomTemplate = templates[Math.floor(Math.random() * templates.length)];
+                const randomItem = items[Math.floor(Math.random() * items.length)];
+
+                const title = randomTemplate.title.replace('{item}', randomItem);
+                const description = randomTemplate.description.replace(/{item}/g, randomItem);
+
+                document.getElementById('title').value = title;
+                document.getElementById('description').value = description;
+
+                aiStatus.innerHTML = '<span class="text-green-600 font-semibold">✅ AI-kuvaus generoitu onnistuneesti! Voit muokata tekstiä ennen tallentamista.</span>';
+            } catch (error) {
+                aiStatus.innerHTML = '<span class="text-red-600">❌ Virhe AI-kuvauksessa. Yritä uudelleen.</span>';
+            } finally {
+                aiButton.disabled = false;
+                aiButton.classList.remove('ai-generating');
+                aiButton.innerHTML = '🤖 Generoi AI-kuvaus';
+            }
+        }
+
+        function suggestPrice() {
+            const categoryId = parseInt(document.getElementById('category').value);
+            const priceInput = document.getElementById('starting_price');
+            
+            const priceSuggestions = {
+                1: 50000,
+                2: 5000,
+                3: 200,
+                4: 100,
+                5: 50,
+                6: 30,
+                7: 100,
+                8: 20
+            };
+            
+            if (priceSuggestions[categoryId] && !priceInput.value) {
+                priceInput.value = priceSuggestions[categoryId];
+            }
+        }
+
+        function handleSubmit(event) {
+            event.preventDefault();
+            document.getElementById('successMessage').classList.remove('hidden');
+            document.getElementById('addProductForm').reset();
+            document.getElementById('imagePreview').innerHTML = '';
+            document.getElementById('aiStatus').innerHTML = '';
+            selectedFiles = [];
+        }
+
+        function closeSuccess() {
+            document.getElementById('successMessage').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
