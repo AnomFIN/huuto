@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omakotitalotontti Espoo - Huuto</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <nav class="bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="demo.html" class="text-2xl font-bold text-blue-600">Huuto</a>
+                    <span class="ml-2 text-gray-500 text-sm">Suomalainen Huutokauppa</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="demo.html" class="text-gray-700 hover:text-blue-600">Kohteet</a>
+                    <a href="#" class="text-gray-700 hover:text-blue-600">Kategoriat</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-4">
+            <a href="demo.html" class="text-blue-600 hover:underline">← Takaisin etusivulle</a>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6">
+                <!-- Images Section -->
+                <div>
+                    <div class="mb-4">
+                        <div class="w-full h-96 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center">
+                            <span class="text-gray-600 text-8xl">🏠</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Details Section -->
+                <div>
+                    <div class="mb-4">
+                        <span class="inline-block bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full">
+                            Kiinteistöt
+                        </span>
+                    </div>
+
+                    <h1 class="text-3xl font-bold text-gray-900 mb-4">
+                        Omakotitalotontti Espoo
+                    </h1>
+
+                    <!-- Price and Bidding Section -->
+                    <div class="bg-gray-50 rounded-lg p-6 mb-6">
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <div class="text-sm text-gray-500">Aloitushinta</div>
+                                <div class="text-lg font-semibold text-gray-700">50 000,00 €</div>
+                            </div>
+                            <div>
+                                <div class="text-sm text-gray-500">Nykyinen hinta</div>
+                                <div class="text-2xl font-bold text-blue-600">52 000,00 €</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="text-sm text-gray-500">Osta heti -hinta</div>
+                            <div class="text-xl font-bold text-green-600">120 000,00 €</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="text-sm text-gray-500">Huutokauppa päättyy</div>
+                            <div class="text-xl font-bold text-red-600">3 päivää 8 tuntia</div>
+                            <div class="text-sm text-gray-500 mt-1">16.02.2026 16:00</div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-4 text-center text-sm border-t pt-4">
+                            <div>
+                                <div class="font-semibold text-gray-900">3</div>
+                                <div class="text-gray-500">Tarjousta</div>
+                            </div>
+                            <div>
+                                <div class="font-semibold text-gray-900">127</div>
+                                <div class="text-gray-500">Katselukertaa</div>
+                            </div>
+                            <div>
+                                <div class="font-semibold text-gray-900">5</div>
+                                <div class="text-gray-500">Seuraajaa</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Seller Info -->
+                    <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                        <h3 class="font-semibold text-gray-900 mb-2">Myyjä</h3>
+                        <p class="text-gray-700">jari_m</p>
+                        <p class="text-sm text-gray-500 mt-1">📍 Espoo</p>
+                    </div>
+
+                    <button class="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                        Tee tarjous
+                    </button>
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="border-t p-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">Kuvaus</h2>
+                <div class="prose max-w-none text-gray-700">
+                    <p>Kaunis 1500 m² tontti rauhallisella alueella Espoossa. Tontti on rakennuskelpoinen ja sille on myönnetty rakennuslupa. Sijainti lähellä palveluita ja hyvät liikenneyhteydet.</p>
+                    <br>
+                    <p>Tontti soveltuu erinomaisesti omakotitalon rakentamiseen. Alue on hiljainen ja viihtyisä, mutta silti lähellä kaikkia tarvittavia palveluita.</p>
+                </div>
+                <div class="mt-4">
+                    <span class="text-sm font-semibold text-gray-700">Kunto:</span>
+                    <span class="text-sm text-gray-600">Uusi</span>
+                </div>
+            </div>
+
+            <!-- Bid History -->
+            <div class="border-t p-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">Tarjoushistoria</h2>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Tarjous</th>
+                                <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Käyttäjä</th>
+                                <th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Aika</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-4 py-2 font-semibold text-blue-600">52 000,00 €</td>
+                                <td class="px-4 py-2 text-gray-700">anna_k</td>
+                                <td class="px-4 py-2 text-gray-500 text-sm">13.02.2026 14:23</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-2 font-semibold text-blue-600">51 000,00 €</td>
+                                <td class="px-4 py-2 text-gray-700">mikko_v</td>
+                                <td class="px-4 py-2 text-gray-500 text-sm">13.02.2026 10:15</td>
+                            </tr>
+                            <tr>
+                                <td class="px-4 py-2 font-semibold text-blue-600">50 000,00 €</td>
+                                <td class="px-4 py-2 text-gray-700">anna_k</td>
+                                <td class="px-4 py-2 text-gray-500 text-sm">12.02.2026 18:45</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Huuto</h3>
+                    <p class="text-gray-300">Suomalainen verkkohuutokauppa-alusta</p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Linkit</h3>
+                    <ul class="space-y-2">
+                        <li><a href="demo.html" class="text-gray-300 hover:text-white">Etusivu</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Kohteet</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Kategoriat</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Tietoa</h3>
+                    <p class="text-gray-300">© 2026 Huuto. Kaikki oikeudet pidätetään.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
