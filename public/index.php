@@ -75,8 +75,14 @@ include __DIR__ . '/../src/views/header.php';
                         </div>
                         <div class="text-right">
                             <div class="text-xs text-gray-500">Päättyy</div>
+                            <?php
+                                $endTimeTimestamp = strtotime($auction['end_time']);
+                                $endTimeAttribute = $endTimeTimestamp !== false
+                                    ? date('c', $endTimeTimestamp)
+                                    : $auction['end_time'];
+                            ?>
                             <div class="countdown text-sm font-semibold text-red-600" 
-                                 data-endtime="<?php echo $auction['end_time']; ?>">
+                                 data-endtime="<?php echo htmlspecialchars($endTimeAttribute, ENT_QUOTES, 'UTF-8'); ?>">
                             </div>
                         </div>
                     </div>
