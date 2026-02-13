@@ -245,7 +245,7 @@
 
         // Demo button interactions
         document.querySelectorAll('.btn').forEach(btn => {
-            if (!btn.disabled && !btn.type === 'submit') {
+            if (!btn.disabled && btn.type !== 'submit') {
                 btn.addEventListener('click', (e) => {
                     if (e.target.classList.contains('btn-primary')) {
                         window.toast && window.toast.success('Primary action completed!');

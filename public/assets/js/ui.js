@@ -11,9 +11,27 @@
   const $ = (selector, context = document) => context.querySelector(selector);
   const $$ = (selector, context = document) => Array.from(context.querySelectorAll(selector));
   
-  // Constants
-  const FOCUS_DELAY = 100; // Delay for focusing elements after modal/menu open
+  // ===== Constants =====
+  
+  // Timing constants
+  const FOCUS_DELAY = 100; // Delay for focusing elements after modal/menu open (ms)
   const URGENT_THRESHOLD_MS = 300000; // 5 minutes in milliseconds for urgent countdown
+  const TOAST_DEFAULT_DURATION = 5000; // Default toast display duration (ms)
+  const TOAST_EXIT_ANIMATION_DURATION = 200; // Toast exit animation duration (ms)
+  const ALERT_AUTO_DISMISS_DURATION = 5000; // Alert auto-dismiss duration (ms)
+  const COUNTDOWN_UPDATE_INTERVAL = 1000; // Countdown timer update interval (ms)
+  const FORM_SUBMIT_FALLBACK_TIMEOUT = 10000; // Form submit button re-enable fallback (ms)
+  
+  // Scroll thresholds
+  const HEADER_SHRINK_THRESHOLD = 100; // Scroll distance before header shrinks (px)
+  const SCROLL_TO_TOP_THRESHOLD = 600; // Scroll distance before scroll-to-top button appears (px)
+  
+  // Throttle intervals
+  const HEADER_SCROLL_THROTTLE = 100; // Header scroll handler throttle interval (ms)
+  const SCROLL_TO_TOP_THROTTLE = 200; // Scroll-to-top visibility check throttle (ms)
+  
+  // IntersectionObserver threshold
+  const REVEAL_ANIMATION_THRESHOLD = 0.1; // Percentage of element visibility to trigger reveal
   
   const debounce = (func, wait) => {
     let timeout;
@@ -125,14 +143,14 @@
       const handleScroll = throttle(() => {
         const currentScroll = window.pageYOffset;
         
-        if (currentScroll > 100) {
+        if (currentScroll > HEADER_SHRINK_THRESHOLD) {
           this.header.classList.add('header-shrink');
         } else {
           this.header.classList.remove('header-shrink');
         }
         
         this.lastScroll = currentScroll;
-      }, 100);
+      }, HEADER_SCROLL_THROTTLE);
       
       window.addEventListener('scroll', handleScroll, { passive: true });
     }
@@ -171,11 +189,24 @@
       menu.className = 'mobile-menu';
       menu.id = 'mobile-menu';
       
-      // Clone navigation
+      // Clone navigation with event delegation
       const nav = document.createElement('nav');
       const links = $$('.header-nav a');
-      links.forEach(link => {
+      links.forEach((link, index) => {
         const clone = link.cloneNode(true);
+        
+        // Forward click events to original link for proper event handling
+        clone.addEventListener('click', function(event) {
+          // If it's a regular navigation link, let it work normally
+          if (!link.onclick && !link.dataset.customHandler) {
+            return; // Let the link work naturally
+          }
+          
+          // For links with custom handlers, forward to original
+          event.preventDefault();
+          link.click();
+        });
+        
         nav.appendChild(clone);
       });
       
@@ -231,6 +262,9 @@
       this.menu.classList.add('active');
       this.backdrop.classList.add('active');
       this.button.classList.add('active');
+      
+      // Save and disable body scroll
+      this.originalBodyOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
       
       // Focus first link
@@ -244,7 +278,9 @@
       this.menu.classList.remove('active');
       this.backdrop.classList.remove('active');
       this.button.classList.remove('active');
-      document.body.style.overflow = '';
+      
+      // Restore body scroll
+      document.body.style.overflow = this.originalBodyOverflow || '';
     }
     
     trapFocus(e) {
@@ -282,7 +318,7 @@
       return container;
     }
     
-    show(message, type = 'info', duration = 5000) {
+    show(message, type = 'info', duration = TOAST_DEFAULT_DURATION) {
       const toast = document.createElement('div');
       toast.className = `toast toast-${type}`;
       
@@ -325,7 +361,7 @@
         if (toast.parentNode) {
           toast.parentNode.removeChild(toast);
         }
-      }, 200);
+      }, TOAST_EXIT_ANIMATION_DURATION);
     }
     
     getTitle(type) {
@@ -416,6 +452,9 @@
     open() {
       this.backdrop.classList.add('active');
       this.modal.classList.add('active');
+      
+      // Save and disable body scroll
+      this.originalBodyOverflow = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
       
       // Focus first focusable element
@@ -430,7 +469,9 @@
     close() {
       this.backdrop.classList.remove('active');
       this.modal.classList.remove('active');
-      document.body.style.overflow = '';
+      
+      // Restore body scroll
+      document.body.style.overflow = this.originalBodyOverflow || '';
     }
     
     isOpen() {
@@ -519,12 +560,12 @@
     
     init() {
       const handleScroll = throttle(() => {
-        if (window.pageYOffset > 600) {
+        if (window.pageYOffset > SCROLL_TO_TOP_THRESHOLD) {
           this.button.classList.add('visible');
         } else {
           this.button.classList.remove('visible');
         }
-      }, 200);
+      }, SCROLL_TO_TOP_THROTTLE);
       
       window.addEventListener('scroll', handleScroll, { passive: true });
       
@@ -548,7 +589,7 @@
       const options = {
         root: null,
         rootMargin: '0px',
-        threshold: 0.1
+        threshold: REVEAL_ANIMATION_THRESHOLD
       };
       
       this.observer = new IntersectionObserver((entries) => {
@@ -623,7 +664,7 @@
       
       if (this.timers.length > 0) {
         this.update();
-        setInterval(() => this.update(), 1000);
+        setInterval(() => this.update(), COUNTDOWN_UPDATE_INTERVAL);
       }
     }
     
@@ -710,7 +751,7 @@
               alert.parentNode.removeChild(alert);
             }
           }, 500);
-        }, 5000);
+        }, ALERT_AUTO_DISMISS_DURATION);
       });
     }
     
@@ -721,6 +762,14 @@
         if (submitBtn && !submitBtn.disabled) {
           submitBtn.classList.add('btn-loading');
           submitBtn.disabled = true;
+          
+          // Fallback: re-enable button if submission doesn't complete
+          setTimeout(function() {
+            if (submitBtn.isConnected && submitBtn.disabled) {
+              submitBtn.disabled = false;
+              submitBtn.classList.remove('btn-loading');
+            }
+          }, FORM_SUBMIT_FALLBACK_TIMEOUT);
         }
       });
     }
@@ -743,7 +792,11 @@
         thumbnail.addEventListener('click', () => {
           const img = $('img', thumbnail);
           if (img) {
-            mainImage.src = img.src;
+            // Resolve image source (handle lazy-loaded images)
+            const imgSrc = img.src || img.dataset.src || img.getAttribute('src');
+            if (imgSrc) {
+              mainImage.src = imgSrc;
+            }
             
             // Update active state
             $$('.thumbnail').forEach(t => t.classList.remove('active'));
