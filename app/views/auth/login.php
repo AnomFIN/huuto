@@ -18,20 +18,20 @@ ob_start();
         
         <div class="form-group">
             <label class="form-label">Sähköposti</label>
-            <input type="email" name="email" class="form-input" required>
+            <input type="email" name="email" class="form-input" required autocomplete="email">
         </div>
         
         <div class="form-group">
             <label class="form-label">Salasana</label>
-            <input type="password" name="password" class="form-input" required>
+            <input type="password" name="password" class="form-input" required autocomplete="current-password">
         </div>
         
-        <button type="submit" class="btn btn-primary" style="width: 100%;">Kirjaudu</button>
+        <button type="submit" class="btn btn-primary w-full">Kirjaudu</button>
     </form>
     
-    <p style="text-align: center; margin-top: 1.5rem; color: var(--gray-600);">
+    <div class="auth-footer">
         Eikö sinulla ole tiliä? <a href="/rekisteroidy">Rekisteröidy tästä</a>
-    </p>
+    </div>
 </div>
 
 <?php
