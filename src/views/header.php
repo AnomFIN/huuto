@@ -18,12 +18,12 @@
                     <span class="ml-2 text-gray-500 text-sm">Suomalainen Huutokauppa</span>
                 </div>
                 <div class="flex items-center space-x-4">
-                    <form action="/search.php" method="GET" class="hidden md:block">
+                    <form action="/" method="GET" class="hidden md:block">
                         <input type="text" name="q" placeholder="Etsi kohteita..." 
                                class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     </form>
-                    <a href="/auctions.php" class="text-gray-700 hover:text-blue-600">Kohteet</a>
-                    <a href="/categories.php" class="text-gray-700 hover:text-blue-600">Kategoriat</a>
+                    <a href="/category.php" class="text-gray-700 hover:text-blue-600">Kohteet</a>
+                    <a href="/category.php" class="text-gray-700 hover:text-blue-600">Kategoriat</a>
                     <a href="/add_product.php" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-semibold">
                         + Lisää tuote
                     </a>
