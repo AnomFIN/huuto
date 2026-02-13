@@ -87,7 +87,7 @@ huuto/
 ├── database/
 │   ├── schema.sql          # Database schema
 │   └── sample_data.sql     # Sample products
-├── public/
+├── main/
 │   ├── index.php           # Homepage
 │   ├── auction.php         # Auction detail
 │   ├── category.php        # Category view
@@ -122,7 +122,7 @@ huuto/
 
 4. **Run Server**
    ```bash
-   cd public
+   cd main
    php -S localhost:8000
    ```
 
