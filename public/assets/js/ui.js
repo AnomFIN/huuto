@@ -857,13 +857,20 @@
     const banner = $('#cookie-banner');
     const acceptBtn = $('#accept-cookies');
     
-    if (!banner) return;
+    if (!banner || !acceptBtn) return;
     
-    if (!localStorage.getItem('cookies-accepted')) {
+    // Check if main.js has already initialized cookie banner
+    // by checking if event listeners exist (we can't detect directly, so check if banner is already shown)
+    const alreadyInitialized = banner.classList.contains('show') || localStorage.getItem('cookies-accepted');
+    
+    // Only initialize if not already handled by main.js
+    if (!alreadyInitialized && !localStorage.getItem('cookies-accepted')) {
       banner.classList.add('show');
     }
     
-    if (acceptBtn) {
+    // Check if button already has listeners by checking a data attribute
+    if (!acceptBtn.dataset.uiInitialized) {
+      acceptBtn.dataset.uiInitialized = 'true';
       acceptBtn.addEventListener('click', () => {
         localStorage.setItem('cookies-accepted', 'true');
         banner.classList.remove('show');
@@ -880,18 +887,51 @@
       return;
     }
     
-    // Initialize all components
+    // Prevent double initialization if ui.js is loaded multiple times
+    if (window.__HUUTO_UI_INITIALIZED__) {
+      return;
+    }
+    window.__HUUTO_UI_INITIALIZED__ = true;
+    
+    // Check for main.js conflicts and warn in console
+    const hasMainJS = typeof updateCountdowns === 'function';
+    if (hasMainJS) {
+      console.info('[Huuto UI] Detected main.js - Some features will be coordinated to avoid conflicts');
+    }
+    
+    // Initialize components that don't conflict with main.js
     new ThemeManager();
     new StickyHeader();
-    new MobileMenu();
+    
+    // Only initialize mobile menu if main.js version doesn't exist
+    const mainJsMobileMenu = document.getElementById('mobile-menu-btn');
+    if (!mainJsMobileMenu) {
+      new MobileMenu();
+    }
+    
     new ScrollToTop();
     new RevealAnimations();
-    new LazyLoadImages();
-    new CountdownTimer();
-    new FormEnhancements();
+    
+    // Skip lazy loading if main.js already handles it
+    if (!hasMainJS || !('loading' in HTMLImageElement.prototype)) {
+      new LazyLoadImages();
+    }
+    
+    // Skip countdown timer if main.js already handles it
+    if (!hasMainJS) {
+      new CountdownTimer();
+    }
+    
+    // Skip form enhancements if alerts are already being auto-dismissed
+    if (!hasMainJS) {
+      new FormEnhancements();
+    }
+    
     new ImageGallery();
     
     initSmoothScrolling();
+    
+    // Cookie banner - coordinated initialization
     initCookieBanner();
     
     // Initialize dropdowns
