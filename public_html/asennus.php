@@ -255,9 +255,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $configContent .= "        'url' => 'http://localhost',\n";
                     $configContent .= "    ]\n";
                     $configContent .= "];\n";
-                    
-                    file_put_contents(__DIR__ . '/../config/config.php', $configContent);
-                    
+
+                    $configPath = __DIR__ . '/../config/config.php';
+                    $configDir  = dirname($configPath);
+
+                    if (!is_dir($configDir)) {
+                        throw new RuntimeException("Configuration directory does not exist: " . $configDir);
+                    }
+
+                    if (!is_writable($configDir)) {
+                        throw new RuntimeException("Configuration directory is not writable: " . $configDir);
+                    }
+
+                    $bytesWritten = file_put_contents($configPath, $configContent);
+                    if ($bytesWritten === false) {
+                        throw new RuntimeException("Failed to write configuration file: " . $configPath . ". Please check file permissions.");
+                    }
                     header('Location: asennus.php?step=3');
                     exit;
                 } catch (Exception $e) {
