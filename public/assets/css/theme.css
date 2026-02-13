@@ -186,6 +186,7 @@
   --ease-smooth: cubic-bezier(0.25, 0.46, 0.45, 0.94);
   
   /* ===== Layout Constraints ===== */
+  --header-height: 80px;
   --container-xs: 36rem;    /* 576px */
   --container-sm: 48rem;    /* 768px */
   --container-md: 62rem;    /* 992px */

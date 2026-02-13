@@ -11,6 +11,10 @@
   const $ = (selector, context = document) => context.querySelector(selector);
   const $$ = (selector, context = document) => Array.from(context.querySelectorAll(selector));
   
+  // Constants
+  const FOCUS_DELAY = 100; // Delay for focusing elements after modal/menu open
+  const URGENT_THRESHOLD_MS = 300000; // 5 minutes in milliseconds for urgent countdown
+  
   const debounce = (func, wait) => {
     let timeout;
     return function executedFunction(...args) {
@@ -232,7 +236,7 @@
       // Focus first link
       const firstLink = $('a', this.menu);
       if (firstLink) {
-        setTimeout(() => firstLink.focus(), 100);
+        setTimeout(() => firstLink.focus(), FOCUS_DELAY);
       }
     }
     
@@ -420,7 +424,7 @@
         if (firstFocusable) {
           firstFocusable.focus();
         }
-      }, 100);
+      }, FOCUS_DELAY);
     }
     
     close() {
@@ -651,8 +655,8 @@
         
         element.textContent = text;
         
-        // Add urgent class if less than 5 minutes
-        if (distance < 300000) {
+        // Add urgent class if less than URGENT_THRESHOLD_MS (5 minutes)
+        if (distance < URGENT_THRESHOLD_MS) {
           element.classList.add('countdown-urgent');
         }
       });

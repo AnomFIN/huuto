@@ -522,7 +522,7 @@
   border-radius: var(--radius-xl);
   padding: var(--space-6);
   position: sticky;
-  top: calc(var(--space-7) + 80px);
+  top: calc(var(--space-7) + var(--header-height));
 }
 
 .bid-section h3 {
