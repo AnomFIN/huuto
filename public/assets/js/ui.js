@@ -648,36 +648,12 @@
   
   class LazyLoadImages {
     constructor() {
-      this.init();
+      // Lazy loading for images is now handled elsewhere (e.g., in main.js).
+      // This class is kept as a no-op to preserve API compatibility.
     }
     
     init() {
-      const images = $$('img[loading="lazy"]');
-      
-      if ('loading' in HTMLImageElement.prototype) {
-        // Native lazy loading supported
-        images.forEach(img => {
-          if (img.dataset.src) {
-            img.src = img.dataset.src;
-          }
-        });
-      } else {
-        // Fallback to IntersectionObserver
-        const observer = new IntersectionObserver((entries) => {
-          entries.forEach(entry => {
-            if (entry.isIntersecting) {
-              const img = entry.target;
-              if (img.dataset.src) {
-                img.src = img.dataset.src;
-              }
-              img.classList.add('loaded');
-              observer.unobserve(img);
-            }
-          });
-        });
-        
-        images.forEach(img => observer.observe(img));
-      }
+      // Intentionally left blank to avoid duplicate lazy loading behavior.
     }
   }
 
