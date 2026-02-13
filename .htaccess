@@ -7,4 +7,5 @@ RewriteRule ^asennus\.php$ public_html/asennus.php [QSA,L]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^asennus\.php$ public_html/asennus.php [QSA,L]
+RewriteRule ^asennus\.php$ public_html/asennus.php [QSA,L]
 RewriteRule ^(.*)$ public_html/index.php [QSA,L]
