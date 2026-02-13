@@ -5,7 +5,7 @@ $isEnded = strtotime($listing['ends_at']) <= time();
 $canBid = Security::isLoggedIn() && !$isEnded && $listing['user_id'] != ($_SESSION['user_id'] ?? 0);
 ?>
 
-<div class="container" style="margin-top: 2rem;">
+<div class="container mt-7">
     <div class="breadcrumb">
         <a href="/">Etusivu</a> / 
         <a href="/kategoriat">Kategoriat</a> / 
@@ -21,45 +21,60 @@ $canBid = Security::isLoggedIn() && !$isEnded && $listing['user_id'] != ($_SESSI
                 <!-- Images -->
                 <?php if (!empty($images)): ?>
                     <div class="listing-images">
-                        <?php foreach ($images as $image): ?>
-                            <img src="<?= htmlspecialchars($image['path']) ?>" 
+                        <div class="main-image-container">
+                            <img src="<?= htmlspecialchars($images[0]['path']) ?>" 
                                  alt="<?= htmlspecialchars($listing['title']) ?>"
-                                 loading="lazy">
-                        <?php endforeach; ?>
+                                 class="main-image"
+                                 loading="eager">
+                        </div>
+                        
+                        <?php if (count($images) > 1): ?>
+                        <div class="image-thumbnails">
+                            <?php foreach ($images as $image): ?>
+                                <div class="thumbnail">
+                                    <img src="<?= htmlspecialchars($image['path']) ?>" 
+                                         alt="<?= htmlspecialchars($listing['title']) ?>"
+                                         loading="lazy">
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php endif; ?>
                     </div>
                 <?php else: ?>
-                    <img src="/assets/img/placeholder.jpg" alt="Ei kuvaa" style="width: 100%; border-radius: 8px;">
+                    <div class="main-image-container">
+                        <img src="/assets/img/placeholder.jpg" alt="Ei kuvaa" class="main-image">
+                    </div>
                 <?php endif; ?>
                 
                 <!-- Description -->
-                <div style="margin-top: 2rem;">
+                <div class="listing-description">
                     <h3>Kuvaus</h3>
-                    <p style="white-space: pre-line; line-height: 1.6;"><?= htmlspecialchars($listing['description']) ?></p>
+                    <p><?= htmlspecialchars($listing['description']) ?></p>
                 </div>
                 
                 <!-- Details -->
-                <div style="margin-top: 2rem; background: var(--gray-50); padding: 1.5rem; border-radius: 8px;">
-                    <h3 style="margin-bottom: 1rem;">Tiedot</h3>
-                    <table style="width: 100%;">
+                <div class="listing-details-box">
+                    <h3>Tiedot</h3>
+                    <table>
                         <tr>
-                            <td style="padding: 0.5rem 0; font-weight: 600;">Kunto:</td>
+                            <td>Kunto:</td>
                             <td><?= htmlspecialchars($listing['condition'] ?? 'Ei ilmoitettu') ?></td>
                         </tr>
                         <tr>
-                            <td style="padding: 0.5rem 0; font-weight: 600;">Sijainti:</td>
+                            <td>Sijainti:</td>
                             <td><?= htmlspecialchars($listing['region'] ?? 'Ei ilmoitettu') ?></td>
                         </tr>
                         <tr>
-                            <td style="padding: 0.5rem 0; font-weight: 600;">Myyjä:</td>
+                            <td>Myyjä:</td>
                             <td><?= htmlspecialchars($listing['seller_name']) ?></td>
                         </tr>
                         <tr>
-                            <td style="padding: 0.5rem 0; font-weight: 600;">Aloitushinta:</td>
+                            <td>Aloitushinta:</td>
                             <td><?= Security::formatPrice($listing['start_price']) ?></td>
                         </tr>
                         <?php if ($listing['buy_now_price']): ?>
                         <tr>
-                            <td style="padding: 0.5rem 0; font-weight: 600;">Osta heti:</td>
+                            <td>Osta heti:</td>
                             <td><?= Security::formatPrice($listing['buy_now_price']) ?></td>
                         </tr>
                         <?php endif; ?>
@@ -74,21 +89,21 @@ $canBid = Security::isLoggedIn() && !$isEnded && $listing['user_id'] != ($_SESSI
                     <div class="current-bid"><?= Security::formatPrice($listing['current_price']) ?></div>
                     
                     <?php if ($isEnded): ?>
-                        <div class="badge badge-danger" style="font-size: 1rem; padding: 0.5rem 1rem;">
+                        <div class="badge badge-danger badge-lg mt-4">
                             Huutokauppa päättynyt
                         </div>
                         <?php if ($listing['highest_bidder_id']): ?>
-                            <p style="margin-top: 1rem;">
+                            <p class="mt-4">
                                 Voittaja: <strong><?= htmlspecialchars($listing['highest_bidder_name'] ?? 'Tuntematon') ?></strong>
                             </p>
                         <?php endif; ?>
                     <?php else: ?>
-                        <p>Päättyy: <strong data-countdown="<?= $listing['ends_at'] ?>" class="countdown">
+                        <p class="mt-3">Päättyy: <strong data-countdown="<?= $listing['ends_at'] ?>" class="countdown">
                             <?= Security::timeRemaining($listing['ends_at']) ?>
                         </strong></p>
                         
                         <?php if ($canBid): ?>
-                            <form method="POST" action="/huuda/<?= $listing['id'] ?>" id="bid-form" style="margin-top: 1.5rem;">
+                            <form method="POST" action="/huuda/<?= $listing['id'] ?>" id="bid-form" class="bid-form">
                                 <input type="hidden" name="csrf_token" value="<?= Security::generateToken() ?>">
                                 
                                 <div class="form-group">
@@ -104,25 +119,25 @@ $canBid = Security::isLoggedIn() && !$isEnded && $listing['user_id'] != ($_SESSI
                                            required>
                                 </div>
                                 
-                                <button type="submit" class="btn btn-success" style="width: 100%;">Huuda</button>
+                                <button type="submit" class="btn btn-success w-full">Huuda</button>
                             </form>
                             
                             <?php if ($listing['buy_now_price'] && $listing['buy_now_price'] > $listing['current_price']): ?>
-                                <form method="POST" action="/osta-heti/<?= $listing['id'] ?>" style="margin-top: 0.5rem;">
+                                <form method="POST" action="/osta-heti/<?= $listing['id'] ?>" class="mt-3">
                                     <input type="hidden" name="csrf_token" value="<?= Security::generateToken() ?>">
-                                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                                    <button type="submit" class="btn btn-primary w-full">
                                         Osta heti <?= Security::formatPrice($listing['buy_now_price']) ?>
                                     </button>
                                 </form>
                             <?php endif; ?>
                         <?php elseif (!Security::isLoggedIn()): ?>
-                            <p style="margin-top: 1rem;">
-                                <a href="/kirjaudu" class="btn btn-primary" style="width: 100%; text-align: center;">
+                            <p class="mt-4">
+                                <a href="/kirjaudu" class="btn btn-primary w-full text-center d-block">
                                     Kirjaudu huutaaksesi
                                 </a>
                             </p>
                         <?php elseif ($listing['user_id'] == ($_SESSION['user_id'] ?? 0)): ?>
-                            <p style="margin-top: 1rem; color: var(--gray-600);">
+                            <p class="mt-4 text-secondary text-sm">
                                 Et voi huutaa omaan ilmoitukseesi
                             </p>
                         <?php endif; ?>

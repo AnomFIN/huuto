@@ -12,7 +12,7 @@ unset($_SESSION['register_errors'], $_SESSION['register_data']);
     
     <?php if (!empty($errors)): ?>
         <div class="alert alert-error">
-            <ul style="list-style: none;">
+            <ul class="list-none">
                 <?php foreach ($errors as $error): ?>
                     <li><?= htmlspecialchars($error) ?></li>
                 <?php endforeach; ?>
@@ -26,26 +26,29 @@ unset($_SESSION['register_errors'], $_SESSION['register_data']);
         <div class="form-group">
             <label class="form-label">Nimi</label>
             <input type="text" name="name" class="form-input" 
-                   value="<?= htmlspecialchars($data['name'] ?? '') ?>" required>
+                   value="<?= htmlspecialchars($data['name'] ?? '') ?>" 
+                   required autocomplete="name">
         </div>
         
         <div class="form-group">
             <label class="form-label">Sähköposti</label>
             <input type="email" name="email" class="form-input" 
-                   value="<?= htmlspecialchars($data['email'] ?? '') ?>" required>
+                   value="<?= htmlspecialchars($data['email'] ?? '') ?>" 
+                   required autocomplete="email">
         </div>
         
         <div class="form-group">
             <label class="form-label">Salasana (min. 6 merkkiä)</label>
-            <input type="password" name="password" class="form-input" required>
+            <input type="password" name="password" class="form-input" 
+                   required autocomplete="new-password">
         </div>
         
-        <button type="submit" class="btn btn-primary" style="width: 100%;">Rekisteröidy</button>
+        <button type="submit" class="btn btn-primary w-full">Rekisteröidy</button>
     </form>
     
-    <p style="text-align: center; margin-top: 1.5rem; color: var(--gray-600);">
+    <div class="auth-footer">
         Onko sinulla jo tili? <a href="/kirjaudu">Kirjaudu tästä</a>
-    </p>
+    </div>
 </div>
 
 <?php
