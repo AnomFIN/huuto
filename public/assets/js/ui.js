@@ -446,10 +446,38 @@
       }
     }
     
+    /**
+     * Set the modal content using an HTML string.
+     *
+     * SECURITY WARNING:
+     *  - The `html` argument MUST be sanitized before being passed to this method.
+     *  - Never pass untrusted user input directly to this method.
+     *  - Use `setTextContent()` instead when you only need to display plain text.
+     *
+     * Using unsanitized HTML here can lead to Cross-Site Scripting (XSS).
+     */
     setContent(html) {
       this.modal.innerHTML = html;
-      
-      // Setup close button
+      this._setupCloseButton();
+    }
+
+    /**
+     * Safely set the modal content as plain text.
+     * This method does not interpret HTML and is safe to use with user input.
+     *
+     * @param {string} text - The text content to display in the modal.
+     */
+    setTextContent(text) {
+      this.modal.textContent = text;
+      this._setupCloseButton();
+    }
+
+    /**
+     * Find and wire up the modal close button inside the current modal content.
+     * This is used by both `setContent` and `setTextContent`.
+     * @private
+     */
+    _setupCloseButton() {
       const closeBtn = $('.modal-close', this.modal);
       if (closeBtn) {
         closeBtn.addEventListener('click', () => this.close());
