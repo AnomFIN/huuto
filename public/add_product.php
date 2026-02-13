@@ -23,13 +23,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             // Handle image uploads
             $uploadedImages = [];
             if (!empty($_FILES['images']['name'][0])) {
-                $uploadDir = __DIR__ . '/../uploads/';
+                $uploadDir = UPLOAD_DIR;
                 if (!is_dir($uploadDir)) {
                     mkdir($uploadDir, 0755, true);
                 }
 
                 $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-                $maxFileSize = 5 * 1024 * 1024; // 5MB
+                $maxFileSize = MAX_UPLOAD_SIZE;
 
                 foreach ($_FILES['images']['tmp_name'] as $key => $tmpName) {
                     if ($_FILES['images']['error'][$key] === UPLOAD_ERR_OK) {
