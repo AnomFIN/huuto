@@ -5,18 +5,18 @@ ob_start();
 
 <div class="container">
     <!-- Hero Section -->
-    <section style="text-align: center; padding: 3rem 0; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); margin: 0 -20px; color: white; border-radius: 12px; margin-top: 2rem;">
-        <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">Suomen suosituin huutokauppa-alusta</h1>
-        <p style="font-size: 1.2rem; margin-bottom: 2rem;">Löydä upeita tuotteita - Tee hyviä kauppoja</p>
-        <a href="/kategoriat" class="btn btn-primary" style="font-size: 1.1rem; padding: 1rem 2rem;">Selaa kategorioita</a>
+    <section class="hero-section">
+        <h1>Suomen suosituin huutokauppa-alusta</h1>
+        <p>Löydä upeita tuotteita - Tee hyviä kauppoja</p>
+        <a href="/kategoriat" class="btn btn-primary btn-lg">Selaa kategorioita</a>
     </section>
 
     <!-- Ending Soon -->
-    <section style="margin: 3rem 0;">
-        <h2 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
-            ⏰ Päättyvät pian
-            <a href="/paattyvat" style="margin-left: auto; font-size: 0.9rem;">Näytä kaikki →</a>
-        </h2>
+    <section>
+        <div class="section-header">
+            <h2>⏰ Päättyvät pian</h2>
+            <a href="/paattyvat">Näytä kaikki →</a>
+        </div>
         
         <div class="grid">
             <?php foreach (array_slice($endingSoon, 0, 8) as $listing): ?>
@@ -39,8 +39,10 @@ ob_start();
     </section>
 
     <!-- Newest Listings -->
-    <section style="margin: 3rem 0;">
-        <h2 style="margin-bottom: 1.5rem;">🆕 Uusimmat ilmoitukset</h2>
+    <section>
+        <div class="section-header">
+            <h2>🆕 Uusimmat ilmoitukset</h2>
+        </div>
         
         <div class="grid">
             <?php foreach (array_slice($newest, 0, 8) as $listing): ?>
@@ -63,8 +65,10 @@ ob_start();
     </section>
 
     <!-- Categories Grid -->
-    <section style="margin: 3rem 0;">
-        <h2 style="margin-bottom: 1.5rem;">📂 Selaa kategorioita</h2>
+    <section>
+        <div class="section-header">
+            <h2>📂 Selaa kategorioita</h2>
+        </div>
         
         <div class="grid">
             <?php foreach (array_slice($categories, 0, 12) as $category): ?>
@@ -77,7 +81,7 @@ ob_start();
             <?php endforeach; ?>
         </div>
         
-        <div style="text-align: center; margin-top: 2rem;">
+        <div class="d-flex justify-center mt-7">
             <a href="/kategoriat" class="btn btn-secondary">Näytä kaikki kategoriat</a>
         </div>
     </section>

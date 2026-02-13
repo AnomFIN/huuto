@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="<?= htmlspecialchars($metaDescription ?? 'Huuto - Suomalainen huutokauppa-alusta', ENT_QUOTES, 'UTF-8') ?>">
     <title><?= $pageTitle ?? 'Huuto' ?> - Huutokaupat</title>
+    
+    <!-- Premium Design System CSS -->
+    <link rel="stylesheet" href="/assets/css/theme.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+    <link rel="stylesheet" href="/assets/css/pages.css">
+    <link rel="stylesheet" href="/assets/css/utilities.css">
+    
+    <!-- Legacy styles for compatibility -->
     <link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body>
@@ -130,6 +138,10 @@
         </div>
     </footer>
 
+    <!-- Premium UI Interactions -->
+    <script src="/assets/js/ui.js"></script>
+    
+    <!-- Legacy scripts for compatibility -->
     <script src="/assets/js/main.js"></script>
 </body>
 </html>
