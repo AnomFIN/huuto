@@ -258,11 +258,28 @@ class Auction {
         $user = $stmt->fetch();
         
         if (!$user) {
+            // Only allow automatic test user creation in explicitly enabled environments
+            $allowTestUser = getenv('APP_ALLOW_TEST_USER');
+            if ($allowTestUser !== '1') {
+                throw new RuntimeException(
+                    'Automatic test user creation is disabled. ' .
+                    'Set APP_ALLOW_TEST_USER=1 in your environment if you want to allow this in development.'
+                );
+            }
+
+            // Use a configured password if provided, otherwise generate a random one
+            $password = getenv('TEST_USER_PASSWORD');
+            if ($password === false || $password === '') {
+                $password = bin2hex(random_bytes(16));
+            }
+
+            $hash = password_hash($password, PASSWORD_BCRYPT);
+
             // Create a test user if none exists
             $sql = "INSERT INTO users (username, email, password_hash, full_name) 
                     VALUES ('test_user', 'test@example.com', :hash, 'Test User')";
             $stmt = $this->db->prepare($sql);
-            $stmt->execute([':hash' => password_hash('test123', PASSWORD_BCRYPT)]);
+            $stmt->execute([':hash' => $hash]);
             return $this->db->lastInsertId();
         }
         
