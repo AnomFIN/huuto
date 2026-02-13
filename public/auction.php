@@ -21,6 +21,8 @@ if (!$auction) {
 
 // Increment view count
 $auctionModel->incrementViews($id);
+// Keep in-memory auction data in sync with incremented view count
+$auction['views'] = (isset($auction['views']) ? (int)$auction['views'] : 0) + 1;
 
 $images = $auctionModel->getAuctionImages($id);
 $bids = $auctionModel->getAuctionBids($id);
