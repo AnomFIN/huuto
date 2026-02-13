@@ -1,0 +1,10 @@
+/config/config.php
+/storage/logs/*.log
+/public/assets/uploads/*
+!.gitkeep
+.DS_Store
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
