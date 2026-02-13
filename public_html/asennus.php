@@ -186,7 +186,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'user' => $_POST['db_user'],
                     'pass' => $_POST['db_pass']
                 ];
-                header('Location: setup.php?step=2');
+                header('Location: asennus.php?step=2');
                 exit;
             } else {
                 $error = 'Database connection failed: ' . $result['error'];
@@ -256,7 +256,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     file_put_contents(__DIR__ . '/../config/config.php', $configContent);
                     
-                    header('Location: setup.php?step=3');
+                    header('Location: asennus.php?step=3');
                     exit;
                 } catch (Exception $e) {
                     $error = 'Installation failed: ' . $e->getMessage();
@@ -744,7 +744,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </a>
             
             <p style="margin-top: 20px; text-align: center; color: #999; font-size: 14px;">
-                Voit poistaa setup.php-tiedoston nyt turvallisesti.
+                Voit poistaa asennus.php-tiedoston nyt turvallisesti.
             </p>
         <?php endif; ?>
     </div>

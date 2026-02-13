@@ -62,17 +62,11 @@ Moderni verkkohuutokauppa-alustan prototyyppi rakennettu PHP:llä ja MySQL:llä.
    cd public_html
    php -S localhost:8000
    ```
-   
-   Tai jos haluat käyttää asennusohjelmaa:
-   ```bash
-   cd public_html
-   php -S localhost:8000
-   ```
-   Ja siirry osoitteeseen: http://localhost:8000/asennus.php
 
 6. **Avaa selaimessa**
    
-   Siirry osoitteeseen: http://localhost:8000
+   - Käytä asennusohjelmaa: http://localhost:8000/asennus.php
+   - Tai käytä suoraan: http://localhost:8000
 
 ## Projektin rakenne
 
