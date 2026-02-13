@@ -194,6 +194,13 @@
       const links = $$('.header-nav a');
       links.forEach((link, index) => {
         const clone = link.cloneNode(true);
+
+        // Forward events from the cloned link to the original link so that
+        // any listeners attached to the original continue to work.
+        clone.addEventListener('click', function(event) {
+          event.preventDefault();
+          link.click();
+        });
         
         // Forward click events to original link for proper event handling
         clone.addEventListener('click', function(event) {
