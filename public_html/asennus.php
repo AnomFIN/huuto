@@ -134,7 +134,7 @@ function createSeedListings($pdo) {
             $numImages = rand(2, 4);
             for ($j = 0; $j < $numImages; $j++) {
                 $pdo->prepare("INSERT INTO listing_images (listing_id, path, sort_order) VALUES (?, ?, ?)")
-                    ->execute([$listingId, "/assets/img/placeholder-{$j}.jpg", $j]);
+                    ->execute([$listingId, '', $j]);
             }
         }
     }
