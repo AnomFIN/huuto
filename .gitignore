@@ -1,10 +1,8 @@
-/config/config.php
-/storage/logs/*.log
-/public/assets/uploads/*
-!.gitkeep
+vendor/
+node_modules/
+.env
+*.log
 .DS_Store
-*.swp
-*.swo
-*~
-.idea/
-.vscode/
+thumbs.db
+uploads/*
+!uploads/.gitkeep
