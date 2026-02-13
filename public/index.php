@@ -1,8 +1,8 @@
 <?php
-require_once __DIR__ . '/config/config.php';
-require_once __DIR__ . '/src/models/Database.php';
-require_once __DIR__ . '/src/models/Auction.php';
-require_once __DIR__ . '/src/models/Category.php';
+require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../src/models/Database.php';
+require_once __DIR__ . '/../src/models/Auction.php';
+require_once __DIR__ . '/../src/models/Category.php';
 
 $auctionModel = new Auction();
 $categoryModel = new Category();
@@ -12,7 +12,7 @@ $featuredAuctions = $auctionModel->getActiveAuctions(12);
 $categories = $categoryModel->getAllCategories();
 
 $pageTitle = SITE_NAME . ' - Etusivu';
-include __DIR__ . '/src/views/header.php';
+include __DIR__ . '/../src/views/header.php';
 ?>
 
 <div class="mb-8">
@@ -86,4 +86,4 @@ include __DIR__ . '/src/views/header.php';
     </div>
 </div>
 
-<?php include __DIR__ . '/src/views/footer.php'; ?>
+<?php include __DIR__ . '/../src/views/footer.php'; ?>

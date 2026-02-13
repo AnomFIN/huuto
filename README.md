@@ -14,7 +14,7 @@ Moderni verkkohuutokauppa-alusta rakennettu PHP:llä ja MySQL:llä. Sisältää 
 
 ## Teknologiat
 
-- **Backend**: PHP 7.4+
+- **Backend**: PHP 8.0+
 - **Tietokanta**: MySQL 5.7+ / MariaDB 10.3+
 - **Frontend**: Tailwind CSS (CDN)
 - **Arkkitehtuuri**: MVC-pattern
@@ -23,7 +23,7 @@ Moderni verkkohuutokauppa-alusta rakennettu PHP:llä ja MySQL:llä. Sisältää 
 
 ### Vaatimukset
 
-- PHP 7.4 tai uudempi
+- PHP 8.0 tai uudempi
 - MySQL 5.7 tai uudempi (tai MariaDB 10.3+)
 - Web-palvelin (Apache, Nginx, tai PHP:n sisäänrakennettu palvelin)
 

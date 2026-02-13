@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $pageTitle ?? SITE_NAME; ?></title>
+    <title><?php echo htmlspecialchars($pageTitle ?? SITE_NAME, ENT_QUOTES, 'UTF-8'); ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .countdown { font-feature-settings: 'tnum'; }

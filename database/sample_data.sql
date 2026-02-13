@@ -39,7 +39,7 @@ INSERT INTO auctions (user_id, category_id, title, description, starting_price, 
 
 -- Sample auctions for Vaatteet (Clothing)
 INSERT INTO auctions (user_id, category_id, title, description, starting_price, current_price, reserve_price, buy_now_price, bid_increment, end_time, status, location, condition_description) VALUES
-(1, 6, 'Canada Goose Talvitakki', 'Canada Goose Expedition Parka, koko M. Musta. Ostettu 2021. Lämpöinen ja laadukas talvitakki. Turkis irrotettavissa. Pestyja huollettu ammattilaisella.', 400.00, 450.00, NULL, 700.00, 25.00, DATE_ADD(NOW(), INTERVAL 3 DAY), 'active', 'Helsinki', 'Erinomainen'),
+(1, 6, 'Canada Goose Talvitakki', 'Canada Goose Expedition Parka, koko M. Musta. Ostettu 2021. Lämpöinen ja laadukas talvitakki. Turkis irrotettavissa. Pesty ja huollettu ammattilaisella.', 400.00, 450.00, NULL, 700.00, 25.00, DATE_ADD(NOW(), INTERVAL 3 DAY), 'active', 'Helsinki', 'Erinomainen'),
 (2, 6, 'Nike Air Max Tennarit', 'Nike Air Max 90, koko 42. Valkoinen/punainen väritys. Käytetty muutaman kerran. Mukana alkuperäinen laatikko.', 60.00, 75.00, NULL, 120.00, 5.00, DATE_ADD(NOW(), INTERVAL 1 DAY), 'active', 'Tampere', 'Erinomainen'),
 (3, 6, 'Vintage Farkkutakki Levi\'s', 'Vintage Levi\'s farkkutakki 1980-luvulta. Koko M. Hieno retro-ilme. Muutama pieni kuluma, lisää tunnelmaa.', 50.00, 50.00, NULL, NULL, 5.00, DATE_ADD(NOW(), INTERVAL 5 DAY), 'active', 'Turku', 'Hyvä');
 
