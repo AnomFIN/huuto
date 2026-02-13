@@ -59,7 +59,7 @@ Moderni verkkohuutokauppa-alustan prototyyppi rakennettu PHP:llä ja MySQL:llä.
 
 5. **Käynnistä kehityspalvelin**
    ```bash
-   cd main
+   cd public_html
    php -S localhost:8000
    ```
 
@@ -77,7 +77,7 @@ huuto/
 ├── database/
 │   ├── schema.sql          # Tietokantarakenne
 │   └── sample_data.sql     # Esimerkkidata
-├── main/
+├── public_html/
 │   ├── index.php           # Etusivu
 │   ├── auction.php         # Yksittäinen huutokauppa
 │   ├── category.php        # Kategorianäkymä
