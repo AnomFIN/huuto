@@ -180,4 +180,92 @@ class Auction {
         $stmt->execute();
         return $stmt->fetchAll();
     }
+
+    /**
+     * Create a new auction
+     */
+    public function createAuction($data) {
+        try {
+            $this->db->beginTransaction();
+
+            $sql = "INSERT INTO auctions (
+                        user_id, category_id, title, description, 
+                        starting_price, current_price, reserve_price, buy_now_price, 
+                        bid_increment, end_time, status, location, condition_description
+                    ) VALUES (
+                        :user_id, :category_id, :title, :description,
+                        :starting_price, :current_price, :reserve_price, :buy_now_price,
+                        :bid_increment, :end_time, :status, :location, :condition_description
+                    )";
+            
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([
+                ':user_id' => $data['user_id'],
+                ':category_id' => $data['category_id'],
+                ':title' => $data['title'],
+                ':description' => $data['description'],
+                ':starting_price' => $data['starting_price'],
+                ':current_price' => $data['starting_price'], // Initial current price = starting price
+                ':reserve_price' => $data['reserve_price'] ?? null,
+                ':buy_now_price' => $data['buy_now_price'] ?? null,
+                ':bid_increment' => $data['bid_increment'] ?? 1.00,
+                ':end_time' => $data['end_time'],
+                ':status' => $data['status'] ?? 'active',
+                ':location' => $data['location'] ?? null,
+                ':condition_description' => $data['condition_description'] ?? null
+            ]);
+
+            $auctionId = $this->db->lastInsertId();
+
+            // Add images if provided
+            if (!empty($data['images'])) {
+                foreach ($data['images'] as $index => $imagePath) {
+                    $this->addAuctionImage($auctionId, $imagePath, $index === 0);
+                }
+            }
+
+            $this->db->commit();
+            return $auctionId;
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Add an image to an auction
+     */
+    public function addAuctionImage($auctionId, $imagePath, $isPrimary = false) {
+        $sql = "INSERT INTO auction_images (auction_id, image_path, is_primary, sort_order) 
+                VALUES (:auction_id, :image_path, :is_primary, :sort_order)";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            ':auction_id' => $auctionId,
+            ':image_path' => $imagePath,
+            ':is_primary' => $isPrimary ? 1 : 0,
+            ':sort_order' => 0
+        ]);
+    }
+
+    /**
+     * Get a default test user (for testing without login)
+     */
+    public function getDefaultTestUser() {
+        $sql = "SELECT id FROM users LIMIT 1";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute();
+        $user = $stmt->fetch();
+        
+        if (!$user) {
+            // Create a test user if none exists
+            $sql = "INSERT INTO users (username, email, password_hash, full_name) 
+                    VALUES ('test_user', 'test@example.com', :hash, 'Test User')";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([':hash' => password_hash('test123', PASSWORD_BCRYPT)]);
+            return $this->db->lastInsertId();
+        }
+        
+        return $user['id'];
+    }
 }

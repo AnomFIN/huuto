@@ -24,6 +24,9 @@
                     </form>
                     <a href="/auctions.php" class="text-gray-700 hover:text-blue-600">Kohteet</a>
                     <a href="/categories.php" class="text-gray-700 hover:text-blue-600">Kategoriat</a>
+                    <a href="/add_product.php" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors font-semibold">
+                        + Lisää tuote
+                    </a>
                 </div>
             </div>
         </div>
