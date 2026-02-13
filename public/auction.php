@@ -104,7 +104,7 @@ include __DIR__ . '/../src/views/header.php';
                 <div class="mb-4">
                     <div class="text-sm text-gray-500">Huutokauppa päättyy</div>
                     <div class="countdown text-xl font-bold text-red-600" 
-                         data-endtime="<?php echo $auction['end_time']; ?>">
+                         data-endtime="<?php echo htmlspecialchars(date('c', strtotime($auction['end_time'])), ENT_QUOTES, 'UTF-8'); ?>">
                     </div>
                     <div class="text-sm text-gray-500 mt-1">
                         <?php echo date('d.m.Y H:i', strtotime($auction['end_time'])); ?>
