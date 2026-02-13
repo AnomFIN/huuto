@@ -77,7 +77,7 @@ function insertCategories($pdo) {
         ['paattyvat', 'Päättyvät', '⏰']
     ];
     
-    $stmt = $pdo->prepare("INSERT INTO categories (slug, name, icon, sort_order) VALUES (?, ?, ?, ?)");
+    $stmt = $pdo->prepare("INSERT IGNORE INTO categories (slug, name, icon, sort_order) VALUES (?, ?, ?, ?)");
     foreach ($categories as $i => $cat) {
         $stmt->execute([$cat[0], $cat[1], $cat[2], $i + 1]);
     }
@@ -159,7 +159,7 @@ function createStaticPages($pdo) {
         ['lapinakyvyys', 'Läpinäkyvyysraportti', '<h2>Läpinäkyvyys</h2><p>Läpinäkyvyysraportti.</p>']
     ];
     
-    $stmt = $pdo->prepare("INSERT INTO pages (slug, title, content_html) VALUES (?, ?, ?)");
+    $stmt = $pdo->prepare("INSERT IGNORE INTO pages (slug, title, content_html) VALUES (?, ?, ?)");
     foreach ($pages as $page) {
         $stmt->execute($page);
     }
@@ -204,21 +204,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Create tables
                     createTables($pdo);
                     
-                    // Insert categories
+                    // Insert categories (use INSERT IGNORE for idempotency)
                     insertCategories($pdo);
                     
                     // Create admin user
-                    $stmt = $pdo->prepare("INSERT INTO users (email, password_hash, name, role, status) VALUES (?, ?, ?, 'admin', 'active')");
+                    $adminEmail = $_POST['admin_email'];
+                    $stmt = $pdo->prepare("INSERT IGNORE INTO users (email, password_hash, name, role, status) VALUES (?, ?, ?, 'admin', 'active')");
                     $stmt->execute([
-                        $_POST['admin_email'],
+                        $adminEmail,
                         password_hash($_POST['admin_password'], PASSWORD_DEFAULT),
                         $_POST['admin_name'] ?: 'Admin'
                     ]);
                     
                     $adminId = $pdo->lastInsertId();
+                    if (!$adminId) {
+                        // User already exists, get their ID
+                        $adminId = $pdo->query("SELECT id FROM users WHERE email = " . $pdo->quote($adminEmail))->fetchColumn();
+                    }
                     
-                    // Create demo user
-                    $stmt = $pdo->prepare("INSERT INTO users (email, password_hash, name, role, status) VALUES (?, ?, ?, 'user', 'active')");
+                    // Create demo user (use INSERT IGNORE)
+                    $stmt = $pdo->prepare("INSERT IGNORE INTO users (email, password_hash, name, role, status) VALUES (?, ?, ?, 'user', 'active')");
                     $stmt->execute([
                         'demo@huuto.local',
                         password_hash('demo123', PASSWORD_DEFAULT),
@@ -228,8 +233,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Create seed listings
                     createSeedListings($pdo);
                     
-                    // Create static pages
+                    // Create static pages (use INSERT IGNORE)
                     createStaticPages($pdo);
+                    
+                    // Store admin email for display on completion page
+                    $_SESSION['admin_email'] = $adminEmail;
                     
                     // Create config file
                     $configContent = "<?php\n";
@@ -476,18 +484,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             <div class="credentials">
                 <h3>📋 Käyttäjätunnukset:</h3>
-                <p><strong>Admin:</strong> <?= htmlspecialchars($_SESSION['db_config']['user'] ?? 'admin@huuto.local') ?></p>
+                <p><strong>Admin:</strong> <?= htmlspecialchars($_SESSION['admin_email'] ?? 'admin@huuto.local') ?></p>
                 <p><strong>Demo käyttäjä:</strong> demo@huuto.local / demo123</p>
             </div>
             
+            <?php
+            // Reconnect to database to show statistics
+            $db = $_SESSION['db_config'];
+            $result = testDbConnection($db['host'], $db['name'], $db['user'], $db['pass']);
+            if ($result['success']) {
+                $pdo = $result['pdo'];
+                $categoryCount = $pdo->query("SELECT COUNT(*) as count FROM categories")->fetch()['count'];
+                $listingCount = $pdo->query("SELECT COUNT(*) as count FROM listings")->fetch()['count'];
+                $pageCount = $pdo->query("SELECT COUNT(*) as count FROM pages")->fetch()['count'];
+            ?>
             <div class="info">
                 <strong>Tiedot:</strong><br>
-                • Luotu <?= count($pdo->query("SELECT id FROM categories")->fetchAll()) ?> kategoriaa<br>
-                • Luotu <?= count($pdo->query("SELECT id FROM listings")->fetchAll()) ?> ilmoitusta<br>
-                • Luotu <?= count($pdo->query("SELECT id FROM pages")->fetchAll()) ?> staattista sivua<br>
+                • Luotu <?= $categoryCount ?> kategoriaa<br>
+                • Luotu <?= $listingCount ?> ilmoitusta<br>
+                • Luotu <?= $pageCount ?> staattista sivua<br>
             </div>
+            <?php } ?>
             
-            <a href="/public/index.php" style="display: inline-block; margin-top: 20px; text-align: center; width: 100%; padding: 14px; background: #667eea; color: white; border-radius: 6px; text-decoration: none;">
+            <a href="/" style="display: inline-block; margin-top: 20px; text-align: center; width: 100%; padding: 14px; background: #667eea; color: white; border-radius: 6px; text-decoration: none;">
                 Siirry sivustolle →
             </a>
             

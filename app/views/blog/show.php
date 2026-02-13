@@ -18,7 +18,11 @@ ob_start();
         </div>
         
         <div style="margin-top: 2rem; line-height: 1.8;">
-            <?= $post['content_html'] ?>
+            <?php
+            // Note: content_html should only be editable by trusted admins
+            // Consider adding HTML purification if user-generated content is allowed
+            echo $post['content_html'];
+            ?>
         </div>
         
         <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid var(--gray-200);">

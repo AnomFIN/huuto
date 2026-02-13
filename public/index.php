@@ -11,7 +11,8 @@ ini_set('display_errors', 1);
 
 // Check if installed
 if (!file_exists(__DIR__ . '/../config/config.php')) {
-    header('Location: /setup.php');
+    // Redirect to setup at root level (setup.php is in parent directory)
+    header('Location: ../setup.php');
     exit;
 }
 

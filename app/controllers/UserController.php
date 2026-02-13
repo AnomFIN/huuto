@@ -60,7 +60,7 @@ class UserController {
                     (SELECT path FROM listing_images WHERE listing_id = l.id ORDER BY sort_order LIMIT 1) as image
              FROM listings l
              LEFT JOIN categories c ON l.category_id = c.id
-             WHERE l.highest_bidder_id = ? AND l.status = 'ended'
+             WHERE l.highest_bidder_id = ? AND l.ends_at <= NOW()
              ORDER BY l.ends_at DESC",
             [$userId]
         );

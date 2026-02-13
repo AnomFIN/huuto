@@ -7,7 +7,11 @@ ob_start();
     <div style="background: white; padding: 2rem; border-radius: 12px;">
         <h1><?= htmlspecialchars($page['title']) ?></h1>
         <div style="margin-top: 2rem; line-height: 1.8;">
-            <?= $page['content_html'] ?>
+            <?php
+            // Note: content_html should only be editable by trusted admins
+            // Consider adding HTML purification if user-generated content is allowed
+            echo $page['content_html'];
+            ?>
         </div>
     </div>
 </div>

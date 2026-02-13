@@ -94,6 +94,14 @@ unset($_SESSION['listing_errors']);
                 </select>
             </div>
             
+            <div class="form-group">
+                <label class="form-label">Kuvat (max 8 kuvaa)</label>
+                <input type="file" name="images[]" class="form-input" multiple accept="image/*" style="padding: 0.5rem;">
+                <p style="font-size: 0.875rem; color: var(--gray-600); margin-top: 0.5rem;">
+                    Voit valita useita kuvia kerralla (max 8 kuvaa)
+                </p>
+            </div>
+            
             <button type="submit" class="btn btn-success" style="width: 100%;">Luo ilmoitus</button>
         </form>
     </div>

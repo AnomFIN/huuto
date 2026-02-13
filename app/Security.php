@@ -67,7 +67,7 @@ class Security {
      */
     public static function generateSlug($string) {
         $string = mb_strtolower($string, 'UTF-8');
-        $string = preg_replace('/[^a-z0-9\s-ÄäÖöÅå]/', '', $string);
+        $string = preg_replace('/[^a-z0-9\sÄäÖöÅå-]/u', '', $string);
         $string = preg_replace('/[\s-]+/', '-', $string);
         $string = trim($string, '-');
         return $string;

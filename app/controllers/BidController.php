@@ -18,54 +18,70 @@ class BidController {
         
         $db = Database::getInstance();
         
-        // Get listing
-        $listing = $db->fetch(
-            "SELECT * FROM listings WHERE id = ? AND status = 'active'",
-            [$listingId]
-        );
+        // Use transaction and row-level locking for concurrency safety
+        $db->beginTransaction();
         
-        if (!$listing) {
-            $_SESSION['error_message'] = 'Ilmoitusta ei löytynyt';
+        try {
+            // Get listing with row lock to prevent concurrent updates
+            $listing = $db->fetch(
+                "SELECT * FROM listings WHERE id = ? AND status = 'active' FOR UPDATE",
+                [$listingId]
+            );
+            
+            if (!$listing) {
+                $db->rollBack();
+                $_SESSION['error_message'] = 'Ilmoitusta ei löytynyt';
+                header('Location: /');
+                exit;
+            }
+            
+            // Check if ended
+            if (strtotime($listing['ends_at']) <= time()) {
+                $db->rollBack();
+                $_SESSION['error_message'] = 'Huutokauppa on päättynyt';
+                header('Location: /kohde/' . $listingId . '/' . $listing['slug']);
+                exit;
+            }
+            
+            // Check if user is seller
+            if ($listing['user_id'] == $userId) {
+                $db->rollBack();
+                $_SESSION['error_message'] = 'Et voi huutaa omaan ilmoitukseesi';
+                header('Location: /kohde/' . $listingId . '/' . $listing['slug']);
+                exit;
+            }
+            
+            // Check minimum increment based on locked current_price
+            $minBid = $listing['current_price'] + $listing['min_increment'];
+            if ($amount < $minBid) {
+                $db->rollBack();
+                $_SESSION['error_message'] = 'Huudon tulee olla vähintään ' . Security::formatPrice($minBid);
+                header('Location: /kohde/' . $listingId . '/' . $listing['slug']);
+                exit;
+            }
+            
+            // Place bid
+            $db->execute(
+                "INSERT INTO bids (listing_id, user_id, amount) VALUES (?, ?, ?)",
+                [$listingId, $userId, $amount]
+            );
+            
+            // Update listing
+            $db->execute(
+                "UPDATE listings SET current_price = ?, highest_bidder_id = ? WHERE id = ?",
+                [$amount, $userId, $listingId]
+            );
+            
+            $db->commit();
+            
+            $_SESSION['success_message'] = 'Huuto onnistui!';
+            header('Location: /kohde/' . $listingId . '/' . $listing['slug']);
+            exit;
+        } catch (Exception $e) {
+            $db->rollBack();
+            $_SESSION['error_message'] = 'Huudon käsittely epäonnistui. Yritä uudelleen.';
             header('Location: /');
             exit;
         }
-        
-        // Check if ended
-        if (strtotime($listing['ends_at']) <= time()) {
-            $_SESSION['error_message'] = 'Huutokauppa on päättynyt';
-            header('Location: /kohde/' . $listingId . '/' . $listing['slug']);
-            exit;
-        }
-        
-        // Check if user is seller
-        if ($listing['user_id'] == $userId) {
-            $_SESSION['error_message'] = 'Et voi huutaa omaan ilmoitukseesi';
-            header('Location: /kohde/' . $listingId . '/' . $listing['slug']);
-            exit;
-        }
-        
-        // Check minimum increment
-        $minBid = $listing['current_price'] + $listing['min_increment'];
-        if ($amount < $minBid) {
-            $_SESSION['error_message'] = 'Huudon tulee olla vähintään ' . Security::formatPrice($minBid);
-            header('Location: /kohde/' . $listingId . '/' . $listing['slug']);
-            exit;
-        }
-        
-        // Place bid
-        $db->execute(
-            "INSERT INTO bids (listing_id, user_id, amount) VALUES (?, ?, ?)",
-            [$listingId, $userId, $amount]
-        );
-        
-        // Update listing
-        $db->execute(
-            "UPDATE listings SET current_price = ?, highest_bidder_id = ? WHERE id = ?",
-            [$amount, $userId, $listingId]
-        );
-        
-        $_SESSION['success_message'] = 'Huuto onnistui!';
-        header('Location: /kohde/' . $listingId . '/' . $listing['slug']);
-        exit;
     }
 }

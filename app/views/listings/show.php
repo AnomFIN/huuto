@@ -108,9 +108,12 @@ $canBid = Security::isLoggedIn() && !$isEnded && $listing['user_id'] != ($_SESSI
                             </form>
                             
                             <?php if ($listing['buy_now_price'] && $listing['buy_now_price'] > $listing['current_price']): ?>
-                                <button class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
-                                    Osta heti <?= Security::formatPrice($listing['buy_now_price']) ?>
-                                </button>
+                                <form method="POST" action="/osta-heti/<?= $listing['id'] ?>" style="margin-top: 0.5rem;">
+                                    <input type="hidden" name="csrf_token" value="<?= Security::generateToken() ?>">
+                                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                                        Osta heti <?= Security::formatPrice($listing['buy_now_price']) ?>
+                                    </button>
+                                </form>
                             <?php endif; ?>
                         <?php elseif (!Security::isLoggedIn()): ?>
                             <p style="margin-top: 1rem;">
@@ -132,7 +135,7 @@ $canBid = Security::isLoggedIn() && !$isEnded && $listing['user_id'] != ($_SESSI
                         <h3>Huutohistoria</h3>
                         <?php foreach ($bids as $bid): ?>
                             <div class="bid-item">
-                                <span><?= htmlspecialchars(substr($bid['bidder_name'], 0, 1)) ?>***</span>
+                                <span><?= htmlspecialchars(mb_substr($bid['bidder_name'], 0, 1, 'UTF-8')) ?>***</span>
                                 <strong><?= Security::formatPrice($bid['amount']) ?></strong>
                             </div>
                         <?php endforeach; ?>
