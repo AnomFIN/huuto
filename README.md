@@ -11,6 +11,8 @@ Moderni verkkohuutokauppa-alusta rakennettu PHP:llä ja MySQL:llä. Sisältää 
 - 🔍 **Haku**: Etsi kohteita otsikon tai kuvauksen perusteella
 - 📊 **Tilastot**: Tarjousmäärät, katselukerrat, seuraajat
 - 🖼️ **Kuvagalleria**: Useat kuvat per kohde
+- 🤖 **AI-tuotekuvausgeneraattori**: Luo automaattisesti tuotekuvaukset kuvista
+- ➕ **Helppo tuotteen lisäys**: Ei vaadi kirjautumista, täydellinen testaukseen
 
 ## Teknologiat
 
@@ -78,7 +80,11 @@ huuto/
 ├── public/
 │   ├── index.php           # Etusivu
 │   ├── auction.php         # Yksittäinen huutokauppa
-│   └── category.php        # Kategorianäkymä
+│   ├── category.php        # Kategorianäkymä
+│   ├── add_product.php     # Tuotteen lisäys (tietokannalla)
+│   ├── add_product_demo.html # Tuotteen lisäys (demo, ei DB)
+│   ├── demo.html           # Demo etusivu
+│   └── demo-auction.html   # Demo huutokauppa
 ├── src/
 │   ├── models/
 │   │   ├── Database.php    # Tietokantayhteys
@@ -115,6 +121,14 @@ huuto/
   - Vaatteet
   - Keräily
   - Muut
+
+### Tuotteen lisäys (Add Product)
+- **Ei vaadi kirjautumista** - Täydellinen testaukseen
+- **AI-kuvausgeneraattori** - Lataa kuvia ja AI luo automaattisesti otsikon ja kuvauksen
+- **Älykäs hinnoittelu** - Ehdottaa hintoja kategorian perusteella
+- **Kuvien esikatselu** - Näe ladatut kuvat ennen tallentamista
+- **Täysi lomake** - Kaikki huutokaupan kentät yhdellä sivulla
+- Käytä: `add_product_demo.html` (demo) tai `add_product.php` (täysi versio)
 
 ## Tietokanta
 
