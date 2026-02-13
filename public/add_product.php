@@ -28,8 +28,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                     mkdir($uploadDir, 0755, true);
                 }
 
+                $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                $maxFileSize = 5 * 1024 * 1024; // 5MB
+
                 foreach ($_FILES['images']['tmp_name'] as $key => $tmpName) {
                     if ($_FILES['images']['error'][$key] === UPLOAD_ERR_OK) {
+                        // Validate file type
+                        $fileType = mime_content_type($tmpName);
+                        if (!in_array($fileType, $allowedTypes)) {
+                            throw new Exception('Virheellinen tiedostotyyppi. Sallitut: JPEG, PNG, GIF, WebP');
+                        }
+
+                        // Validate file size
+                        if ($_FILES['images']['size'][$key] > $maxFileSize) {
+                            throw new Exception('Tiedosto on liian suuri. Maksimikoko: 5MB');
+                        }
+
                         $fileName = uniqid() . '_' . basename($_FILES['images']['name'][$key]);
                         $targetPath = $uploadDir . $fileName;
                         

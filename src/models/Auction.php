@@ -220,7 +220,7 @@ class Auction {
             // Add images if provided
             if (!empty($data['images'])) {
                 foreach ($data['images'] as $index => $imagePath) {
-                    $this->addAuctionImage($auctionId, $imagePath, $index === 0);
+                    $this->addAuctionImage($auctionId, $imagePath, $index === 0, $index);
                 }
             }
 
@@ -235,7 +235,7 @@ class Auction {
     /**
      * Add an image to an auction
      */
-    public function addAuctionImage($auctionId, $imagePath, $isPrimary = false) {
+    public function addAuctionImage($auctionId, $imagePath, $isPrimary = false, $sortOrder = 0) {
         $sql = "INSERT INTO auction_images (auction_id, image_path, is_primary, sort_order) 
                 VALUES (:auction_id, :image_path, :is_primary, :sort_order)";
         
@@ -244,7 +244,7 @@ class Auction {
             ':auction_id' => $auctionId,
             ':image_path' => $imagePath,
             ':is_primary' => $isPrimary ? 1 : 0,
-            ':sort_order' => 0
+            ':sort_order' => $sortOrder
         ]);
     }
 
