@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Huuto - Suomalainen Huutokauppa (Demo)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .countdown { font-feature-settings: 'tnum'; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <nav class="bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <a href="/" class="text-2xl font-bold text-blue-600">Huuto</a>
+                    <span class="ml-2 text-gray-500 text-sm">Suomalainen Huutokauppa</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <form action="/search.php" method="GET" class="hidden md:block">
+                        <input type="text" name="q" placeholder="Etsi kohteita..." 
+                               class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </form>
+                    <a href="#" class="text-gray-700 hover:text-blue-600">Kohteet</a>
+                    <a href="#" class="text-gray-700 hover:text-blue-600">Kategoriat</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">Tervetuloa Huutoon</h1>
+            <p class="text-xl text-gray-600">Suomen suurin verkkohuutokauppa-alusta</p>
+        </div>
+
+        <!-- Categories -->
+        <div class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Selaa kategorioita</h2>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <a href="#" class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow text-center">
+                    <div class="text-4xl mb-2">🏠</div>
+                    <h3 class="font-semibold text-gray-900">Kiinteistöt</h3>
+                    <p class="text-sm text-gray-500">3 kohdetta</p>
+                </a>
+                <a href="#" class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow text-center">
+                    <div class="text-4xl mb-2">🚗</div>
+                    <h3 class="font-semibold text-gray-900">Ajoneuvot</h3>
+                    <p class="text-sm text-gray-500">3 kohdetta</p>
+                </a>
+                <a href="#" class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow text-center">
+                    <div class="text-4xl mb-2">💻</div>
+                    <h3 class="font-semibold text-gray-900">Elektroniikka</h3>
+                    <p class="text-sm text-gray-500">3 kohdetta</p>
+                </a>
+                <a href="#" class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow text-center">
+                    <div class="text-4xl mb-2">🏡</div>
+                    <h3 class="font-semibold text-gray-900">Kodin tavarat</h3>
+                    <p class="text-sm text-gray-500">3 kohdetta</p>
+                </a>
+                <a href="#" class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow text-center">
+                    <div class="text-4xl mb-2">⚽</div>
+                    <h3 class="font-semibold text-gray-900">Urheilu</h3>
+                    <p class="text-sm text-gray-500">3 kohdetta</p>
+                </a>
+                <a href="#" class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow text-center">
+                    <div class="text-4xl mb-2">👕</div>
+                    <h3 class="font-semibold text-gray-900">Vaatteet</h3>
+                    <p class="text-sm text-gray-500">3 kohdetta</p>
+                </a>
+                <a href="#" class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow text-center">
+                    <div class="text-4xl mb-2">🎨</div>
+                    <h3 class="font-semibold text-gray-900">Keräily</h3>
+                    <p class="text-sm text-gray-500">3 kohdetta</p>
+                </a>
+                <a href="#" class="bg-white p-6 rounded-lg shadow hover:shadow-lg transition-shadow text-center">
+                    <div class="text-4xl mb-2">📦</div>
+                    <h3 class="font-semibold text-gray-900">Muut</h3>
+                    <p class="text-sm text-gray-500">0 kohdetta</p>
+                </a>
+            </div>
+        </div>
+
+        <!-- Featured Auctions -->
+        <div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Päättyvät pian</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Auction Card 1 -->
+                <a href="demo-auction.html" class="bg-white rounded-lg shadow hover:shadow-xl transition-shadow overflow-hidden">
+                    <div class="w-full h-48 bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+                        <span class="text-gray-600 text-5xl">🏠</span>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-semibold text-gray-900 mb-2 truncate">Omakotitalotontti Espoo</h3>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm text-gray-500">Kiinteistöt</span>
+                            <span class="text-sm text-gray-500">3 tarjousta</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-xs text-gray-500">Nykyinen hinta</div>
+                                <div class="text-lg font-bold text-blue-600">52 000,00 €</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs text-gray-500">Päättyy</div>
+                                <div class="text-sm font-semibold text-red-600">3pv 8h</div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Auction Card 2 -->
+                <a href="demo-auction.html" class="bg-white rounded-lg shadow hover:shadow-xl transition-shadow overflow-hidden">
+                    <div class="w-full h-48 bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center">
+                        <span class="text-gray-600 text-5xl">🚗</span>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-semibold text-gray-900 mb-2 truncate">Toyota Corolla 2018</h3>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm text-gray-500">Ajoneuvot</span>
+                            <span class="text-sm text-gray-500">4 tarjousta</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-xs text-gray-500">Nykyinen hinta</div>
+                                <div class="text-lg font-bold text-blue-600">13 500,00 €</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs text-gray-500">Päättyy</div>
+                                <div class="text-sm font-semibold text-red-600">4pv 2h</div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Auction Card 3 -->
+                <a href="demo-auction.html" class="bg-white rounded-lg shadow hover:shadow-xl transition-shadow overflow-hidden">
+                    <div class="w-full h-48 bg-gradient-to-br from-purple-100 to-purple-200 flex items-center justify-center">
+                        <span class="text-gray-600 text-5xl">💻</span>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-semibold text-gray-900 mb-2 truncate">iPhone 14 Pro 256GB</h3>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm text-gray-500">Elektroniikka</span>
+                            <span class="text-sm text-gray-500">3 tarjousta</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-xs text-gray-500">Nykyinen hinta</div>
+                                <div class="text-lg font-bold text-blue-600">875,00 €</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs text-gray-500">Päättyy</div>
+                                <div class="text-sm font-semibold text-red-600">1pv 5h</div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+
+                <!-- Auction Card 4 -->
+                <a href="demo-auction.html" class="bg-white rounded-lg shadow hover:shadow-xl transition-shadow overflow-hidden">
+                    <div class="w-full h-48 bg-gradient-to-br from-yellow-100 to-yellow-200 flex items-center justify-center">
+                        <span class="text-gray-600 text-5xl">🏡</span>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-semibold text-gray-900 mb-2 truncate">Design Sohva 3-istuttava</h3>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm text-gray-500">Kodin tavarat</span>
+                            <span class="text-sm text-gray-500">2 tarjousta</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-xs text-gray-500">Nykyinen hinta</div>
+                                <div class="text-lg font-bold text-blue-600">340,00 €</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs text-gray-500">Päättyy</div>
+                                <div class="text-sm font-semibold text-red-600">2pv 12h</div>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bg-gray-800 text-white mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Huuto</h3>
+                    <p class="text-gray-300">Suomalainen verkkohuutokauppa-alusta</p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Linkit</h3>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="text-gray-300 hover:text-white">Etusivu</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Kohteet</a></li>
+                        <li><a href="#" class="text-gray-300 hover:text-white">Kategoriat</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-4">Tietoa</h3>
+                    <p class="text-gray-300">© 2026 Huuto. Kaikki oikeudet pidätetään.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
