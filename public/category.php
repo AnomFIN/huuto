@@ -16,7 +16,7 @@ if ($categorySlug) {
         exit;
     }
     $auctions = $auctionModel->getAuctionsByCategory($categorySlug);
-    $pageTitle = htmlspecialchars($category['name']) . ' - ' . SITE_NAME;
+    $pageTitle = $category['name'] . ' - ' . SITE_NAME;
 } else {
     $category = null;
     $auctions = $auctionModel->getActiveAuctions(50);
