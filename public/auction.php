@@ -25,7 +25,7 @@ $auctionModel->incrementViews($id);
 $images = $auctionModel->getAuctionImages($id);
 $bids = $auctionModel->getAuctionBids($id);
 
-$pageTitle = htmlspecialchars($auction['title']) . ' - ' . SITE_NAME;
+$pageTitle = $auction['title'] . ' - ' . SITE_NAME;
 include __DIR__ . '/../src/views/header.php';
 ?>
 
