@@ -62,6 +62,13 @@ Moderni verkkohuutokauppa-alustan prototyyppi rakennettu PHP:llä ja MySQL:llä.
    cd public_html
    php -S localhost:8000
    ```
+   
+   Tai jos haluat käyttää asennusohjelmaa:
+   ```bash
+   cd public_html
+   php -S localhost:8000
+   ```
+   Ja siirry osoitteeseen: http://localhost:8000/asennus.php
 
 6. **Avaa selaimessa**
    
@@ -82,6 +89,7 @@ huuto/
 │   ├── auction.php         # Yksittäinen huutokauppa
 │   ├── category.php        # Kategorianäkymä
 │   ├── add_product.php     # Tuotteen lisäys (tietokannalla)
+│   ├── asennus.php         # Asennusohjelma (reaktiivinen GUI)
 │   ├── add_product_demo.html # Tuotteen lisäys (demo, ei DB)
 │   ├── demo.html           # Demo etusivu
 │   └── demo-auction.html   # Demo huutokauppa
