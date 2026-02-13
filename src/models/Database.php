@@ -18,7 +18,7 @@ class Database {
             ]);
         } catch (PDOException $e) {
             error_log("Database connection failed: " . $e->getMessage());
-            die("Tietokantayhteys epäonnistui. Yritä myöhemmin uudelleen.");
+            throw new RuntimeException("Tietokantayhteys epäonnistui. Yritä myöhemmin uudelleen.", 0, $e);
         }
     }
 
