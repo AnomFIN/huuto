@@ -762,6 +762,14 @@
         if (submitBtn && !submitBtn.disabled) {
           submitBtn.classList.add('btn-loading');
           submitBtn.disabled = true;
+
+          // Fallback: re-enable the button if submission does not complete (for example, validation error or network issue)
+          setTimeout(function() {
+            if (submitBtn.isConnected && submitBtn.disabled) {
+              submitBtn.disabled = false;
+              submitBtn.classList.remove('btn-loading');
+            }
+          }, 10000); // 10 seconds fallback
           
           // Fallback: re-enable button if submission doesn't complete
           setTimeout(function() {
