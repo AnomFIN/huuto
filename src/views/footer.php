@@ -27,10 +27,34 @@
         // Countdown timer functionality
         function updateCountdowns() {
             document.querySelectorAll('.countdown').forEach(element => {
-                const endTime = new Date(element.dataset.endtime).getTime();
-                const now = new Date().getTime();
-                const distance = endTime - now;
+                const rawEndTime = element.dataset.endtime;
 
+                let endTimeMs = NaN;
+
+                if (rawEndTime) {
+                    // If the value is numeric, treat it as epoch milliseconds.
+                    if (/^\d+$/.test(rawEndTime.trim())) {
+                        endTimeMs = parseInt(rawEndTime.trim(), 10);
+                    } else {
+                        // Normalize common "YYYY-MM-DD HH:MM:SS" format to ISO-8601.
+                        let normalized = rawEndTime.trim();
+                        if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(normalized)) {
+                            normalized = normalized.replace(' ', 'T') + 'Z';
+                        }
+                        const parsed = Date.parse(normalized);
+                        if (!isNaN(parsed)) {
+                            endTimeMs = parsed;
+                        }
+                    }
+                }
+
+                if (isNaN(endTimeMs)) {
+                    element.innerHTML = "Päättynyt";
+                    return;
+                }
+
+                const now = Date.now();
+                const distance = endTimeMs - now;
                 if (distance < 0) {
                     element.innerHTML = "Päättynyt";
                     return;
