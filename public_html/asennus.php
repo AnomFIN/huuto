@@ -219,7 +219,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $adminId = $pdo->lastInsertId();
                     if (!$adminId) {
                         // User already exists, get their ID
-                        $adminId = $pdo->query("SELECT id FROM users WHERE email = " . $pdo->quote($adminEmail))->fetchColumn();
+                        $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+                        $stmt->execute([$adminEmail]);
+                        $adminId = $stmt->fetchColumn();
                     }
                     
                     // Create demo user (use INSERT IGNORE)
