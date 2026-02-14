@@ -130,7 +130,7 @@ function createSeedListings($pdo) {
             
             // Using auctions table schema from database/schema.sql
             $stmt = $pdo->prepare("
-                INSERT INTO auctions (user_id, category_id, title, description, start_price, 
+                INSERT INTO auctions (user_id, category_id, title, description, starting_price, 
                     current_price, buy_now_price, end_time, status)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active')
             ");
