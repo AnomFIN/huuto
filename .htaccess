@@ -1,11 +1,29 @@
-RewriteEngine On
+# Huuto - Web Hotel Configuration
+# Apache + PHP + MySQL deployment
 
-# Explicit rule for installation wizard
-RewriteRule ^asennus\.php$ public_html/asennus.php [QSA,L]
+# Security: Disable directory listing
+Options -Indexes
 
-# Default routing for other requests
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^asennus\.php$ public_html/asennus.php [QSA,L]
-RewriteRule ^asennus\.php$ public_html/asennus.php [QSA,L]
-RewriteRule ^(.*)$ public_html/index.php [QSA,L]
+# Block access to sensitive directories using mod_rewrite
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Block access to sensitive directories
+    RewriteRule ^config/ - [F,L]
+    RewriteRule ^database/ - [F,L]
+    RewriteRule ^logs/ - [F,L]
+    RewriteRule ^storage/ - [F,L]
+    RewriteRule ^app/ - [F,L]
+    RewriteRule ^src/ - [F,L]
+</IfModule>
+
+# Security headers
+<IfModule mod_headers.c>
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-Content-Type-Options "nosniff"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+    Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+</IfModule>
+
+# PHP files work directly - no rewrite needed
+# /index.php, /auction.php, /category.php, /asennus.php etc. work as-is

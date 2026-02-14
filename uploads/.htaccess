@@ -1,0 +1,45 @@
+# Huuto - Uploads Security
+# Prevent PHP execution in uploads directory
+
+# Default: Deny all files
+<IfModule mod_authz_core.c>
+    # Apache 2.4
+    Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+    # Apache 2.2
+    Order Allow,Deny
+    Deny from all
+</IfModule>
+
+# Remove PHP handlers to prevent execution (works with FastCGI/PHP-FPM)
+<IfModule mod_mime.c>
+    RemoveHandler .php .php3 .php4 .php5 .phtml .pl .py .jsp .asp .sh .cgi
+    RemoveType .php .php3 .php4 .php5 .phtml .pl .py .jsp .asp .sh .cgi
+</IfModule>
+
+# Block execution of dangerous file types
+<FilesMatch "\.(php|php3|php4|php5|phtml|pl|py|jsp|asp|sh|cgi)$">
+    <IfModule mod_authz_core.c>
+        # Apache 2.4
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        # Apache 2.2
+        Order Allow,Deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Explicitly allow only safe image files
+<FilesMatch "\.(jpg|jpeg|png|gif|webp|svg)$">
+    <IfModule mod_authz_core.c>
+        # Apache 2.4
+        Require all granted
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        # Apache 2.2
+        Order Allow,Deny
+        Allow from all
+    </IfModule>
+</FilesMatch>
