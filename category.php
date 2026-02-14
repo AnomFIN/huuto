@@ -1,4 +1,11 @@
 <?php
+// Check if installation is complete
+$lockFile = __DIR__ . '/config/installed.lock';
+if (!file_exists($lockFile)) {
+    header('Location: /asennus.php');
+    exit;
+}
+
 require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/src/models/Database.php';
 require_once __DIR__ . '/src/models/Auction.php';
