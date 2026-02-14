@@ -54,13 +54,28 @@ function createTables($pdo) {
     $schema = preg_replace('/^CREATE DATABASE.*?;/mi', '', $schema);
     $schema = preg_replace('/^USE .*?;/mi', '', $schema);
     
+    // Split by semicolon but keep multi-line statements together
     $statements = array_filter(array_map('trim', explode(';', $schema)));
     
+    $createdTables = [];
     foreach ($statements as $statement) {
         if (!empty($statement) && !preg_match('/^\s*--/', $statement)) {
-            $pdo->exec($statement);
+            try {
+                $pdo->exec($statement);
+                // Track which tables were created
+                if (preg_match('/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`?(\w+)`?/i', $statement, $matches)) {
+                    $createdTables[] = $matches[1];
+                }
+            } catch (PDOException $e) {
+                // Log error but continue with other statements if using IF NOT EXISTS
+                if (strpos($statement, 'IF NOT EXISTS') === false) {
+                    throw new Exception("Failed to execute SQL statement: " . $e->getMessage());
+                }
+            }
         }
     }
+    
+    return $createdTables;
 }
 
 function insertCategories($pdo) {
@@ -197,8 +212,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     $pdo = $result['pdo'];
                     
-                    // Create tables
-                    createTables($pdo);
+                    // Create tables and get list of created tables
+                    $createdTables = createTables($pdo);
+                    
+                    // Verify critical tables exist before proceeding
+                    $requiredTables = ['users', 'categories', 'auctions'];
+                    foreach ($requiredTables as $table) {
+                        $stmt = $pdo->query("SHOW TABLES LIKE '$table'");
+                        if ($stmt->rowCount() == 0) {
+                            throw new Exception("Critical table '$table' was not created. Please check database permissions and schema file.");
+                        }
+                    }
                     
                     // Insert categories (use INSERT IGNORE for idempotency)
                     insertCategories($pdo);
