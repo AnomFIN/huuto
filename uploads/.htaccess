@@ -1,0 +1,17 @@
+# Huuto - Uploads Security
+# Prevent PHP execution in uploads directory
+
+# Disable PHP processing
+php_flag engine off
+
+# Force all files to be treated as plain text or images
+<FilesMatch "\.(php|php3|php4|php5|phtml|pl|py|jsp|asp|sh|cgi)$">
+    Order Allow,Deny
+    Deny from all
+</FilesMatch>
+
+# Only allow image files
+<FilesMatch "\.(jpg|jpeg|png|gif|webp)$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch>

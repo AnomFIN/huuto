@@ -6,3 +6,6 @@ node_modules/
 thumbs.db
 uploads/*
 !uploads/.gitkeep
+!uploads/.htaccess
+config/database.php
+config/installed.lock
