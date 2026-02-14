@@ -280,12 +280,12 @@ SMTP_ENCRYPTION=tls
 ### Create Google OAuth Credentials
 
 1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select existing
-3. Enable "Google+ API"
-4. Go to "Credentials" → "Create Credentials" → "OAuth 2.0 Client ID"
-5. Application type: Web application
+2. Create a new project or select an existing one.
+3. In the left sidebar, go to **APIs & Services → OAuth consent screen** and configure the consent screen (user type, app name, support email, and authorized domains), then save.
+4. Go to **APIs & Services → Credentials**, click **Create credentials** → **OAuth client ID**.
+5. Application type: **Web application**.
 6. Authorized redirect URIs: `https://yourdomain.com/auth/google-callback.php`
-7. Copy Client ID and Client Secret
+7. Save and then copy the **Client ID** and **Client Secret**.
 
 ### Configure in .env
 

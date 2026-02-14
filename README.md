@@ -18,7 +18,7 @@ This massive upgrade transforms Huuto from a basic MVP into a **professional, pr
 - 🎨 **Nordic Professional Design**: Modern, clean aesthetic with CSS variables and dark mode
 - 🔑 **Multiple Auth Methods**: Password, magic code (6-digit), Google OAuth 2.0
 - 📧 **Smart Email System**: Dev mode logging, production SMTP, beautiful HTML templates
-- 💾 **Enhanced Database**: 16 tables supporting watchlists, ratings, notifications, anti-sniping
+- 💾 **Enhanced Database**: 18 tables supporting watchlists, ratings, notifications, anti-sniping
 - 📝 **Comprehensive Docs**: 50KB of documentation with setup guides and 300+ test cases
 - ⚡ **Performance Ready**: Lazy loading, caching, optimized queries, responsive design
 - ♿ **Accessibility**: WCAG AA compliant with proper focus states and ARIA labels

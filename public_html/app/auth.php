@@ -145,6 +145,11 @@ class Auth {
             return ['success' => false, 'error' => 'Virheellinen sähköpostiosoite tai salasana'];
         }
         
+        // Check if user has a password (OAuth-only users have NULL password_hash)
+        if (empty($user['password_hash'])) {
+            return ['success' => false, 'error' => 'Tili luotu Google-kirjautumisella. Käytä Google-kirjautumista tai nollaa salasana.'];
+        }
+        
         // Verify password
         if (!password_verify($password, $user['password_hash'])) {
             $this->logLoginAttempt($ip, $email, false);
@@ -547,9 +552,26 @@ class Auth {
         $_SESSION['logged_in_at'] = time();
         
         if ($rememberMe) {
-            // Extend session lifetime for "remember me"
+            // Extend session lifetime for "remember me" by re-issuing the session cookie
             $sessionLifetime = 30 * 24 * 3600; // 30 days
-            session_set_cookie_params($sessionLifetime);
+            $params = session_get_cookie_params();
+            $expires = time() + $sessionLifetime;
+
+            // Preserve existing cookie attributes while extending the expiry time
+            $cookieOptions = [
+                'expires'  => $expires,
+                'path'     => $params['path'] ?? '/',
+                'domain'   => $params['domain'] ?? '',
+                'secure'   => $params['secure'] ?? false,
+                'httponly' => $params['httponly'] ?? true,
+            ];
+
+            // Only set SameSite if available in current PHP version / params
+            if (isset($params['samesite'])) {
+                $cookieOptions['samesite'] = $params['samesite'];
+            }
+
+            setcookie(session_name(), session_id(), $cookieOptions);
         }
     }
     

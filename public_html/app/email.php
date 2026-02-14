@@ -67,8 +67,8 @@ class Email {
             $headers[] = 'Content-Type: text/plain; charset=UTF-8';
         }
         
-        // If SMTP is configured, use it (requires PHPMailer or similar)
-        if (!empty(SMTP_HOST)) {
+        // Only use SMTP if host, username, and password are all configured
+        if (!empty(SMTP_HOST) && !empty(SMTP_USERNAME) && !empty(SMTP_PASSWORD)) {
             return $this->sendViaSMTP($to, $subject, $body, $headers);
         }
         
@@ -78,12 +78,17 @@ class Email {
     
     /**
      * Send via SMTP (basic implementation)
-     * For production, consider using PHPMailer library
+     * Currently falls back to PHP's mail() until proper SMTP support is added.
+     * For production, consider using PHPMailer library.
      */
     private function sendViaSMTP($to, $subject, $body, $headers) {
-        // This is a placeholder - in production use PHPMailer or similar
-        error_log('SMTP sending not implemented. Install PHPMailer for SMTP support.');
-        return $this->logEmail($to, $subject, $body);
+        // SMTP is not implemented yet - log a warning and fall back to mail()
+        error_log('SMTP sending not implemented. Falling back to PHP mail(). Install PHPMailer for SMTP support.');
+        
+        // Ensure headers are in string form for mail()
+        $headersString = is_array($headers) ? implode("\r\n", $headers) : $headers;
+        
+        return mail($to, $subject, $body, $headersString);
     }
     
     /**

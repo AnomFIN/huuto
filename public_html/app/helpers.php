@@ -447,8 +447,21 @@ function handle_upload($file, $destination_dir, $allowed_types = null) {
         return ['success' => false, 'error' => 'Tiedostotyyppi ei ole sallittu'];
     }
     
-    // Generate safe filename
-    $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+    // Generate safe filename based on detected MIME type, not user-supplied extension
+    $extension_map = [
+        'image/jpeg' => 'jpg',
+        'image/png'  => 'png',
+        'image/gif'  => 'gif',
+        'image/webp' => 'webp',
+    ];
+    
+    $ext = $extension_map[$mime] ?? null;
+    if ($ext === null) {
+        // Should not occur if $allowed and $extension_map are kept in sync,
+        // but fail safely if MIME type is not recognized.
+        return ['success' => false, 'error' => 'Tuntematon tiedostotyyppi'];
+    }
+    
     $filename = bin2hex(random_bytes(16)) . '.' . $ext;
     $filepath = rtrim($destination_dir, '/') . '/' . $filename;
     
@@ -475,7 +488,15 @@ function handle_upload($file, $destination_dir, $allowed_types = null) {
  * Create thumbnail
  */
 function create_thumbnail($source, $destination, $maxWidth = 300, $maxHeight = 300) {
-    list($width, $height, $type) = getimagesize($source);
+    $imageInfo = getimagesize($source);
+    
+    // Validate that getimagesize succeeded
+    if ($imageInfo === false) {
+        error_log("create_thumbnail: Failed to read image info from $source");
+        return false;
+    }
+    
+    list($width, $height, $type) = $imageInfo;
     
     // Calculate new dimensions
     $ratio = min($maxWidth / $width, $maxHeight / $height);
@@ -493,14 +514,23 @@ function create_thumbnail($source, $destination, $maxWidth = 300, $maxHeight = 3
         case IMAGETYPE_GIF:
             $src = imagecreatefromgif($source);
             break;
+        case IMAGETYPE_WEBP:
+            $src = imagecreatefromwebp($source);
+            break;
         default:
+            error_log("create_thumbnail: Unsupported image type for $source");
             return false;
+    }
+    
+    if ($src === false) {
+        error_log("create_thumbnail: Failed to create image resource from $source");
+        return false;
     }
     
     $dst = imagecreatetruecolor($newWidth, $newHeight);
     
-    // Preserve transparency for PNG and GIF
-    if ($type === IMAGETYPE_PNG || $type === IMAGETYPE_GIF) {
+    // Preserve transparency for PNG, GIF, and WebP
+    if ($type === IMAGETYPE_PNG || $type === IMAGETYPE_GIF || $type === IMAGETYPE_WEBP) {
         imagealphablending($dst, false);
         imagesavealpha($dst, true);
     }
@@ -509,22 +539,26 @@ function create_thumbnail($source, $destination, $maxWidth = 300, $maxHeight = 3
     imagecopyresampled($dst, $src, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
     
     // Save
+    $result = false;
     switch ($type) {
         case IMAGETYPE_JPEG:
-            imagejpeg($dst, $destination, 85);
+            $result = imagejpeg($dst, $destination, 85);
             break;
         case IMAGETYPE_PNG:
-            imagepng($dst, $destination, 8);
+            $result = imagepng($dst, $destination, 8);
             break;
         case IMAGETYPE_GIF:
-            imagegif($dst, $destination);
+            $result = imagegif($dst, $destination);
+            break;
+        case IMAGETYPE_WEBP:
+            $result = imagewebp($dst, $destination, 85);
             break;
     }
     
     imagedestroy($src);
     imagedestroy($dst);
     
-    return true;
+    return $result;
 }
 
 // ============================================================

@@ -88,8 +88,8 @@ define('MAIL_LOG_FILE', __DIR__ . '/../../logs/auth.log');
 define('MAIL_FROM', env('MAIL_FROM', 'noreply@huuto.fi'));
 define('MAIL_FROM_NAME', env('MAIL_FROM_NAME', 'Huuto'));
 
-// SMTP settings (optional)
-define('SMTP_HOST', env('SMTP_HOST', 'localhost'));
+// SMTP settings (optional - leave empty to use PHP mail())
+define('SMTP_HOST', env('SMTP_HOST', ''));
 define('SMTP_PORT', env('SMTP_PORT', 587));
 define('SMTP_USERNAME', env('SMTP_USERNAME', ''));
 define('SMTP_PASSWORD', env('SMTP_PASSWORD', ''));
@@ -139,7 +139,13 @@ if (env('APP_DEBUG', false)) {
 ini_set('session.cookie_httponly', 1);
 ini_set('session.use_strict_mode', 1);
 ini_set('session.cookie_samesite', 'Lax');
-if (env('APP_ENV', 'production') === 'production' && isset($_SERVER['HTTPS'])) {
+
+// Check if HTTPS is actually enabled (handle proxy headers and HTTPS=off)
+$isHttps = (
+    (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https')
+);
+if (env('APP_ENV', 'production') === 'production' && $isHttps) {
     ini_set('session.cookie_secure', 1);
 }
 

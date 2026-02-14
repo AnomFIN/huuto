@@ -365,7 +365,8 @@ INSERT IGNORE INTO categories (name, slug, description, icon, sort_order) VALUES
 DELIMITER //
 
 -- Update watchers_count when watchlist changes
-CREATE TRIGGER IF NOT EXISTS update_watchers_count_insert
+DROP TRIGGER IF EXISTS update_watchers_count_insert//
+CREATE TRIGGER update_watchers_count_insert
 AFTER INSERT ON watchlist
 FOR EACH ROW
 BEGIN
@@ -374,7 +375,8 @@ BEGIN
     WHERE id = NEW.auction_id;
 END//
 
-CREATE TRIGGER IF NOT EXISTS update_watchers_count_delete
+DROP TRIGGER IF EXISTS update_watchers_count_delete//
+CREATE TRIGGER update_watchers_count_delete
 AFTER DELETE ON watchlist
 FOR EACH ROW
 BEGIN
@@ -384,7 +386,8 @@ BEGIN
 END//
 
 -- Update user rating when new rating is added
-CREATE TRIGGER IF NOT EXISTS update_user_rating_insert
+DROP TRIGGER IF EXISTS update_user_rating_insert//
+CREATE TRIGGER update_user_rating_insert
 AFTER INSERT ON ratings
 FOR EACH ROW
 BEGIN
@@ -394,7 +397,8 @@ BEGIN
     WHERE id = NEW.seller_id;
 END//
 
-CREATE TRIGGER IF NOT EXISTS update_user_rating_update
+DROP TRIGGER IF EXISTS update_user_rating_update//
+CREATE TRIGGER update_user_rating_update
 AFTER UPDATE ON ratings
 FOR EACH ROW
 BEGIN
@@ -405,7 +409,8 @@ BEGIN
 END//
 
 -- Check reserve price when new bid is placed
-CREATE TRIGGER IF NOT EXISTS check_reserve_price
+DROP TRIGGER IF EXISTS check_reserve_price//
+CREATE TRIGGER check_reserve_price
 AFTER INSERT ON bids
 FOR EACH ROW
 BEGIN
