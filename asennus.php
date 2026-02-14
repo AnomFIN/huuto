@@ -9,9 +9,10 @@ ini_set('display_errors', 1);
 
 session_start();
 
-// Check if already installed
-if (file_exists(__DIR__ . '/config/config.php') && !isset($_GET['force'])) {
-    die('Application already installed. Delete config/config.php to reinstall or add ?force=1');
+// Check if already installed using lock file
+$lockFile = __DIR__ . '/config/installed.lock';
+if (file_exists($lockFile) && !isset($_GET['force'])) {
+    die('Application already installed. Delete config/installed.lock to reinstall or add ?force=1');
 }
 
 $step = $_GET['step'] ?? 1;
@@ -264,6 +265,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($bytesWritten === false) {
                         throw new RuntimeException("Failed to write configuration file: " . $configPath . ". Please check file permissions.");
                     }
+                    
+                    // Create installation lock file
+                    $lockFile = __DIR__ . '/config/installed.lock';
+                    $lockContent = "Installation completed: " . date('Y-m-d H:i:s') . "\n";
+                    $lockContent .= "Admin: " . $adminEmail . "\n";
+                    file_put_contents($lockFile, $lockContent);
+                    
                     header('Location: asennus.php?step=3');
                     exit;
                 } catch (Exception $e) {
