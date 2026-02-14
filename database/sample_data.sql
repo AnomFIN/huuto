@@ -1,11 +1,11 @@
 -- Sample data for testing the auction platform
 USE huuto_db;
 
--- Insert test users
+-- Insert test users (password for all: demo123)
 INSERT INTO users (username, email, password_hash, full_name, phone) VALUES
-('jari_m', 'jari.m@example.com', '$2y$10$example_hash_1', 'Jari Mäkelä', '+358 40 123 4567'),
-('anna_k', 'anna.k@example.com', '$2y$10$example_hash_2', 'Anna Korhonen', '+358 45 234 5678'),
-('mikko_v', 'mikko.v@example.com', '$2y$10$example_hash_3', 'Mikko Virtanen', '+358 50 345 6789');
+('jari_m', 'jari.m@example.com', '$2y$10$doRst.f.4Mh2pj/YKVtPH.BYFEFJltpP7vMD2FgpdoYaaUz9VSSSW', 'Jari Mäkelä', '+358 40 123 4567'),
+('anna_k', 'anna.k@example.com', '$2y$10$4UTE4FzkmBZDtbNqUJZ/j.ppGOU.LC8OHdSC5c9QI6ZWH6TwMvpN6', 'Anna Korhonen', '+358 45 234 5678'),
+('mikko_v', 'mikko.v@example.com', '$2y$10$bDAxBiDGc0i5py9eUxwn3urN9FMaw4E/zJ6o5iV.eODjfg.6b7bVK', 'Mikko Virtanen', '+358 50 345 6789');
 
 -- Sample auctions for Kiinteistöt (Real Estate)
 INSERT INTO auctions (user_id, category_id, title, description, starting_price, current_price, reserve_price, buy_now_price, bid_increment, end_time, status, location, condition_description) VALUES
