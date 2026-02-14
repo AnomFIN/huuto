@@ -413,14 +413,16 @@ class Auth {
             // Exchange code for token
             $tokenData = $this->getGoogleAccessToken($code);
             
-            if (!$tokenData) {
+            // Ensure we have a valid token response with an access token
+            if (!is_array($tokenData) || empty($tokenData['access_token'])) {
                 return ['success' => false, 'error' => 'Failed to get access token'];
             }
             
             // Get user info
             $userInfo = $this->getGoogleUserInfo($tokenData['access_token']);
             
-            if (!$userInfo) {
+            // Ensure we have valid user info with required fields
+            if (!is_array($userInfo) || empty($userInfo['id']) || empty($userInfo['email'])) {
                 return ['success' => false, 'error' => 'Failed to get user info'];
             }
             
