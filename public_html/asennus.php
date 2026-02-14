@@ -10,7 +10,7 @@ ini_set('display_errors', 1);
 session_start();
 
 // Check if already installed
-if (file_exists(__DIR__ . '/../config/config.php') && !isset($_GET['force'])) {
+if (file_exists(__DIR__ . '/config/config.php') && !isset($_GET['force'])) {
     die('Application already installed. Delete config/config.php to reinstall or add ?force=1');
 }
 
@@ -48,7 +48,7 @@ function testDbConnection($host, $dbname, $user, $pass) {
 
 function createTables($pdo) {
     // Use database/schema.sql which matches the public_html app structure
-    $schema = file_get_contents(__DIR__ . '/../database/schema.sql');
+    $schema = file_get_contents(__DIR__ . '/database/schema.sql');
     // Remove the CREATE DATABASE and USE statements from the schema file
     $schema = preg_replace('/^CREATE DATABASE.*?;/mi', '', $schema);
     $schema = preg_replace('/^USE .*?;/mi', '', $schema);
@@ -249,7 +249,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $configContent .= "    'charset' => 'utf8mb4'\n";
                     $configContent .= "];\n";
 
-                    $configPath = __DIR__ . '/../config/database.php';
+                    $configPath = __DIR__ . '/config/database.php';
                     $configDir  = dirname($configPath);
 
                     if (!is_dir($configDir)) {
