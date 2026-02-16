@@ -131,51 +131,61 @@ class Auth {
      */
     public function login($email, $password, $rememberMe = false) {
         $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-        
-        // Rate limiting
-        if (!rate_limit_login($ip . ':' . $email)) {
-            return ['success' => false, 'error' => 'Liian monta kirjautumisyritystä. Yritä myöhemmin uudelleen.'];
+
+        try {
+            // Rate limiting
+            if (!rate_limit_login($ip . ':' . $email)) {
+                return ['success' => false, 'error' => 'Liian monta kirjautumisyritystä. Yritä myöhemmin uudelleen.'];
+            }
+
+            // Find user
+            $user = $this->db->queryOne('SELECT * FROM users WHERE email = ?', [$email]);
+
+            if (!$user) {
+                $this->logLoginAttempt($ip, $email, false);
+                return ['success' => false, 'error' => 'Virheellinen sähköpostiosoite tai salasana'];
+            }
+
+            // Check if user has a password (OAuth-only users have NULL password_hash)
+            if (empty($user['password_hash'])) {
+                return ['success' => false, 'error' => 'Tili luotu Google-kirjautumisella. Käytä Google-kirjautumista.'];
+            }
+
+            // Verify password
+            if (!password_verify($password, $user['password_hash'])) {
+                $this->logLoginAttempt($ip, $email, false);
+                return ['success' => false, 'error' => 'Virheellinen sähköpostiosoite tai salasana'];
+            }
+
+            // Check if user is banned
+            if ($user['status'] === 'banned' || $user['status'] === 'suspended') {
+                return ['success' => false, 'error' => 'Tilisi on estetty'];
+            }
+
+            // Check if email is verified (optional - can be enforced or not)
+            if (!$user['email_verified'] && env('REQUIRE_EMAIL_VERIFICATION', false)) {
+                return ['success' => false, 'error' => 'Vahvista sähköpostiosoitteesi ennen kirjautumista'];
+            }
+
+            // Successful login
+            $this->logLoginAttempt($ip, $email, true);
+            $this->createSession($user['id'], $rememberMe);
+
+            // Update last login
+            $this->db->update('users', ['last_login_at' => date('Y-m-d H:i:s')], 'id = ?', [$user['id']]);
+
+            audit_log('login', 'user', $user['id'], ['method' => 'password']);
+
+            return ['success' => true, 'user' => $user];
+        } catch (Throwable $e) {
+            error_log(json_encode([
+                'event' => 'password_login_failed',
+                'email_hash' => hash('sha256', (string)$email),
+                'error' => $e->getMessage(),
+            ], JSON_UNESCAPED_UNICODE));
+
+            return ['success' => false, 'error' => 'Kirjautuminen epäonnistui. Yritä hetken kuluttua uudelleen.'];
         }
-        
-        // Find user
-        $user = $this->db->queryOne('SELECT * FROM users WHERE email = ?', [$email]);
-        
-        if (!$user) {
-            $this->logLoginAttempt($ip, $email, false);
-            return ['success' => false, 'error' => 'Virheellinen sähköpostiosoite tai salasana'];
-        }
-        
-        // Check if user has a password (OAuth-only users have NULL password_hash)
-        if (empty($user['password_hash'])) {
-            return ['success' => false, 'error' => 'Tili luotu Google-kirjautumisella. Käytä Google-kirjautumista tai nollaa salasana.'];
-        }
-        
-        // Verify password
-        if (!password_verify($password, $user['password_hash'])) {
-            $this->logLoginAttempt($ip, $email, false);
-            return ['success' => false, 'error' => 'Virheellinen sähköpostiosoite tai salasana'];
-        }
-        
-        // Check if user is banned
-        if ($user['status'] === 'banned' || $user['status'] === 'suspended') {
-            return ['success' => false, 'error' => 'Tilisi on estetty'];
-        }
-        
-        // Check if email is verified (optional - can be enforced or not)
-        if (!$user['email_verified'] && env('REQUIRE_EMAIL_VERIFICATION', false)) {
-            return ['success' => false, 'error' => 'Vahvista sähköpostiosoitteesi ennen kirjautumista'];
-        }
-        
-        // Successful login
-        $this->logLoginAttempt($ip, $email, true);
-        $this->createSession($user['id'], $rememberMe);
-        
-        // Update last login
-        $this->db->update('users', ['last_login_at' => date('Y-m-d H:i:s')], 'id = ?', [$user['id']]);
-        
-        audit_log('login', 'user', $user['id'], ['method' => 'password']);
-        
-        return ['success' => true, 'user' => $user];
     }
     
     // ============================================================
@@ -385,6 +395,16 @@ class Auth {
     // ============================================================
     
     /**
+     * Check if Google OAuth can be used safely
+     */
+    public function isGoogleAuthEnabled() {
+        return in_array(AUTH_METHOD, ['google', 'both'], true)
+            && GOOGLE_CLIENT_ID !== ''
+            && GOOGLE_CLIENT_SECRET !== ''
+            && function_exists('curl_init');
+    }
+
+    /**
      * Get Google OAuth URL
      */
     public function getGoogleAuthUrl() {
@@ -447,7 +467,7 @@ class Auth {
             audit_log('login', 'user', $user['id'], ['method' => 'google_oauth']);
             
             return ['success' => true, 'user' => $user];
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             error_log('Google OAuth callback failed: ' . $e->getMessage());
             return ['success' => false, 'error' => 'Authentication failed'];
         }
@@ -457,6 +477,10 @@ class Auth {
      * Get Google access token
      */
     private function getGoogleAccessToken($code) {
+        if (!function_exists('curl_init')) {
+            throw new RuntimeException('cURL extension missing');
+        }
+
         $data = [
             'code' => $code,
             'client_id' => GOOGLE_CLIENT_ID,
@@ -469,25 +493,55 @@ class Auth {
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        
+        curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+
         $response = curl_exec($ch);
+        if ($response === false) {
+            $error = curl_error($ch);
+            curl_close($ch);
+            throw new RuntimeException('Google token request failed: ' . $error);
+        }
+
+        $httpCode = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
         curl_close($ch);
-        
-        return json_decode($response, true);
+
+        $decoded = json_decode($response, true);
+        if ($httpCode >= 400 || !is_array($decoded)) {
+            throw new RuntimeException('Google token response invalid');
+        }
+
+        return $decoded;
     }
     
     /**
      * Get Google user info
      */
     private function getGoogleUserInfo($accessToken) {
+        if (!function_exists('curl_init')) {
+            throw new RuntimeException('cURL extension missing');
+        }
+
         $ch = curl_init('https://www.googleapis.com/oauth2/v2/userinfo');
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Authorization: Bearer ' . $accessToken]);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        
+        curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+
         $response = curl_exec($ch);
+        if ($response === false) {
+            $error = curl_error($ch);
+            curl_close($ch);
+            throw new RuntimeException('Google token request failed: ' . $error);
+        }
+
+        $httpCode = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
         curl_close($ch);
-        
-        return json_decode($response, true);
+
+        $decoded = json_decode($response, true);
+        if ($httpCode >= 400 || !is_array($decoded)) {
+            throw new RuntimeException('Google token response invalid');
+        }
+
+        return $decoded;
     }
     
     /**
