@@ -3,6 +3,14 @@
 ## Quick Start - Essential Commands
 
 **After FTP Upload, run these commands immediately:**
+
+### Option A: Automated Script (SSH Access)
+```bash
+cd /home/dajnpsku/public_html/
+./set-permissions.sh
+```
+
+### Option B: Manual Commands (SSH Access)
 ```bash
 # Set writable directories (REQUIRED)
 chmod 777 /home/dajnpsku/public_html/config/
@@ -18,7 +26,10 @@ chmod 644 /home/dajnpsku/public_html/logs/.htaccess
 # Then visit: https://www.huuto247.fi/asennus.php
 ```
 
+### Option C: FTP Client (No SSH Access)
 **Using FTP Client:** Right-click directory → File Permissions → Enter: 777 or 644
+
+📋 **See [CHMOD_GUIDE.md](CHMOD_GUIDE.md) for detailed FTP client instructions**
 
 ---
 
@@ -108,6 +119,10 @@ put -r *
 ### 2️⃣ Set File Permissions
 
 **IMPORTANT:** After uploading files via FTP, you MUST set proper permissions for the application to work correctly.
+
+📋 **Quick Reference:** See [CHMOD_GUIDE.md](CHMOD_GUIDE.md) for a comprehensive permission guide  
+🚀 **Automated Setup:** Run `./set-permissions.sh` if you have SSH access  
+🪟 **Windows Users:** See `set-permissions.bat` for FTP client instructions
 
 #### 🔧 Required Permissions
 
