@@ -27,7 +27,7 @@ foreach ($testPages as $page) {
     try {
         // Capture output in case there are warnings
         ob_start();
-        require_once __DIR__ . '/' . $page;
+        require_once __DIR__ . '/../' . $page;
         $output = ob_get_clean();
         
         if ($output) {
