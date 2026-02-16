@@ -1,5 +1,27 @@
 # 🚀 Web Hotel Deployment Checklist
 
+## Quick Start - Essential Commands
+
+**After FTP Upload, run these commands immediately:**
+```bash
+# Set writable directories (REQUIRED)
+chmod 777 /home/dajnpsku/public_html/config/
+chmod 777 /home/dajnpsku/public_html/uploads/
+chmod 777 /home/dajnpsku/public_html/storage/logs/
+chmod 777 /home/dajnpsku/public_html/logs/
+
+# Set security files (REQUIRED)
+chmod 644 /home/dajnpsku/public_html/.htaccess
+chmod 644 /home/dajnpsku/public_html/uploads/.htaccess
+chmod 644 /home/dajnpsku/public_html/logs/.htaccess
+
+# Then visit: https://www.huuto247.fi/asennus.php
+```
+
+**Using FTP Client:** Right-click directory → File Permissions → Enter: 777 or 644
+
+---
+
 ## Pre-Deployment Checklist
 
 ### ✅ Repository Status
@@ -85,29 +107,139 @@ put -r *
 
 ### 2️⃣ Set File Permissions
 
-**Via cPanel File Manager or FTP Client:**
+**IMPORTANT:** After uploading files via FTP, you MUST set proper permissions for the application to work correctly.
+
+#### 🔧 Required Permissions
+
+**Writable Directories (chmod 777):**
+These directories need write permissions so the application can create files:
 
 ```bash
-# Make config directory writable (installer needs to write database.php)
+# Config directory - installer writes database.php and installed.lock
 chmod 777 /home/dajnpsku/public_html/config/
 
-# Make uploads directory writable (for image uploads)
+# Uploads directory - stores uploaded product images
 chmod 777 /home/dajnpsku/public_html/uploads/
 
-# Verify .htaccess is readable
-chmod 644 /home/dajnpsku/public_html/.htaccess
+# Storage/logs directory - application writes error logs
+chmod 777 /home/dajnpsku/public_html/storage/
+chmod 777 /home/dajnpsku/public_html/storage/logs/
 
-# Verify uploads/.htaccess is readable
-chmod 644 /home/dajnpsku/public_html/uploads/.htaccess
+# Logs directory - additional logging
+chmod 777 /home/dajnpsku/public_html/logs/
 ```
 
+**Security Files (chmod 644):**
+These .htaccess files must be readable by Apache:
+
+```bash
+# Root .htaccess - Apache security configuration
+chmod 644 /home/dajnpsku/public_html/.htaccess
+
+# Uploads .htaccess - prevents PHP execution in uploads
+chmod 644 /home/dajnpsku/public_html/uploads/.htaccess
+
+# Logs .htaccess - blocks direct access to logs
+chmod 644 /home/dajnpsku/public_html/logs/.htaccess
+```
+
+**PHP Files (chmod 644):**
+All PHP files should have standard read permissions:
+
+```bash
+# Main PHP files
+chmod 644 /home/dajnpsku/public_html/*.php
+
+# PHP files in subdirectories (recursive)
+find /home/dajnpsku/public_html -name "*.php" -type f -exec chmod 644 {} \;
+```
+
+**Standard Directories (chmod 755):**
+All other directories should have standard permissions:
+
+```bash
+# Root directory
+chmod 755 /home/dajnpsku/public_html/
+
+# All subdirectories except writable ones
+chmod 755 /home/dajnpsku/public_html/app/
+chmod 755 /home/dajnpsku/public_html/auth/
+chmod 755 /home/dajnpsku/public_html/database/
+chmod 755 /home/dajnpsku/public_html/src/
+chmod 755 /home/dajnpsku/public_html/src/models/
+chmod 755 /home/dajnpsku/public_html/src/views/
+chmod 755 /home/dajnpsku/public_html/assets/
+chmod 755 /home/dajnpsku/public_html/assets/css/
+chmod 755 /home/dajnpsku/public_html/tests/
+```
+
+#### 📋 Quick Reference Table
+
+| Path | Permission | Numeric | Reason |
+|------|-----------|---------|--------|
+| `config/` | rwxrwxrwx | **777** | Installer writes database.php |
+| `uploads/` | rwxrwxrwx | **777** | Image uploads stored here |
+| `storage/logs/` | rwxrwxrwx | **777** | Application error logs |
+| `logs/` | rwxrwxrwx | **777** | Additional logging |
+| `.htaccess` | rw-r--r-- | **644** | Apache must read security rules |
+| `uploads/.htaccess` | rw-r--r-- | **644** | Prevents PHP execution |
+| `logs/.htaccess` | rw-r--r-- | **644** | Blocks log access |
+| All `.php` files | rw-r--r-- | **644** | Standard PHP file permissions |
+| All other directories | rwxr-xr-x | **755** | Standard directory access |
+
+#### 🖱️ Using FTP Clients
+
 **FileZilla:**
-1. Right-click on `config/` → File Permissions → 777
-2. Right-click on `uploads/` → File Permissions → 777
+1. Connect to your FTP server
+2. Navigate to `/home/dajnpsku/public_html/`
+3. Right-click on each directory/file → File Permissions
+4. Enter numeric value (777, 755, or 644) or check boxes:
+   - **777**: Read, Write, Execute for Owner, Group, Public (all checkboxes)
+   - **755**: Owner=rwx, Group=rx, Public=rx
+   - **644**: Owner=rw, Group=r, Public=r
+5. For directories, check "Recurse into subdirectories" if needed
 
 **cPanel File Manager:**
-1. Select `config/` → Permissions → Change to 777
-2. Select `uploads/` → Permissions → Change to 777
+1. Log into cPanel
+2. Open File Manager
+3. Navigate to `public_html/`
+4. Select directory/file → Permissions (top menu)
+5. Enter numeric value (777, 755, or 644) or use checkboxes
+6. Click "Change Permissions"
+
+**WinSCP:**
+1. Connect to FTP server
+2. Right-click directory/file → Properties → Permissions
+3. Set octal value (777, 755, or 644)
+4. Click OK
+
+#### ⚠️ Important Notes
+
+**Why chmod 777?**
+- **777** means "anyone can read, write, and execute"
+- Required for directories where PHP needs to create files
+- **Only use on**: config/, uploads/, storage/logs/, logs/
+- **Never use on**: PHP files or root directory
+
+**Security Considerations:**
+- ✅ **Safe to use 777**: On writable directories (config, uploads, logs)
+- ✅ **.htaccess files protect**: uploads/ from PHP execution
+- ❌ **Never 777**: PHP files (.php) or root directory
+- ❌ **Never 777**: .htaccess files (use 644)
+
+**After Installation:**
+Once installation is complete, you can optionally tighten permissions:
+```bash
+# After installer runs, you can reduce config permissions
+chmod 755 /home/dajnpsku/public_html/config/
+chmod 644 /home/dajnpsku/public_html/config/database.php
+chmod 644 /home/dajnpsku/public_html/config/installed.lock
+
+# Keep uploads and logs writable
+chmod 777 /home/dajnpsku/public_html/uploads/
+chmod 777 /home/dajnpsku/public_html/storage/logs/
+chmod 777 /home/dajnpsku/public_html/logs/
+```
 
 ---
 
@@ -307,6 +439,36 @@ upload_max_filesize = 10M
 post_max_size = 10M
 max_file_uploads = 10
 ```
+
+### ❌ Permission Denied Errors
+
+**Causes:**
+1. Wrong file/directory permissions
+2. Web server can't write to directories
+3. .htaccess files not readable
+
+**Fix:**
+```bash
+# 1. Check current permissions:
+ls -la /home/dajnpsku/public_html/config/
+ls -la /home/dajnpsku/public_html/uploads/
+
+# 2. Reset all required permissions:
+chmod 777 /home/dajnpsku/public_html/config/
+chmod 777 /home/dajnpsku/public_html/uploads/
+chmod 777 /home/dajnpsku/public_html/storage/logs/
+chmod 777 /home/dajnpsku/public_html/logs/
+chmod 644 /home/dajnpsku/public_html/.htaccess
+chmod 644 /home/dajnpsku/public_html/uploads/.htaccess
+
+# 3. Verify ownership (should match web server user):
+# Contact hosting support if ownership is incorrect
+```
+
+**Common Error Messages:**
+- "Failed to open stream: Permission denied" → Directory not writable (need 777)
+- "Warning: mkdir(): Permission denied" → Parent directory not writable
+- "Unable to write to config/database.php" → config/ needs chmod 777
 
 ### ❌ Redirect Loop
 

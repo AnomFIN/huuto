@@ -25,11 +25,20 @@
 
 2. **Set File Permissions**
    ```bash
-   chmod 755 /home/dajnpsku/public_html/
+   # Required writable directories
    chmod 777 /home/dajnpsku/public_html/config/
    chmod 777 /home/dajnpsku/public_html/uploads/
+   chmod 777 /home/dajnpsku/public_html/storage/logs/
+   chmod 777 /home/dajnpsku/public_html/logs/
+   
+   # Security files
    chmod 644 /home/dajnpsku/public_html/.htaccess
+   chmod 644 /home/dajnpsku/public_html/uploads/.htaccess
    ```
+   
+   **Using FTP Client (FileZilla/cPanel):**
+   - Right-click folder → File Permissions → Enter "777" or "644"
+   - See DEPLOYMENT.md for complete details
 
 3. **Run Installation**
    - Visit: `https://www.huuto247.fi/asennus.php`
