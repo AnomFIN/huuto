@@ -19,18 +19,50 @@ echo "Working directory: $WEB_ROOT"
 echo ""
 
 # Set writable directories (777)
-echo "📁 Setting writable directories (chmod 777)..."
-chmod 777 "$WEB_ROOT/config/" 2>/dev/null && echo "  ✅ config/" || echo "  ❌ config/ - may need sudo"
-chmod 777 "$WEB_ROOT/uploads/" 2>/dev/null && echo "  ✅ uploads/" || echo "  ❌ uploads/ - may need sudo"
-chmod 777 "$WEB_ROOT/storage/" 2>/dev/null && echo "  ✅ storage/" || echo "  ❌ storage/ - may need sudo"
-chmod 777 "$WEB_ROOT/logs/" 2>/dev/null && echo "  ✅ logs/" || echo "  ❌ logs/ - may need sudo"
+if [ -d "$WEB_ROOT/config/" ]; then
+  chmod 777 "$WEB_ROOT/config/" 2>/dev/null && echo "  ✅ config/" || echo "  ❌ config/ - may need sudo"
+else
+  echo "  ⚠️ config/ - directory does not exist"
+fi
+if [ -d "$WEB_ROOT/uploads/" ]; then
+  chmod 777 "$WEB_ROOT/uploads/" 2>/dev/null && echo "  ✅ uploads/" || echo "  ❌ uploads/ - may need sudo"
+else
+  echo "  ⚠️ uploads/ - directory does not exist"
+fi
+if [ -d "$WEB_ROOT/storage/" ]; then
+  chmod 777 "$WEB_ROOT/storage/" 2>/dev/null && echo "  ✅ storage/" || echo "  ❌ storage/ - may need sudo"
+else
+  echo "  ⚠️ storage/ - directory does not exist"
+fi
+if [ -d "$WEB_ROOT/storage/logs/" ]; then
+  chmod 777 "$WEB_ROOT/storage/logs/" 2>/dev/null && echo "  ✅ storage/logs/" || echo "  ❌ storage/logs/ - may need sudo"
+else
+  echo "  ⚠️ storage/logs/ - directory does not exist"
+fi
+if [ -d "$WEB_ROOT/logs/" ]; then
+  chmod 777 "$WEB_ROOT/logs/" 2>/dev/null && echo "  ✅ logs/" || echo "  ❌ logs/ - may need sudo"
+else
+  echo "  ⚠️ logs/ - directory does not exist"
+fi
 echo ""
 
 # Set security files (644)
 echo "🔒 Setting security files (chmod 644)..."
-chmod 644 "$WEB_ROOT/.htaccess" 2>/dev/null && echo "  ✅ .htaccess" || echo "  ❌ .htaccess - may need sudo"
-chmod 644 "$WEB_ROOT/uploads/.htaccess" 2>/dev/null && echo "  ✅ uploads/.htaccess" || echo "  ❌ uploads/.htaccess - may need sudo"
-chmod 644 "$WEB_ROOT/logs/.htaccess" 2>/dev/null && echo "  ✅ logs/.htaccess" || echo "  ❌ logs/.htaccess - may need sudo"
+if [ -f "$WEB_ROOT/.htaccess" ]; then
+  chmod 644 "$WEB_ROOT/.htaccess" 2>/dev/null && echo "  ✅ .htaccess" || echo "  ❌ .htaccess - may need sudo"
+else
+  echo "  ⚠️ .htaccess - file does not exist"
+fi
+if [ -f "$WEB_ROOT/uploads/.htaccess" ]; then
+  chmod 644 "$WEB_ROOT/uploads/.htaccess" 2>/dev/null && echo "  ✅ uploads/.htaccess" || echo "  ❌ uploads/.htaccess - may need sudo"
+else
+  echo "  ⚠️ uploads/.htaccess - file does not exist"
+fi
+if [ -f "$WEB_ROOT/logs/.htaccess" ]; then
+  chmod 644 "$WEB_ROOT/logs/.htaccess" 2>/dev/null && echo "  ✅ logs/.htaccess" || echo "  ❌ logs/.htaccess - may need sudo"
+else
+  echo "  ⚠️ logs/.htaccess - file does not exist"
+fi
 echo ""
 
 # Set PHP files (644)
