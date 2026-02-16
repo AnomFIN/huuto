@@ -97,7 +97,7 @@ cd /home/dajnpsku/public_html/
 ### ✅ Safe to use 777:
 - `config/` - Only during installation, can be tightened to 755 afterward
 - `uploads/` - Protected by .htaccess (no PHP execution)
-- `storage/logs/` - Protected by .htaccess
+- `storage/logs/` - Must NOT be directly accessible from the web (keep outside public_html or block via server config)
 - `logs/` - Protected by .htaccess
 
 ### ❌ NEVER use 777 on:
