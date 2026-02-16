@@ -31,6 +31,7 @@
    ./set-permissions.sh
    
    # Option B: Manual (SSH access)
+   # Note: this single chmod applies 777 to each directory listed (space-separated).
    chmod 777 config/ uploads/ logs/
    chmod 644 .htaccess uploads/.htaccess
    ```
