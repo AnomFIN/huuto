@@ -1,12 +1,6 @@
 <?php
-// Minimal admin.php to avoid 500 errors
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-require_once __DIR__ . '/app/config.php';
-require_once __DIR__ . '/app/db.php';
-require_once __DIR__ . '/src/models/Database.php'; 
-require_once __DIR__ . '/src/models/Auction.php';
+// Bootstrap the application
+require_once __DIR__ . '/bootstrap.php';
 
 $success = '';
 $error = '';

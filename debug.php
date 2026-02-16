@@ -1,13 +1,11 @@
 <?php
 // Simple debug script to check database status
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+require_once __DIR__ . '/bootstrap.php';
 
 echo "<h1>Database Debug</h1>";
 echo "<h2>1. Config Check</h2>";
 
 try {
-    require_once __DIR__ . '/app/config.php';
     echo "✅ Config loaded<br>";
     echo "SITE_NAME: " . (defined('SITE_NAME') ? SITE_NAME : 'NOT DEFINED') . "<br>";
     echo "BASE_URL: " . (defined('BASE_URL') ? BASE_URL : 'NOT DEFINED') . "<br>";

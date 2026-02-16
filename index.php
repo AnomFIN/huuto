@@ -1,14 +1,6 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-require_once __DIR__ . '/app/config.php';
-require_once __DIR__ . '/app/db.php';
-require_once __DIR__ . '/src/models/Database.php';
-require_once __DIR__ . '/src/models/Auction.php';
-require_once __DIR__ . '/src/models/Category.php';
-require_once __DIR__ . '/app/auth.php';
-require_once __DIR__ . '/app/helpers.php';
+// Bootstrap the application
+require_once __DIR__ . '/bootstrap.php';
 
 // Initialize with empty arrays in case of errors
 $closingSoonAuctions = [];
@@ -36,7 +28,7 @@ try {
 }
 
 $pageTitle = SITE_NAME . ' - Etusivu';
-include __DIR__ . '/src/views/header.php';
+include SRC_PATH . '/views/header.php';
 ?>
 
 <div class="mb-8">
@@ -423,4 +415,4 @@ updateCountdowns(); // Initial update
 setInterval(updateCountdowns, 1000);
 </script>
 
-<?php include __DIR__ . '/src/views/footer.php'; ?>
+<?php include SRC_PATH . '/views/footer.php'; ?>

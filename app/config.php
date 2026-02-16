@@ -4,9 +4,15 @@
  * Supports .env file for environment-specific settings
  */
 
+// Ensure BASE_PATH is defined (should be set by bootstrap.php)
+if (!defined('BASE_PATH')) {
+    define('BASE_PATH', dirname(__DIR__));
+}
+
 // Load environment variables from .env file if it exists
-if (file_exists(__DIR__ . '/../../.env')) {
-    $lines = file(__DIR__ . '/../../.env', FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+$envFile = BASE_PATH . '/.env';
+if (file_exists($envFile)) {
+    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
         if (strpos(trim($line), '#') === 0) continue; // Skip comments
         list($key, $value) = explode('=', $line, 2);
@@ -74,7 +80,7 @@ define('BID_RATE_WINDOW', env('BID_RATE_WINDOW', 60)); // 1 minute
 // ============================================================
 // File Upload Settings
 // ============================================================
-define('UPLOAD_DIR', __DIR__ . '/../../uploads/');
+define('UPLOAD_DIR', BASE_PATH . '/uploads/');
 define('UPLOAD_MAX_SIZE', env('UPLOAD_MAX_SIZE', 5 * 1024 * 1024)); // 5MB
 define('UPLOAD_MAX_FILES', env('UPLOAD_MAX_FILES', 8));
 define('ALLOWED_IMAGE_TYPES', ['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
@@ -84,7 +90,7 @@ define('ALLOWED_IMAGE_TYPES', ['image/jpeg', 'image/png', 'image/gif', 'image/we
 // ============================================================
 define('MAIL_ENABLED', env('MAIL_ENABLED', false));
 define('MAIL_DEV_MODE', env('MAIL_DEV_MODE', true)); // Log emails instead of sending
-define('MAIL_LOG_FILE', __DIR__ . '/../../logs/auth.log');
+define('MAIL_LOG_FILE', BASE_PATH . '/logs/auth.log');
 define('MAIL_FROM', env('MAIL_FROM', 'noreply@huuto.fi'));
 define('MAIL_FROM_NAME', env('MAIL_FROM_NAME', 'Huuto'));
 
@@ -132,7 +138,7 @@ if (env('APP_DEBUG', false)) {
     error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED);
     ini_set('display_errors', 0);
     ini_set('log_errors', 1);
-    ini_set('error_log', __DIR__ . '/../../logs/error.log');
+    ini_set('error_log', BASE_PATH . '/logs/error.log');
 }
 
 // Session configuration
@@ -156,10 +162,10 @@ if (session_status() === PHP_SESSION_NONE) {
 
 // Create necessary directories
 $dirs = [
-    __DIR__ . '/../../uploads/',
-    __DIR__ . '/../../uploads/auctions/',
-    __DIR__ . '/../../uploads/avatars/',
-    __DIR__ . '/../../logs/',
+    BASE_PATH . '/uploads/',
+    BASE_PATH . '/uploads/auctions/',
+    BASE_PATH . '/uploads/avatars/',
+    BASE_PATH . '/logs/',
 ];
 
 foreach ($dirs as $dir) {
@@ -169,7 +175,7 @@ foreach ($dirs as $dir) {
 }
 
 // Ensure logs directory is protected
-$htaccess = __DIR__ . '/../../logs/.htaccess';
+$htaccess = BASE_PATH . '/logs/.htaccess';
 if (!file_exists($htaccess)) {
     file_put_contents($htaccess, "Deny from all\n");
 }

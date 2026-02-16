@@ -1,7 +1,5 @@
 <?php
-require_once __DIR__ . '/../app/config.php';
-require_once __DIR__ . '/../app/db.php';
-require_once __DIR__ . '/../app/auth.php';
+require_once __DIR__ . '/../bootstrap.php';
 
 // Set flash message before logout
 $_SESSION['flash_message'] = 'Sinut on kirjattu ulos onnistuneesti.';
