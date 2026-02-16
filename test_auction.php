@@ -1,8 +1,6 @@
 <?php
 // Quick test for Auction class
-require_once __DIR__ . '/config/config.php';
-require_once __DIR__ . '/src/models/Database.php';
-require_once __DIR__ . '/src/models/Auction.php';
+require_once __DIR__ . '/bootstrap.php';
 
 echo "Testing Auction class...<br>";
 

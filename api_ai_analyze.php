@@ -4,15 +4,7 @@
  * Uses OpenAI Vision API to analyze product images and generate descriptions
  */
 
-// Check if installation is complete
-$lockFile = __DIR__ . '/config/installed.lock';
-if (!file_exists($lockFile)) {
-    http_response_code(503);
-    echo json_encode(['error' => 'Service not available']);
-    exit;
-}
-
-require_once __DIR__ . '/config/config.php';
+require_once __DIR__ . '/bootstrap.php';
 
 header('Content-Type: application/json');
 

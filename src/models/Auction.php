@@ -307,7 +307,6 @@ class Auction {
             ':sort_order' => $sortOrder
         ]);
     }
-    }
 
     /**
      * Get a default test user (for testing without login)

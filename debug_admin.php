@@ -2,35 +2,14 @@
 // Debug version of admin.php to identify 500 error
 echo "Debug: Admin.php loading...<br>";
 
-// Enable error reporting
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-ini_set('log_errors', 1);
-ini_set('error_log', '/tmp/php_errors.log');
-
-echo "Debug: Error reporting enabled<br>";
-
-// Check if installation is complete
-$lockFile = __DIR__ . '/config/installed.lock';
-echo "Debug: Checking lock file: $lockFile<br>";
-
-if (!file_exists($lockFile)) {
-    echo "Debug: Lock file not found, redirecting to asennus.php<br>";
-    // Don't redirect for debug
-    // header('Location: /asennus.php');
-    // exit;
-} else {
-    echo "Debug: Lock file found<br>";
-}
-
-echo "Debug: Loading config.php<br>";
-if (file_exists(__DIR__ . '/config/config.php')) {
-    echo "Debug: config.php exists<br>";
+echo "Debug: Loading bootstrap<br>";
+if (file_exists(__DIR__ . '/bootstrap.php')) {
+    echo "Debug: bootstrap.php exists<br>";
     try {
-        require_once __DIR__ . '/config/config.php';
-        echo "Debug: config.php loaded successfully<br>";
+        require_once __DIR__ . '/bootstrap.php';
+        echo "Debug: bootstrap.php loaded successfully<br>";
     } catch (Exception $e) {
-        echo "Debug: Error loading config.php: " . $e->getMessage() . "<br>";
+        echo "Debug: Error loading bootstrap.php: " . $e->getMessage() . "<br>";
         die();
     }
 } else {

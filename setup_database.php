@@ -1,14 +1,10 @@
 <?php
 // Database setup script - run this once to create missing tables
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+require_once __DIR__ . '/bootstrap.php';
 
 echo "<h1>Database Setup</h1>";
 
 try {
-    require_once __DIR__ . '/app/config.php';
-    require_once __DIR__ . '/app/db.php';
-    
     $pdo = db();
     echo "✅ Database connected<br><br>";
     

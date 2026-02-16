@@ -2,7 +2,7 @@
 /**
  * Test OpenAI API mock for debugging
  */
-require_once __DIR__ . '/config/config.php';
+require_once __DIR__ . '/bootstrap.php';
 
 header('Content-Type: application/json');
 

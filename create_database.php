@@ -3,10 +3,8 @@
  * Database Creation Script
  * Creates the database and runs initial setup
  */
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
 
-require_once __DIR__ . '/app/config.php';
+require_once __DIR__ . '/bootstrap.php';
 
 echo "<h1>Database Setup Wizard</h1>";
 

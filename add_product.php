@@ -1,15 +1,6 @@
 <?php
-// Check if installation is complete
-$lockFile = __DIR__ . '/config/installed.lock';
-if (!file_exists($lockFile)) {
-    header('Location: /asennus.php');
-    exit;
-}
-
-require_once __DIR__ . '/config/config.php';
-require_once __DIR__ . '/src/models/Database.php';
-require_once __DIR__ . '/src/models/Auction.php';
-require_once __DIR__ . '/src/models/Category.php';
+// Bootstrap the application
+require_once __DIR__ . '/bootstrap.php';
 
 $auctionModel = new Auction();
 $categoryModel = new Category();
@@ -100,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 $categories = $categoryModel->getAllCategories();
 
 $pageTitle = 'Lisää tuote - ' . SITE_NAME;
-include __DIR__ . '/src/views/header.php';
+include SRC_PATH . '/views/header.php';
 ?>
 
 <style>
@@ -448,4 +439,4 @@ document.querySelector('select[name="category_id"]').addEventListener('change', 
 });
 </script>
 
-<?php include __DIR__ . '/src/views/footer.php'; ?>
+<?php include SRC_PATH . '/views/footer.php'; ?>
