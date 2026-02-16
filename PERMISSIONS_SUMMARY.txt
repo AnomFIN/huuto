@@ -1,0 +1,123 @@
+╔═══════════════════════════════════════════════════════════════════════╗
+║                 HUUTO - FILE PERMISSIONS SUMMARY                      ║
+║              After FTP Upload to Web Hotel                            ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+📋 WHAT NEEDS chmod 777? (Writable Directories)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✓ config/           → Installer writes database.php
+✓ uploads/          → Stores product images
+✓ storage/logs/     → Application error logs
+✓ logs/             → Additional logging
+
+📋 WHAT NEEDS chmod 644? (Security Files)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✓ .htaccess               → Apache security rules
+✓ uploads/.htaccess       → Blocks PHP execution
+✓ logs/.htaccess          → Blocks log access
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║                         QUICK METHODS                                 ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+METHOD 1: Automated Script (if you have SSH access)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  $ cd /home/dajnpsku/public_html/
+  $ ./set-permissions.sh
+
+METHOD 2: Manual Commands (if you have SSH access)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  $ chmod 777 config/ uploads/ storage/logs/ logs/
+  $ chmod 644 .htaccess uploads/.htaccess logs/.htaccess
+
+METHOD 3: FileZilla (FTP Client)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  1. Right-click folder/file
+  2. Select "File Permissions"
+  3. Enter: 777 or 644
+  4. Click OK
+
+METHOD 4: cPanel File Manager
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  1. Select folder/file
+  2. Click "Permissions" (top menu)
+  3. Enter: 777 or 644
+  4. Click "Change Permissions"
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║                    PERMISSION NUMBERS EXPLAINED                       ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+777 = Anyone can Read, Write, Execute
+     ✓ Owner:  Read + Write + Execute = 7
+     ✓ Group:  Read + Write + Execute = 7  
+     ✓ Public: Read + Write + Execute = 7
+
+644 = Owner can Write, Everyone can Read
+     ✓ Owner:  Read + Write = 6
+     ✓ Group:  Read = 4
+     ✓ Public: Read = 4
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║                        SECURITY NOTES                                 ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+✅ SAFE to use 777 on directories:
+   - config/, uploads/, storage/logs/, logs/
+   - Protected by .htaccess files
+
+❌ NEVER use 777 on:
+   - PHP files (*.php)
+   - .htaccess files
+   - Root directory
+
+🔒 Why it's safe:
+   - uploads/.htaccess prevents PHP execution
+   - Root .htaccess blocks sensitive file access
+   - Only specific directories need write access
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║                    DETAILED DOCUMENTATION                             ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+📚 Full Guide:        See CHMOD_GUIDE.md
+📋 Deployment:        See DEPLOYMENT.md
+📖 General Info:      See README.md
+🪟 Windows Users:     See set-permissions.bat
+🐧 Linux Script:      Run ./set-permissions.sh
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║                       TROUBLESHOOTING                                 ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+❌ "Permission denied" error
+   → Re-apply: chmod 777 config/ uploads/ storage/logs/ logs/
+
+❌ Installer can't write database.php
+   → config/ needs chmod 777
+
+❌ Images won't upload
+   → uploads/ needs chmod 777
+
+❌ No error logs appearing
+   → storage/logs/ needs chmod 777
+
+For more help, see DEPLOYMENT.md troubleshooting section.
+
+╔═══════════════════════════════════════════════════════════════════════╗
+║                         AFTER INSTALLATION                            ║
+╚═══════════════════════════════════════════════════════════════════════╝
+
+Optional: Tighten security after successful installation
+  $ chmod 755 config/
+  $ chmod 644 config/database.php
+  $ chmod 644 config/installed.lock
+
+Keep these writable:
+  ✓ uploads/ (777)
+  ✓ storage/logs/ (777)
+  ✓ logs/ (777)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                    Ready to deploy? Let's go! 🚀
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
