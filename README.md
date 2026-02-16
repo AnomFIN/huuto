@@ -31,7 +31,7 @@
    ./set-permissions.sh
    
    # Option B: Manual (SSH access)
-   chmod 777 config/ uploads/ storage/logs/ logs/
+   chmod 777 config/ uploads/ logs/
    chmod 644 .htaccess uploads/.htaccess
    ```
    
