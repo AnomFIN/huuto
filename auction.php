@@ -128,7 +128,7 @@ include __DIR__ . '/src/views/header.php';
                         <div class="text-gray-500">Katselukertaa</div>
                     </div>
                     <div>
-                        <div class="font-semibold text-gray-900"><?php echo $auction['watch_count']; ?></div>
+                        <div class="font-semibold text-gray-900"><?php echo isset($auction['watch_count']) ? $auction['watch_count'] : 0; ?></div>
                         <div class="text-gray-500">Seuraajaa</div>
                     </div>
                 </div>

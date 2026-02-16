@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Analyysi - Testi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto py-8">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h1 class="text-2xl font-bold mb-6">AI Image Analysis - Test</h1>
+            
+            <form id="ai-test-form" enctype="multipart/form-data" class="space-y-4">
+                <div>
+                    <label for="test-images" class="block text-sm font-medium text-gray-700 mb-2">
+                        Testikuvat (valitse test_image.jpg)
+                    </label>
+                    <input 
+                        type="file" 
+                        id="test-images" 
+                        name="images[]" 
+                        accept="image/*" 
+                        multiple 
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    >
+                </div>
+                
+                <div class="flex space-x-4">
+                    <button type="button" onclick="testMockAPI()" 
+                            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                        🧪 Mock-testi (toimii aina)
+                    </button>
+                    <button type="button" onclick="testRealAPI()" 
+                            class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+                        🚀 Oikea API-testi (tarvitsee API-avaimen)
+                    </button>
+                </div>
+            </form>
+            
+            <div id="result" class="mt-6 hidden">
+                <h3 class="text-lg font-semibold mb-3">Tulos:</h3>
+                <div id="result-content" class="bg-gray-50 p-4 rounded border"></div>
+            </div>
+            
+            <div id="loading" class="mt-6 hidden">
+                <div class="text-center">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                    <p class="mt-2 text-gray-600">Analysoidaan kuvaa...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showLoading() {
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('result').classList.add('hidden');
+        }
+        
+        function hideLoading() {
+            document.getElementById('loading').classList.add('hidden');
+        }
+        
+        function showResult(data) {
+            const resultDiv = document.getElementById('result-content');
+            
+            if (data.success) {
+                resultDiv.innerHTML = `
+                    <div class="space-y-3">
+                        <div><strong>Otsikko:</strong> ${data.title}</div>
+                        <div><strong>Kuvaus:</strong> ${data.description}</div>
+                        <div><strong>Kategoria:</strong> ${data.category}</div>
+                        <div><strong>Aloitushinta:</strong> ${data.startPrice}€</div>
+                        <div><strong>Osta heti:</strong> ${data.buyNowPrice}€</div>
+                    </div>
+                `;
+                resultDiv.className = 'bg-green-50 p-4 rounded border border-green-200';
+            } else {
+                resultDiv.innerHTML = `<div class="text-red-600">❌ Virhe: ${data.error}</div>`;
+                resultDiv.className = 'bg-red-50 p-4 rounded border border-red-200';
+            }
+            
+            document.getElementById('result').classList.remove('hidden');
+        }
+        
+        function testMockAPI() {
+            showLoading();
+            
+            const formData = new FormData();
+            const fileInput = document.getElementById('test-images');
+            
+            if (fileInput.files.length === 0) {
+                alert('Valitsa ensin kuva!');
+                hideLoading();
+                return;
+            }
+            
+            for (let file of fileInput.files) {
+                formData.append('images[]', file);
+            }
+            formData.append('test_mode', '1'); // Enable mock mode
+            
+            fetch('api_ai_analyze_test.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideLoading();
+                showResult(data);
+            })
+            .catch(error => {
+                hideLoading();
+                showResult({error: 'Network error: ' + error.message});
+            });
+        }
+        
+        function testRealAPI() {
+            showLoading();
+            
+            const formData = new FormData();
+            const fileInput = document.getElementById('test-images');
+            
+            if (fileInput.files.length === 0) {
+                alert('Valitsa ensin kuva!');
+                hideLoading();
+                return;
+            }
+            
+            for (let file of fileInput.files) {
+                formData.append('images[]', file);
+            }
+            
+            fetch('api_ai_analyze.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                hideLoading();
+                showResult(data);
+            })
+            .catch(error => {
+                hideLoading();
+                showResult({error: 'Network error: ' + error.message});
+            });
+        }
+    </script>
+</body>
+</html>

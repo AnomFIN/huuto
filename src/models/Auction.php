@@ -10,6 +10,66 @@ class Auction {
     }
 
     /**
+     * Get popular auctions (most bids/views)
+     */
+    public function getPopularAuctions($limit = 20) {
+        $sql = "SELECT a.*, c.name as category_name, c.slug as category_slug,
+                       u.username as seller_username,
+                       (SELECT image_path FROM auction_images WHERE auction_id = a.id AND is_primary = 1 LIMIT 1) as primary_image,
+                       (SELECT COUNT(*) FROM bids WHERE auction_id = a.id) as bid_count,
+                       (SELECT MAX(amount) FROM bids WHERE auction_id = a.id) as highest_bid
+                FROM auctions a
+                JOIN categories c ON a.category_id = c.id
+                JOIN users u ON a.user_id = u.id
+                WHERE a.status = 'active' AND a.end_time > NOW()
+                ORDER BY (SELECT COUNT(*) FROM bids WHERE auction_id = a.id) DESC, a.views DESC
+                LIMIT :limit";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        $results = $stmt->fetchAll();
+        foreach ($results as &$auction) {
+            // Use highest bid as current price, fallback to starting price
+            $auction['current_price'] = $auction['highest_bid'] ?: $auction['starting_price'];
+        }
+        
+        return $results;
+    }
+    
+    /**
+     * Get auctions closing soon (within next 24 hours)
+     */
+    public function getClosingSoonAuctions($limit = 5) {
+        $sql = "SELECT a.*, c.name as category_name, c.slug as category_slug,
+                       u.username as seller_username,
+                       (SELECT image_path FROM auction_images WHERE auction_id = a.id AND is_primary = 1 LIMIT 1) as primary_image,
+                       (SELECT COUNT(*) FROM bids WHERE auction_id = a.id) as bid_count,
+                       (SELECT MAX(amount) FROM bids WHERE auction_id = a.id) as current_price
+                FROM auctions a
+                JOIN categories c ON a.category_id = c.id
+                JOIN users u ON a.user_id = u.id
+                WHERE a.status = 'active' 
+                  AND a.end_time > NOW() 
+                  AND a.end_time <= DATE_ADD(NOW(), INTERVAL 24 HOUR)
+                ORDER BY a.end_time ASC
+                LIMIT :limit";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        $results = $stmt->fetchAll();
+        foreach ($results as &$auction) {
+            // Use highest bid as current price, fallback to starting price
+            $auction['current_price'] = $auction['current_price'] ?: $auction['starting_price'];
+        }
+        
+        return $results;
+    }
+    
+    /**
      * Get all active auctions
      */
     public function getActiveAuctions($limit = 20, $offset = 0) {
@@ -61,7 +121,7 @@ class Auction {
         $sql = "SELECT a.*, c.name as category_name, c.slug as category_slug,
                        u.username as seller_username, u.full_name as seller_name,
                        (SELECT COUNT(*) FROM bids WHERE auction_id = a.id) as bid_count,
-                       (SELECT COUNT(*) FROM watchlist WHERE auction_id = a.id) as watch_count
+                       0 as watch_count
                 FROM auctions a
                 JOIN categories c ON a.category_id = c.id
                 JOIN users u ON a.user_id = u.id
@@ -247,6 +307,7 @@ class Auction {
             ':sort_order' => $sortOrder
         ]);
     }
+    }
 
     /**
      * Get a default test user (for testing without login)
@@ -284,5 +345,118 @@ class Auction {
         }
         
         return $user['id'];
+    }
+
+    /**
+     * Get all auctions (for admin interface)
+     */
+    public function getAllAuctions($limit = 100, $offset = 0) {
+        $sql = "SELECT a.*, c.name as category_name, c.slug as category_slug,
+                       u.username as seller_username,
+                       (SELECT image_path FROM auction_images WHERE auction_id = a.id AND is_primary = 1 LIMIT 1) as primary_image,
+                       (SELECT COUNT(*) FROM bids WHERE auction_id = a.id) as bid_count
+                FROM auctions a
+                JOIN categories c ON a.category_id = c.id
+                JOIN users u ON a.user_id = u.id
+                ORDER BY a.created_at DESC
+                LIMIT :limit OFFSET :offset";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Update auction data
+     */
+    public function updateAuction($id, $data) {
+        $sql = "UPDATE auctions SET 
+                    category_id = :category_id,
+                    title = :title,
+                    description = :description,
+                    starting_price = :starting_price,
+                    current_price = :current_price,
+                    reserve_price = :reserve_price,
+                    buy_now_price = :buy_now_price,
+                    bid_increment = :bid_increment,
+                    end_time = :end_time,
+                    status = :status,
+                    location = :location,
+                    condition_description = :condition_description,
+                    updated_at = NOW()
+                WHERE id = :id";
+        
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([
+            ':id' => $id,
+            ':category_id' => $data['category_id'],
+            ':title' => $data['title'],
+            ':description' => $data['description'],
+            ':starting_price' => $data['starting_price'],
+            ':current_price' => $data['current_price'],
+            ':reserve_price' => $data['reserve_price'],
+            ':buy_now_price' => $data['buy_now_price'],
+            ':bid_increment' => $data['bid_increment'],
+            ':end_time' => $data['end_time'],
+            ':status' => $data['status'],
+            ':location' => $data['location'],
+            ':condition_description' => $data['condition_description']
+        ]);
+    }
+
+    /**
+     * Delete an auction image
+     */
+    public function deleteAuctionImage($imageId) {
+        // First get the image path to delete the file
+        $sql = "SELECT image_path FROM auction_images WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':id', $imageId, PDO::PARAM_INT);
+        $stmt->execute();
+        $image = $stmt->fetch();
+
+        if ($image) {
+            // Delete the physical file
+            $filePath = __DIR__ . '/../../' . ltrim($image['image_path'], '/');
+            if (file_exists($filePath)) {
+                unlink($filePath);
+            }
+
+            // Delete from database
+            $sql = "DELETE FROM auction_images WHERE id = :id";
+            $stmt = $this->db->prepare($sql);
+            return $stmt->execute([':id' => $imageId]);
+        }
+        return false;
+    }
+
+    /**
+     * Set primary image for an auction
+     */
+    public function setPrimaryImage($auctionId, $imageId) {
+        try {
+            $this->db->beginTransaction();
+
+            // First, unset all primary images for this auction
+            $sql = "UPDATE auction_images SET is_primary = 0 WHERE auction_id = :auction_id";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([':auction_id' => $auctionId]);
+
+            // Then set the new primary image
+            $sql = "UPDATE auction_images SET is_primary = 1 WHERE id = :id AND auction_id = :auction_id";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([
+                ':id' => $imageId,
+                ':auction_id' => $auctionId
+            ]);
+
+            $this->db->commit();
+            return true;
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
     }
 }
