@@ -23,7 +23,6 @@ echo "📁 Setting writable directories (chmod 777)..."
 chmod 777 "$WEB_ROOT/config/" 2>/dev/null && echo "  ✅ config/" || echo "  ❌ config/ - may need sudo"
 chmod 777 "$WEB_ROOT/uploads/" 2>/dev/null && echo "  ✅ uploads/" || echo "  ❌ uploads/ - may need sudo"
 chmod 777 "$WEB_ROOT/storage/" 2>/dev/null && echo "  ✅ storage/" || echo "  ❌ storage/ - may need sudo"
-chmod 777 "$WEB_ROOT/storage/logs/" 2>/dev/null && echo "  ✅ storage/logs/" || echo "  ❌ storage/logs/ - may need sudo"
 chmod 777 "$WEB_ROOT/logs/" 2>/dev/null && echo "  ✅ logs/" || echo "  ❌ logs/ - may need sudo"
 echo ""
 
