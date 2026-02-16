@@ -177,5 +177,5 @@ foreach ($dirs as $dir) {
 // Ensure logs directory is protected
 $htaccess = BASE_PATH . '/logs/.htaccess';
 if (!file_exists($htaccess)) {
-    file_put_contents($htaccess, "Deny from all\n");
+    file_put_contents($htaccess, "Require all denied\n");
 }
