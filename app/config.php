@@ -149,6 +149,11 @@ if (env('APP_ENV', 'production') === 'production' && $isHttps) {
     ini_set('session.cookie_secure', 1);
 }
 
+// Start session after ini settings
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 // Create necessary directories
 $dirs = [
     __DIR__ . '/../../uploads/',

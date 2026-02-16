@@ -11,8 +11,9 @@
                     <h3 class="text-lg font-semibold mb-4">Linkit</h3>
                     <ul class="space-y-2">
                         <li><a href="/" class="text-gray-300 hover:text-white">Etusivu</a></li>
-                        <li><a href="/auctions" class="text-gray-300 hover:text-white">Kohteet</a></li>
-                        <li><a href="/categories" class="text-gray-300 hover:text-white">Kategoriat</a></li>
+                        <li><a href="auction.php" class="text-gray-300 hover:text-white">Kohteet</a></li>
+                        <li><a href="category.php" class="text-gray-300 hover:text-white">Kategoriat</a></li>
+                        <li><a href="admin.php" class="text-gray-300 hover:text-white">Admin</a></li>
                     </ul>
                 </div>
                 <div>

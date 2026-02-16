@@ -50,29 +50,75 @@ function testDbConnection($host, $dbname, $user, $pass) {
 function createTables($pdo) {
     // Use database/schema.sql which matches the public_html app structure
     $schema = file_get_contents(__DIR__ . '/database/schema.sql');
+    if ($schema === false) {
+        throw new Exception("Could not read schema file: " . __DIR__ . '/database/schema.sql');
+    }
+    
     // Remove the CREATE DATABASE and USE statements from the schema file
     $schema = preg_replace('/^CREATE DATABASE.*?;/mi', '', $schema);
     $schema = preg_replace('/^USE .*?;/mi', '', $schema);
     
-    // Split by semicolon but keep multi-line statements together
-    $statements = array_filter(array_map('trim', explode(';', $schema)));
+    // Split by semicolon - simple but works for well-formatted SQL
+    $statements = array_filter(array_map('trim', preg_split('/;(?=(?:[^\'"`]*[\'"`][^\'"`]*[\'"`])*[^\'"`]*$)/m', $schema)));
     
     $createdTables = [];
-    foreach ($statements as $statement) {
-        if (!empty($statement) && !preg_match('/^\s*--/', $statement)) {
-            try {
-                $pdo->exec($statement);
-                // Track which tables were created
+    $executedStatements = 0;
+    $errors = [];
+    
+    error_log("Starting table creation with " . count($statements) . " total SQL statements");
+    
+    foreach ($statements as $i => $statement) {
+        $statement = trim($statement);
+        // Skip empty statements and comments
+        if (empty($statement) || preg_match('/^\s*--/', $statement) || preg_match('/^\s*$/', $statement)) {
+            continue;
+        }
+        
+        // Log the statement being executed (first 100 chars)
+        error_log("Executing statement " . ($i + 1) . ": " . substr($statement, 0, 100) . "...");
+        
+        try {
+            $result = $pdo->exec($statement);
+            if ($result === false) {
+                $errorInfo = $pdo->errorInfo();
+                $errors[] = "Statement " . ($i + 1) . " failed: " . $errorInfo[2];
+                error_log("Statement " . ($i + 1) . " exec returned false: " . $errorInfo[2]);
+                continue;
+            }
+            
+            $executedStatements++;
+            
+            // Track which tables were created
+            if (preg_match('/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`?(\w+)`?/i', $statement, $matches)) {
+                $createdTables[] = $matches[1];
+                error_log("Successfully created table: " . $matches[1]);
+            }
+        } catch (PDOException $e) {
+            $errorMsg = "Statement " . ($i + 1) . " failed: " . $e->getMessage();
+            $errors[] = $errorMsg;
+            error_log($errorMsg . "\nStatement: " . substr($statement, 0, 200));
+            
+            // For CREATE TABLE IF NOT EXISTS, ignore "table already exists" errors
+            if (strpos($statement, 'IF NOT EXISTS') !== false && 
+                (strpos($e->getMessage(), 'already exists') !== false || strpos($e->getMessage(), 'Table') !== false)) {
+                // Extract table name and add to created list anyway
                 if (preg_match('/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`?(\w+)`?/i', $statement, $matches)) {
                     $createdTables[] = $matches[1];
+                    error_log("Table " . $matches[1] . " already exists, continuing");
                 }
-            } catch (PDOException $e) {
-                // Log error but continue with other statements if using IF NOT EXISTS
-                if (strpos($statement, 'IF NOT EXISTS') === false) {
-                    throw new Exception("Failed to execute SQL statement: " . $e->getMessage());
-                }
+                continue;
             }
+            
+            // For critical errors, stop execution
+            throw new Exception("Critical SQL error: " . $e->getMessage() . "\nStatement: " . substr($statement, 0, 100) . "...");
         }
+    }
+    
+    // Debug info
+    error_log("Executed $executedStatements SQL statements successfully");
+    error_log("Created " . count($createdTables) . " tables: " . implode(', ', $createdTables));
+    if (!empty($errors)) {
+        error_log("Errors encountered: " . implode("; ", $errors));
     }
     
     return $createdTables;
@@ -212,15 +258,127 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     $pdo = $result['pdo'];
                     
+                    // Add debugging info about database connection
+                    $currentDb = $pdo->query("SELECT DATABASE()")->fetchColumn();
+                    error_log("Connected to database: " . $currentDb);
+                    
+                    // Add some debugging output for browser
+                    echo "<script>console.log('Creating database tables...');</script>";
+                    
                     // Create tables and get list of created tables
-                    $createdTables = createTables($pdo);
+                    try {
+                        $createdTables = createTables($pdo);
+                        echo "<script>console.log('Created tables: " . implode(', ', $createdTables) . "');</script>";
+                    } catch (Exception $e) {
+                        echo "<script>console.error('Table creation error: " . addslashes($e->getMessage()) . "');</script>";
+                        throw $e;
+                    }
                     
                     // Verify critical tables exist before proceeding
                     $requiredTables = ['users', 'categories', 'auctions'];
+                    $missingTables = [];
+                    
                     foreach ($requiredTables as $table) {
                         $stmt = $pdo->query("SHOW TABLES LIKE '$table'");
                         if ($stmt->rowCount() == 0) {
-                            throw new Exception("Critical table '$table' was not created. Please check database permissions and schema file.");
+                            $missingTables[] = $table;
+                        } else {
+                            error_log("Table '$table' verified successfully");
+                        }
+                    }
+                    
+                    if (!empty($missingTables)) {
+                        // Show all tables that actually exist for debugging
+                        $existingTables = $pdo->query("SHOW TABLES")->fetchAll(PDO::FETCH_COLUMN);
+                        error_log("Existing tables in database: " . implode(', ', $existingTables));
+                        error_log("Created tables reported by createTables(): " . implode(', ', $createdTables));
+                        
+                        // Try to create the missing tables individually as a fallback
+                        echo "<script>console.log('Attempting fallback table creation for: " . implode(', ', $missingTables) . "');</script>";
+                        
+                        $manualTableCreation = [
+                            'users' => "CREATE TABLE IF NOT EXISTS users (
+                                id INT AUTO_INCREMENT PRIMARY KEY,
+                                username VARCHAR(50) UNIQUE NOT NULL,
+                                email VARCHAR(100) UNIQUE NOT NULL,
+                                password_hash VARCHAR(255) NOT NULL,
+                                full_name VARCHAR(100),
+                                phone VARCHAR(20),
+                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                                INDEX idx_email (email),
+                                INDEX idx_username (username)
+                            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+                            
+                            'categories' => "CREATE TABLE IF NOT EXISTS categories (
+                                id INT AUTO_INCREMENT PRIMARY KEY,
+                                name VARCHAR(100) NOT NULL,
+                                slug VARCHAR(100) UNIQUE NOT NULL,
+                                description TEXT,
+                                parent_id INT DEFAULT NULL,
+                                icon VARCHAR(50),
+                                sort_order INT DEFAULT 0,
+                                INDEX idx_slug (slug),
+                                INDEX idx_parent (parent_id)
+                            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
+                            
+                            'auctions' => "CREATE TABLE IF NOT EXISTS auctions (
+                                id INT AUTO_INCREMENT PRIMARY KEY,
+                                user_id INT NOT NULL,
+                                category_id INT NOT NULL,
+                                title VARCHAR(200) NOT NULL,
+                                description TEXT,
+                                starting_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+                                current_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+                                reserve_price DECIMAL(10,2) DEFAULT NULL,
+                                buy_now_price DECIMAL(10,2) DEFAULT NULL,
+                                bid_increment DECIMAL(10,2) NOT NULL DEFAULT 1.00,
+                                start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                end_time TIMESTAMP NOT NULL,
+                                status ENUM('draft', 'active', 'ended', 'cancelled') DEFAULT 'draft',
+                                views INT DEFAULT 0,
+                                location VARCHAR(200),
+                                condition_description VARCHAR(50),
+                                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                                FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE RESTRICT,
+                                INDEX idx_status (status),
+                                INDEX idx_end_time (end_time),
+                                INDEX idx_category (category_id),
+                                INDEX idx_user (user_id)
+                            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+                        ];
+                        
+                        $fallbackCreated = [];
+                        foreach ($missingTables as $table) {
+                            if (isset($manualTableCreation[$table])) {
+                                try {
+                                    $pdo->exec($manualTableCreation[$table]);
+                                    $fallbackCreated[] = $table;
+                                    echo "<script>console.log('Fallback created table: $table');</script>";
+                                } catch (PDOException $e) {
+                                    echo "<script>console.error('Fallback failed for table $table: " . addslashes($e->getMessage()) . "');</script>";
+                                }
+                            }
+                        }
+                        
+                        // Re-check which tables now exist
+                        $stillMissing = [];
+                        foreach ($requiredTables as $table) {
+                            $stmt = $pdo->query("SHOW TABLES LIKE '$table'");
+                            if ($stmt->rowCount() == 0) {
+                                $stillMissing[] = $table;
+                            }
+                        }
+                        
+                        if (!empty($stillMissing)) {
+                            $existingTablesAfterFallback = $pdo->query("SHOW TABLES")->fetchAll(PDO::FETCH_COLUMN);
+                            throw new Exception("Critical tables were not created: " . implode(', ', $stillMissing) . 
+                                              ". Please check database permissions and schema file. Existing tables: " . 
+                                              implode(', ', $existingTablesAfterFallback));
+                        } else {
+                            echo "<script>console.log('All required tables now exist after fallback');</script>";
                         }
                     }
                     

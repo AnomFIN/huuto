@@ -192,7 +192,7 @@ include __DIR__ . '/src/views/header.php';
 
             <div>
                 <label class="block text-sm font-semibold text-gray-700 mb-2">Kategoria *</label>
-                <select id="category_id" name="category_id" required
+                <select name="category_id" required
                         class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                     <option value="">Valitse kategoria</option>
                     <?php foreach ($categories as $category): ?>
@@ -389,17 +389,12 @@ async function generateAIDescription() {
         // Try to match category suggestion
         if (data.category_suggestion) {
             const categorySelect = document.getElementById('category_id');
-
-            if (categorySelect) {
-                const options = categorySelect.querySelectorAll('option');
-                for (let option of options) {
-                    if (option.textContent.toLowerCase().includes(data.category_suggestion.toLowerCase())) {
-                        categorySelect.value = option.value;
-                        break;
-                    }
+            const options = categorySelect.querySelectorAll('option');
+            for (let option of options) {
+                if (option.textContent.toLowerCase().includes(data.category_suggestion.toLowerCase())) {
+                    categorySelect.value = option.value;
+                    break;
                 }
-            } else {
-                console.warn('category_id select not found in DOM');
             }
         }
 
