@@ -39,37 +39,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         throw new Exception('Täytä vaaditut kentät');
                     }
 
-                    // Handle new image uploads
-                    if (!empty($_FILES['new_images']['name'][0])) {
-                        $uploadDir = UPLOAD_DIR;
-                        if (!is_dir($uploadDir)) {
-                            mkdir($uploadDir, 0755, true);
-                        }
-
-                        $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-                        foreach ($_FILES['new_images']['tmp_name'] as $key => $tmpName) {
-                            if ($_FILES['new_images']['error'][$key] === UPLOAD_ERR_OK) {
-                                $fileType = mime_content_type($tmpName);
-                                if (!in_array($fileType, $allowedTypes)) {
-                                    throw new Exception('Virheellinen tiedostotyyppi');
-                                }
-
-                                if ($_FILES['new_images']['size'][$key] > MAX_UPLOAD_SIZE) {
-                                    throw new Exception('Tiedosto liian suuri');
-                                }
-
-                                $fileName = uniqid() . '_' . basename($_FILES['new_images']['name'][$key]);
-                                $targetPath = $uploadDir . $fileName;
-                                
-                                if (move_uploaded_file($tmpName, $targetPath)) {
-                                    // Add image to database
-                                    $stmt = $db->prepare("INSERT INTO auction_images (auction_id, image_path, is_primary, sort_order) VALUES (?, ?, 0, 0)");
-                                    $stmt->execute([$id, '/uploads/' . $fileName]);
-                                }
-                            }
-                        }
-                    }
-
                     // Update auction - direct SQL instead of method
                     $endTime = $auction['end_time'];
                     if (!empty($_POST['duration_days'])) {
@@ -115,8 +84,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 case 'delete_image':
                     $imageId = (int)$_POST['image_id'];
                     // Get image path first
-                    $stmt = $db->prepare("SELECT image_path FROM auction_images WHERE id = ?");
-                    $stmt->execute([$imageId]);
+                    $stmt = $db->prepare("SELECT image_path, is_primary FROM auction_images WHERE id = ? AND auction_id = ?");
+                    $stmt->execute([$imageId, $id]);
                     $image = $stmt->fetch();
                     
                     if ($image) {
@@ -129,6 +98,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         // Delete from database
                         $stmt = $db->prepare("DELETE FROM auction_images WHERE id = ?");
                         $stmt->execute([$imageId]);
+
+                        // If deleted image was primary, promote first remaining image
+                        if ((int)($image['is_primary'] ?? 0) === 1) {
+                            $stmt = $db->prepare("SELECT id FROM auction_images WHERE auction_id = ? ORDER BY sort_order ASC, id ASC LIMIT 1");
+                            $stmt->execute([$id]);
+                            $newPrimary = $stmt->fetch();
+
+                            if ($newPrimary) {
+                                $stmt = $db->prepare("UPDATE auction_images SET is_primary = 0 WHERE auction_id = ?");
+                                $stmt->execute([$id]);
+
+                                $stmt = $db->prepare("UPDATE auction_images SET is_primary = 1 WHERE id = ? AND auction_id = ?");
+                                $stmt->execute([$newPrimary['id'], $id]);
+                            }
+                        }
                         
                         // Refresh images
                         $stmt = $db->prepare("SELECT * FROM auction_images WHERE auction_id = ? ORDER BY is_primary DESC, sort_order ASC");
@@ -318,13 +302,14 @@ include SRC_PATH . '/views/header.php';
             </div>
 
             <div class="mb-6">
-                <label for="new_images" class="block text-sm font-medium text-gray-700 mb-2">
+                <label for="imageInput" class="block text-sm font-medium text-gray-700 mb-2">
                     Lisää uusia kuvia
                 </label>
-                <input type="file" id="new_images" name="new_images[]" 
+                <input type="file" id="imageInput" name="images[]" 
                        accept="image/*" multiple
                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <p class="text-sm text-gray-500 mt-1">Voit valita useita kuvia kerralla. Max 5MB per kuva.</p>
+                <p class="text-sm text-gray-500 mt-1">Auto-upload päällä. Max 8 kuvaa / kohde, 10MB / kuva.</p>
+                <p id="imageUploadError" class="text-sm text-red-600 mt-2 hidden"></p>
             </div>
 
             <div class="flex gap-4">
@@ -344,59 +329,50 @@ include SRC_PATH . '/views/header.php';
     <div class="bg-white rounded-lg shadow-lg p-6">
         <h2 class="text-xl font-semibold mb-4">Kuvien hallinta</h2>
         
-        <?php if (!empty($images)): ?>
-            <div class="space-y-4">
-                <?php foreach ($images as $image): ?>
-                    <div class="border border-gray-200 rounded-lg p-4 flex items-center space-x-4">
-                        <img src="<?php echo htmlspecialchars($image['image_path']); ?>" 
-                             alt="Kuva" class="w-20 h-20 object-cover rounded-lg">
-                        
-                        <div class="flex-1">
-                            <p class="text-sm text-gray-600">
-                                <?php echo basename($image['image_path']); ?>
-                            </p>
-                            <?php if ($image['is_primary']): ?>
-                                <span class="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
-                                    Pääkuva
-                                </span>
-                            <?php endif; ?>
-                        </div>
-                        
-                        <div class="flex space-x-2">
-                            <?php if (!$image['is_primary']): ?>
-                                <form method="POST" class="inline">
-                                    <input type="hidden" name="action" value="set_primary_image">
-                                    <input type="hidden" name="image_id" value="<?php echo $image['id']; ?>">
-                                    <button type="submit" 
-                                            class="text-blue-600 hover:text-blue-800 text-sm">
-                                        Aseta pääkuvaksi
-                                    </button>
-                                </form>
-                            <?php endif; ?>
-                            
-                            <form method="POST" class="inline" 
-                                  onsubmit="return confirm('Haluatko varmasti poistaa tämän kuvan?');">
-                                <input type="hidden" name="action" value="delete_image">
-                                <input type="hidden" name="image_id" value="<?php echo $image['id']; ?>">
-                                <button type="submit" 
-                                        class="text-red-600 hover:text-red-800 text-sm">
-                                    Poista
-                                </button>
-                            </form>
-                        </div>
+        <div id="imageGallery" class="space-y-4" data-auction-id="<?php echo $id; ?>">
+            <?php foreach ($images as $image): ?>
+                <div class="border border-gray-200 rounded-lg p-4 flex items-center space-x-4 auction-image-item" data-image-id="<?php echo (int)$image['id']; ?>">
+                    <img src="<?php echo htmlspecialchars($image['image_path']); ?>" 
+                         alt="Kuva" class="w-20 h-20 object-cover rounded-lg cursor-pointer js-set-primary">
+
+                    <div class="flex-1">
+                        <p class="text-sm text-gray-600">
+                            <?php echo basename($image['image_path']); ?>
+                        </p>
+                        <p class="text-xs text-green-700 mt-1 js-primary-label <?php echo (int)$image['is_primary'] === 1 ? '' : 'hidden'; ?>">(Pääkuva)</p>
                     </div>
-                <?php endforeach; ?>
-            </div>
-        <?php else: ?>
-            <div class="text-center py-8 text-gray-500">
+
+                    <div class="flex space-x-2">
+                        <form method="POST" class="inline">
+                            <input type="hidden" name="action" value="set_primary_image">
+                            <input type="hidden" name="image_id" value="<?php echo (int)$image['id']; ?>">
+                            <button type="submit" class="text-blue-600 hover:text-blue-800 text-sm js-set-primary">
+                                Aseta pääkuvaksi
+                            </button>
+                        </form>
+
+                        <form method="POST" class="inline" onsubmit="return confirm('Haluatko varmasti poistaa tämän kuvan?');">
+                            <input type="hidden" name="action" value="delete_image">
+                            <input type="hidden" name="image_id" value="<?php echo (int)$image['id']; ?>">
+                            <button type="submit" class="text-red-600 hover:text-red-800 text-sm js-delete-image">
+                                Poista
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
+
+        <div id="emptyImageState" class="text-center py-8 text-gray-500 <?php echo !empty($images) ? 'hidden' : ''; ?>">
                 <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                     <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
                 <p class="mt-2">Ei kuvia lisätty</p>
                 <p class="text-sm">Lisää kuvia yllä olevalla lomakkeella</p>
             </div>
-        <?php endif; ?>
     </div>
 </div>
+
+<script src="/assets/js/edit_auction_images.js"></script>
 
 <?php include SRC_PATH . '/views/footer.php'; ?>

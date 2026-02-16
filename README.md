@@ -305,3 +305,48 @@ ls -la /home/dajnpsku/public_html/
 **Domain**: https://www.huuto247.fi/
 
 **🎉 Ready for Web Hotel Deployment! 🚀**
+
+---
+
+## 🖼️ Edit Auction: Auto-upload + pääkuva (uusi)
+
+### Mitä muuttui
+- `edit_auction.php` tukee nyt automaattista monikuvien latausta ilman erillistä upload-nappia.
+- Uudet API-endpointit:
+  - `POST /api/upload_auction_images.php`
+  - `POST /api/set_primary_image.php`
+  - `POST /api/delete_auction_image.php`
+- Kuvamäärärajat: max 8 kuvaa / kohde, max 10MB / kuva.
+
+### Why this design
+- Yksi selkeä upload-polku: file input `change` laukaisee latauksen heti.
+- API vastaa aina JSON:lla (`ok/error`), jolloin frontend ei jää epäselvään tilaan.
+- Pääkuva-logiikka pidetään tietokannassa (`is_primary`), joten refresh säilyttää oikean tilan.
+- Poisto hoitaa automaattisen pääkuvan vaihdon, jotta UI/DB pysyy konsistenttina.
+
+### Runbook (local)
+```bash
+php -S localhost:8000
+# Avaa: http://localhost:8000/edit_auction.php?id=1
+```
+
+### Verify nopeasti
+1. Valitse 1 kuva -> näkyy heti galleriassa ilman sivun päivitystä.
+2. Valitse useita kuvia -> kaikki latautuvat ja näkyvät.
+3. Klikkaa toista kuvaa / “Aseta pääkuvaksi” -> vain sen alla näkyy `(Pääkuva)`.
+4. Poista pääkuva -> seuraava kuva nousee automaattisesti pääkuvaksi.
+
+### TODO (seuraavat iteraatiot)
+- Lisää drag & drop -lataus edit-sivulle.
+- Lisää kuvien uudelleenjärjestely (sort_order) hiirellä.
+- Lisää server-side kuvien optimointi (resize + thumbnail).
+
+### Google-kirjautuminen käyttöön
+1. Lisää ympäristömuuttujiin:
+   - `AUTH_METHOD=both`
+   - `GOOGLE_CLIENT_ID=...`
+   - `GOOGLE_CLIENT_SECRET=...`
+2. Aseta Google OAuth redirect URI: `https://<domain>/auth/google-callback.php`
+3. Varmista että PHP:ssä on `curl`-laajennus käytössä.
+
+Jos konfiguraatio puuttuu, kirjautumissivu piilottaa Google-painikkeen automaattisesti.
