@@ -78,8 +78,8 @@ try {
     
     // Load core application files
     require_once APP_PATH . '/db.php';
-    require_once APP_PATH . '/auth.php';
     require_once APP_PATH . '/helpers.php';
+    require_once APP_PATH . '/auth.php';
     
     // Load model classes
     require_once SRC_PATH . '/models/Database.php';
