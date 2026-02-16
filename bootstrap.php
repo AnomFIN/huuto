@@ -36,8 +36,9 @@ function handleFatalError() {
             $error['line']
         ));
         
-        // Show friendly message to user (will be overridden by config if in production)
-        if (ini_get('display_errors')) {
+        // Show friendly message to user in debug mode
+        $showErrors = (defined('APP_DEBUG') && APP_DEBUG) || ini_get('display_errors');
+        if ($showErrors) {
             echo "<!DOCTYPE html><html><head><title>Virhe</title></head><body>";
             echo "<h1>Tekninen virhe</h1>";
             echo "<p>Sivuston lataamisessa tapahtui virhe. Yritä myöhemmin uudelleen.</p>";
@@ -58,7 +59,9 @@ set_exception_handler(function($exception) {
         $exception->getTraceAsString()
     ));
     
-    if (ini_get('display_errors')) {
+    // Show friendly message to user in debug mode
+    $showErrors = (defined('APP_DEBUG') && APP_DEBUG) || ini_get('display_errors');
+    if ($showErrors) {
         echo "<!DOCTYPE html><html><head><title>Virhe</title></head><body>";
         echo "<h1>Tekninen virhe</h1>";
         echo "<p>Tapahtui odottamaton virhe: " . htmlspecialchars($exception->getMessage()) . "</p>";
@@ -76,9 +79,10 @@ try {
     // Load the main configuration file
     require_once APP_PATH . '/config.php';
     
-    // Load core application files
+    // Load core application files in correct order
     require_once APP_PATH . '/db.php';
     require_once APP_PATH . '/helpers.php';
+    require_once APP_PATH . '/email.php';
     require_once APP_PATH . '/auth.php';
     
     // Load model classes
@@ -93,7 +97,9 @@ try {
     echo "<!DOCTYPE html><html><head><title>Virhe</title></head><body>";
     echo "<h1>Sivuston käynnistys epäonnistui</h1>";
     echo "<p>Sivuston alustuksessa tapahtui virhe. Yritä myöhemmin uudelleen.</p>";
-    if (ini_get('display_errors')) {
+    // Only show error details in debug mode
+    $showErrors = (defined('APP_DEBUG') && APP_DEBUG) || ini_get('display_errors');
+    if ($showErrors) {
         echo "<pre>" . htmlspecialchars($e->getMessage()) . "</pre>";
     }
     echo "</body></html>";

@@ -37,7 +37,10 @@ try {
     echo "No HTTP 500 errors detected. All core functionality loads correctly.\n";
     
 } catch (Throwable $e) {
-    ob_end_clean();
+    // Clean output buffer if it exists
+    if (ob_get_level() > 0) {
+        ob_end_clean();
+    }
     echo "\n=== TEST FAILED ===\n";
     echo "ERROR: " . $e->getMessage() . "\n";
     echo "File: " . $e->getFile() . "\n";
