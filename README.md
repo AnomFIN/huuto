@@ -27,6 +27,7 @@
    ```bash
    # Option A: Automated (SSH access)
    cd /home/dajnpsku/public_html/
+   chmod +x set-permissions.sh
    ./set-permissions.sh
    
    # Option B: Manual (SSH access)
