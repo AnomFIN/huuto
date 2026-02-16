@@ -10,18 +10,30 @@ require_once __DIR__ . '/src/models/Category.php';
 require_once __DIR__ . '/app/auth.php';
 require_once __DIR__ . '/app/helpers.php';
 
-$auctionModel = new Auction();
-$categoryModel = new Category();
+// Initialize with empty arrays in case of errors
+$closingSoonAuctions = [];
+$popularAuctions = [];
+$moreClosingAuctions = [];
+$featuredAuctions = [];
+$categories = [];
 
-// Get closing soon auctions for carousel
-$closingSoonAuctions = $auctionModel->getClosingSoonAuctions(5);
-// Get popular auctions
-$popularAuctions = $auctionModel->getPopularAuctions(20);
-// Get more closing soon auctions for the bottom section
-$moreClosingAuctions = $auctionModel->getClosingSoonAuctions(20);
-// Get featured auctions
-$featuredAuctions = $auctionModel->getActiveAuctions(12);
-$categories = $categoryModel->getAllCategories();
+try {
+    $auctionModel = new Auction();
+    $categoryModel = new Category();
+    
+    // Get closing soon auctions for carousel
+    $closingSoonAuctions = $auctionModel->getClosingSoonAuctions(5);
+    // Get popular auctions
+    $popularAuctions = $auctionModel->getPopularAuctions(20);
+    // Get more closing soon auctions for the bottom section
+    $moreClosingAuctions = $auctionModel->getClosingSoonAuctions(20);
+    // Get featured auctions
+    $featuredAuctions = $auctionModel->getActiveAuctions(12);
+    $categories = $categoryModel->getAllCategories();
+} catch (Exception $e) {
+    // Log the error but don't crash the page
+    error_log("Error loading homepage data: " . $e->getMessage());
+}
 
 $pageTitle = SITE_NAME . ' - Etusivu';
 include __DIR__ . '/src/views/header.php';
