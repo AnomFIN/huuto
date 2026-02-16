@@ -12,7 +12,7 @@ if (!file_exists($lockFile)) {
     exit;
 }
 
-require_once __DIR__ . '/config/config.php';
+require_once __DIR__ . '/app/config.php';
 
 header('Content-Type: application/json');
 

@@ -24,10 +24,10 @@ if (!file_exists($lockFile)) {
 }
 
 echo "Debug: Loading config.php<br>";
-if (file_exists(__DIR__ . '/config/config.php')) {
-    echo "Debug: config.php exists<br>";
+if (file_exists(__DIR__ . '/app/config.php')) {
+    echo "Debug: app/config.php exists<br>";
     try {
-        require_once __DIR__ . '/config/config.php';
+        require_once __DIR__ . '/app/config.php';
         echo "Debug: config.php loaded successfully<br>";
     } catch (Exception $e) {
         echo "Debug: Error loading config.php: " . $e->getMessage() . "<br>";
