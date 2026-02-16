@@ -21,7 +21,7 @@ if ($categorySlug) {
     $pageTitle = 'Kaikki kohteet - ' . SITE_NAME;
 }
 
-include __DIR__ . '/src/views/header.php';
+include SRC_PATH . '/views/header.php';
 ?>
 
 <div class="mb-8">
@@ -91,4 +91,4 @@ include __DIR__ . '/src/views/header.php';
     </div>
 <?php endif; ?>
 
-<?php include __DIR__ . '/src/views/footer.php'; ?>
+<?php include SRC_PATH . '/views/footer.php'; ?>

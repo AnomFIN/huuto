@@ -44,7 +44,7 @@ try {
 }
 
 $pageTitle = 'Admin - ' . SITE_NAME;
-include __DIR__ . '/src/views/header.php';
+include SRC_PATH . '/views/header.php';
 ?>
 
 <div class="mb-8">
@@ -273,4 +273,4 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<?php include __DIR__ . '/src/views/footer.php'; ?>
+<?php include SRC_PATH . '/views/footer.php'; ?>

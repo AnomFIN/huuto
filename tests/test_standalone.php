@@ -12,15 +12,9 @@ try {
     // Include the index page logic (without rendering HTML)
     ob_start();
     
-    require_once __DIR__ . '/../app/config.php';
-    require_once __DIR__ . '/../app/db.php';
-    require_once __DIR__ . '/../src/models/Database.php';
-    require_once __DIR__ . '/../src/models/Auction.php';
-    require_once __DIR__ . '/../src/models/Category.php';
-    require_once __DIR__ . '/../app/auth.php';
-    require_once __DIR__ . '/../app/helpers.php';
+    require_once __DIR__ . '/../bootstrap.php';
 
-    echo "✅ All includes loaded successfully\n";
+    echo "✅ Bootstrap loaded successfully\n";
     
     // Try to initialize models (this will test DB connection)
     try {

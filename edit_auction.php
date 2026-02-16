@@ -168,7 +168,7 @@ $categoryModel = new Category();
 $categories = $categoryModel->getAllCategories();
 
 $pageTitle = 'Muokkaa kohdetta: ' . $auction['title'] . ' - ' . SITE_NAME;
-include __DIR__ . '/src/views/header.php';
+include SRC_PATH . '/views/header.php';
 ?>
 
 <div class="mb-4">
@@ -399,4 +399,4 @@ include __DIR__ . '/src/views/header.php';
     </div>
 </div>
 
-<?php include __DIR__ . '/src/views/footer.php'; ?>
+<?php include SRC_PATH . '/views/footer.php'; ?>

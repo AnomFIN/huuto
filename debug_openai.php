@@ -2,7 +2,7 @@
 /**
  * Simple OpenAI API test without images
  */
-require_once __DIR__ . '/app/config.php';
+require_once __DIR__ . '/bootstrap.php';
 
 header('Content-Type: application/json');
 

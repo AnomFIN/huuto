@@ -1,22 +1,14 @@
 <?php
 // Minimal test to find the actual error
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+require_once __DIR__ . '/bootstrap.php';
 
 echo "=== TESTING index.php COMPONENTS ===\n";
 
-echo "1. Loading config...\n";
-try {
-    require_once __DIR__ . '/app/config.php';
-    echo "✅ Config OK\n";
-} catch (Exception $e) {
-    echo "❌ Config FAILED: " . $e->getMessage() . "\n";
-    exit;
-}
+echo "✅ Bootstrap loaded\n";
 
 echo "2. Loading db...\n";
 try {
-    require_once __DIR__ . '/app/db.php';
+    $pdo = db();
     echo "✅ DB OK\n";
 } catch (Exception $e) {
     echo "❌ DB FAILED: " . $e->getMessage() . "\n";

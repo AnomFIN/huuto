@@ -91,7 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 $categories = $categoryModel->getAllCategories();
 
 $pageTitle = 'Lisää tuote - ' . SITE_NAME;
-include __DIR__ . '/src/views/header.php';
+include SRC_PATH . '/views/header.php';
 ?>
 
 <style>
@@ -439,4 +439,4 @@ document.querySelector('select[name="category_id"]').addEventListener('change', 
 });
 </script>
 
-<?php include __DIR__ . '/src/views/footer.php'; ?>
+<?php include SRC_PATH . '/views/footer.php'; ?>
