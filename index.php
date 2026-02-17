@@ -56,6 +56,7 @@ function normalizeAuctionForUi(array $auction, array $fallbackCategories): array
     if (isset($auction['category_name'])) {
         $category = htmlspecialchars(trim((string) $auction['category_name']), ENT_QUOTES | ENT_HTML5, 'UTF-8');
     } else {
+        // $fallbackCategories contains only trusted hardcoded values (see $categories array at top of file)
         $category = $fallbackCategories[array_rand($fallbackCategories)]; // Trusted fallback
     }
 

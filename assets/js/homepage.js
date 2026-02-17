@@ -177,6 +177,7 @@
     state.activeItemId = item.id;
     nodes.itemImage.textContent = sanitizeAndDecode(item.imageLabel || item.title, 28);
     nodes.itemTitle.textContent = sanitizeAndDecode(item.title, 100);
+    // formatCountdown returns formatted time string (not user data), so no decoding needed
     nodes.itemMeta.textContent = `${sanitizeAndDecode(item.location, 32)} • ${sanitizeAndDecode(item.category, 24)} • ${formatCountdown(item.endTime)}`;
     nodes.itemPrice.textContent = `Hinta nyt ${formatCurrency(item.priceNow)}`;
     nodes.itemDetail.textContent = `Myyjä: ${sanitizeAndDecode(item.seller || 'Premium Seller', 30)} • Toimitus: Nouto tai toimitus • Tarjouksia ${item.bidsCount}`;
