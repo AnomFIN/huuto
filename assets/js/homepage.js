@@ -76,6 +76,11 @@
   let carouselTimerId = null;
 
   const sanitizeText = (value, maxLen = 80) => String(value ?? '').trim().slice(0, maxLen);
+  const decodeHtmlEntities = (text) => {
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = text;
+    return textarea.value;
+  };
   const parseDateMs = (value) => {
     const parsed = Date.parse(String(value || ''));
     return Number.isFinite(parsed) ? parsed : Date.now();
@@ -169,11 +174,11 @@
   const openItemModal = (item) => {
     if (!item) return;
     state.activeItemId = item.id;
-    nodes.itemImage.textContent = sanitizeText(item.imageLabel || item.title, 28);
-    nodes.itemTitle.textContent = sanitizeText(item.title, 100);
-    nodes.itemMeta.textContent = `${sanitizeText(item.location, 32)} • ${sanitizeText(item.category, 24)} • ${formatCountdown(item.endTime)}`;
+    nodes.itemImage.textContent = decodeHtmlEntities(sanitizeText(item.imageLabel || item.title, 28));
+    nodes.itemTitle.textContent = decodeHtmlEntities(sanitizeText(item.title, 100));
+    nodes.itemMeta.textContent = `${decodeHtmlEntities(sanitizeText(item.location, 32))} • ${decodeHtmlEntities(sanitizeText(item.category, 24))} • ${formatCountdown(item.endTime)}`;
     nodes.itemPrice.textContent = `Hinta nyt ${formatCurrency(item.priceNow)}`;
-    nodes.itemDetail.textContent = `Myyjä: ${sanitizeText(item.seller || 'Premium Seller', 30)} • Toimitus: Nouto tai toimitus • Tarjouksia ${item.bidsCount}`;
+    nodes.itemDetail.textContent = `Myyjä: ${decodeHtmlEntities(sanitizeText(item.seller || 'Premium Seller', 30))} • Toimitus: Nouto tai toimitus • Tarjouksia ${item.bidsCount}`;
     nodes.itemBidBtn.textContent = `Huutaa nyt ${formatCurrency(item.priceNow + item.minIncrement)} (+${formatCurrency(item.minIncrement)})`;
     nodes.itemModal.classList.add('open');
     nodes.itemModal.setAttribute('aria-hidden', 'false');
