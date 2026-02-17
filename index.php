@@ -97,7 +97,7 @@ function buildUiData(array $source, array $categories, int $targetCount): array
 
 $popularUiData = buildUiData($popularAuctions, $categories, 180);
 $closingUiData = buildUiData($closingSoonAuctions, $categories, 180);
-$isUserLoggedIn = function_exists('is_logged_in') && is_logged_in();
+$isUserLoggedIn = is_logged_in();
 ?>
 <!doctype html>
 <html lang="fi">
