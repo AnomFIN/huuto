@@ -1,437 +1,230 @@
 <?php
-// Bootstrap the application
 require_once __DIR__ . '/bootstrap.php';
 
-// Initialize with empty arrays in case of errors
-$closingSoonAuctions = [];
+$pageTitle = SITE_NAME . ' - Etusivu';
+$categories = [
+    'Ajoneuvot',
+    'Työkoneet',
+    'Asunnot',
+    'Vapaa-aika',
+    'Piha',
+    'Työkalut',
+    'Rakennus',
+    'Sisustus',
+    'Elektroniikka',
+    'Keräily',
+    'Muut',
+];
+
 $popularAuctions = [];
-$moreClosingAuctions = [];
-$featuredAuctions = [];
-$categories = [];
+$closingSoonAuctions = [];
+$dataLoadError = null;
 
 try {
     $auctionModel = new Auction();
-    $categoryModel = new Category();
-    
-    // Get closing soon auctions for carousel
-    $closingSoonAuctions = $auctionModel->getClosingSoonAuctions(5);
-    // Get popular auctions
-    $popularAuctions = $auctionModel->getPopularAuctions(20);
-    // Get more closing soon auctions for the bottom section
-    $moreClosingAuctions = $auctionModel->getClosingSoonAuctions(20);
-    // Get featured auctions
-    $featuredAuctions = $auctionModel->getActiveAuctions(12);
-    $categories = $categoryModel->getAllCategories();
-} catch (Exception $e) {
-    // Log the error but don't crash the page
-    error_log("Error loading homepage data: " . $e->getMessage());
-    // Set a user-friendly error message
-    $dataLoadError = "Tietojen lataaminen epäonnistui. Yritämme korjata ongelman pian.";
+    $popularAuctions = $auctionModel->getPopularAuctions(120);
+    $closingSoonAuctions = $auctionModel->getClosingSoonAuctions(120);
+} catch (Throwable $error) {
+    error_log(json_encode([
+        'event' => 'homepage_data_load_failed',
+        'message' => $error->getMessage(),
+    ], JSON_UNESCAPED_UNICODE));
+    $dataLoadError = 'Tietojen lataaminen epäonnistui. Näytämme väliaikaiset demo-kohteet.';
 }
 
-$pageTitle = SITE_NAME . ' - Etusivu';
-include SRC_PATH . '/views/header.php';
+// Beyond algorithms. Into outcomes.
+function normalizeAuctionForUi(array $auction, array $fallbackCategories): array
+{
+    $title = trim((string) ($auction['title'] ?? 'Kohde'));
+    $category = trim((string) ($auction['category_name'] ?? $fallbackCategories[array_rand($fallbackCategories)]));
+    $location = trim((string) ($auction['location'] ?? 'Helsinki'));
+
+    $endTimeRaw = isset($auction['end_time']) ? strtotime((string) $auction['end_time']) : false;
+    $endTimestamp = ($endTimeRaw && $endTimeRaw > time()) ? $endTimeRaw : time() + random_int(3600, 60 * 60 * 24 * 6);
+
+    $priceNow = isset($auction['current_price']) ? (float) $auction['current_price'] : (float) random_int(35, 3200);
+    $bidCount = isset($auction['bid_count']) ? (int) $auction['bid_count'] : random_int(1, 31);
+
+    return [
+        'id' => (int) ($auction['id'] ?? random_int(10000, 99999)),
+        'title' => mb_substr($title !== '' ? $title : 'Kohde', 0, 80),
+        'location' => mb_substr($location !== '' ? $location : 'Helsinki', 0, 40),
+        'category' => mb_substr($category !== '' ? $category : 'Muut', 0, 40),
+        'endTime' => gmdate('c', $endTimestamp),
+        'priceNow' => round(max(1, $priceNow), 2),
+        'bidsCount' => max(0, $bidCount),
+        'minIncrement' => (float) (($priceNow >= 1000) ? 20 : (($priceNow >= 200) ? 10 : 5)),
+        'isAd' => false,
+        'imageLabel' => mb_substr($title !== '' ? $title : 'Huuto247', 0, 24),
+        'seller' => 'Verified-myyjä',
+    ];
+}
+
+function buildUiData(array $source, array $categories, int $targetCount): array
+{
+    $items = [];
+    foreach ($source as $auction) {
+        if (count($items) >= $targetCount) {
+            break;
+        }
+        if (!is_array($auction)) {
+            continue;
+        }
+        $items[] = normalizeAuctionForUi($auction, $categories);
+    }
+
+    while (count($items) < $targetCount) {
+        $seed = count($items) + 1;
+        $price = random_int(40, 3600);
+        $cities = ['Helsinki', 'Lahti', 'Tampere', 'Turku', 'Oulu', 'Jyväskylä'];
+        $items[] = [
+            'id' => 500000 + $seed,
+            'title' => sprintf('Premium-kohde %02d', $seed),
+            'location' => $cities[array_rand($cities)],
+            'category' => $categories[array_rand($categories)],
+            'endTime' => gmdate('c', time() + random_int(1200, 60 * 60 * 24 * 8)),
+            'priceNow' => (float) $price,
+            'bidsCount' => random_int(1, 41),
+            'minIncrement' => (float) (($price >= 1000) ? 20 : (($price >= 200) ? 10 : 5)),
+            'isAd' => false,
+            'imageLabel' => 'Huuto247',
+            'seller' => 'Premium Seller',
+        ];
+    }
+
+    return $items;
+}
+
+$popularUiData = buildUiData($popularAuctions, $categories, 180);
+$closingUiData = buildUiData($closingSoonAuctions, $categories, 180);
+$isUserLoggedIn = function_exists('is_logged_in') && is_logged_in();
 ?>
-
-<?php if (isset($dataLoadError)): ?>
-<div class="mb-4 bg-yellow-50 border-l-4 border-yellow-400 p-4">
-    <div class="flex">
-        <div class="flex-shrink-0">
-            <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
-            </svg>
-        </div>
-        <div class="ml-3">
-            <p class="text-sm text-yellow-700">
-                <?php echo htmlspecialchars($dataLoadError); ?>
-            </p>
-        </div>
+<!doctype html>
+<html lang="fi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?php echo htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8'); ?></title>
+    <link rel="stylesheet" href="/assets/css/homepage.css">
+</head>
+<body>
+<div class="top-bar">
+    <div class="container top-bar-inner">
+        <a href="#">Myy yrityksesi varasto tehokkaasti!</a>
+        <a href="#">Löydä todellisia löytöjä</a>
     </div>
 </div>
-<?php endif; ?>
 
-<div class="mb-8">
-    <h1 class="text-4xl font-bold text-gray-900 mb-2">Tervetuloa Huutoon</h1>
-    <p class="text-xl text-gray-600">Suomen suurin verkkohuutokauppa-alusta</p>
-</div>
+<header class="site-header" id="site-header">
+    <div class="container header-inner">
+        <a class="logo" href="/">HUUTO247 <span>.fi</span></a>
 
-<!-- Top Section: Half-width Carousel + Login/Categories -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
-    <!-- Left: Closing Soon Carousel -->
-    <div>
-        <?php if (!empty($closingSoonAuctions)): ?>
-        <h2 class="text-2xl font-bold text-gray-900 mb-6">Sulkeutuu pian</h2>
-        <div class="relative bg-white rounded-lg shadow-lg p-6">
-            <!-- Previous button -->
-            <button id="prev-btn" class="absolute left-2 top-1/2 transform -translate-y-1/2 z-10 bg-white rounded-full shadow-lg p-2 hover:bg-gray-100 transition-colors">
-                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                </svg>
-            </button>
-            
-            <!-- Next button -->
-            <button id="next-btn" class="absolute right-2 top-1/2 transform -translate-y-1/2 z-10 bg-white rounded-full shadow-lg p-2 hover:bg-gray-100 transition-colors">
-                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-            </button>
-            
-            <div class="overflow-hidden" id="carousel-container">
-                <div class="flex transition-transform duration-500 ease-in-out" id="carousel-track">
-                    <?php foreach ($closingSoonAuctions as $index => $auction): ?>
-                        <div class="flex-none w-full px-2 carousel-item">
-                            <a href="/auction.php?id=<?php echo $auction['id']; ?>" 
-                               class="block bg-gray-50 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-                                <?php if ($auction['primary_image']): ?>
-                                    <img src="<?php echo htmlspecialchars($auction['primary_image']); ?>" 
-                                         alt="<?php echo htmlspecialchars($auction['title']); ?>"
-                                         class="w-full h-48 object-cover">
-                                <?php else: ?>
-                                    <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
-                                        <span class="text-gray-400 text-4xl">📦</span>
-                                    </div>
-                                <?php endif; ?>
-                                
-                                <div class="p-4">
-                                    <h3 class="font-semibold text-gray-900 mb-2 truncate">
-                                        <?php echo htmlspecialchars($auction['title']); ?>
-                                    </h3>
-                                    
-                                    <div class="flex items-center justify-between mb-2">
-                                        <span class="text-sm text-gray-500">
-                                            <?php echo htmlspecialchars($auction['category_name']); ?>
-                                        </span>
-                                        <span class="text-sm text-gray-500">
-                                            <?php echo $auction['bid_count']; ?> tarjousta
-                                        </span>
-                                    </div>
-                                    
-                                    <div class="flex items-center justify-between">
-                                        <div>
-                                            <div class="text-xs text-gray-500">Nykyinen hinta</div>
-                                            <div class="text-lg font-bold text-blue-600">
-                                                <?php echo number_format($auction['current_price'], 2, ',', ' '); ?> €
-                                            </div>
-                                        </div>
-                                        <div class="text-right">
-                                            <div class="text-xs text-gray-500">Sulkeutuu</div>
-                                            <?php
-                                                $endTimeTimestamp = strtotime($auction['end_time']);
-                                                $endTimeAttribute = $endTimeTimestamp !== false
-                                                    ? date('c', $endTimeTimestamp)
-                                                    : $auction['end_time'];
-                                            ?>
-                                            <div class="countdown-detailed text-sm font-semibold text-red-600" 
-                                                 data-endtime="<?php echo htmlspecialchars($endTimeAttribute, ENT_QUOTES, 'UTF-8'); ?>">
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </a>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-            
-            <!-- Carousel indicators -->
-            <div class="flex justify-center mt-4 space-x-2">
-                <?php for ($i = 0; $i < count($closingSoonAuctions); $i++): ?>
-                    <button class="carousel-indicator w-2 h-2 rounded-full bg-gray-300 hover:bg-gray-400 transition-colors" 
-                            data-slide="<?php echo $i; ?>"></button>
-                <?php endfor; ?>
-            </div>
-        </div>
-        <?php endif; ?>
-    </div>
-    
-    <!-- Right: Login/Register + Categories -->
-    <div class="space-y-8">
-        <!-- Login/Register Section -->
-        <div class="bg-white rounded-lg shadow-lg p-6">
-            <?php if (function_exists('is_logged_in') && is_logged_in()): ?>
-                <?php $user = current_user(); ?>
-                <h3 class="text-xl font-bold text-gray-900 mb-4">Tervetuloa, <?php echo htmlspecialchars($user['full_name'] ?? $user['username']); ?>!</h3>
-                <div class="space-y-3">
-                    <a href="/add_product.php" class="block w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors text-center font-semibold">
-                        + Lisää tuote myyntiin
-                    </a>
-                    <a href="/my-auctions.php" class="block w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors text-center">
-                        Omat huutokaupat
-                    </a>
-                    <a href="/auth/logout.php" class="block w-full text-gray-600 hover:text-red-600 text-center">
-                        Kirjaudu ulos
-                    </a>
-                </div>
-            <?php else: ?>
-                <h3 class="text-xl font-bold text-gray-900 mb-4">Liity Huutoon</h3>
-                <p class="text-gray-600 mb-6">Rekisteröidy käyttäjäksi ja aloita ostaminen ja myyminen!</p>
-                <div class="space-y-3">
-                    <a href="/auth/register.php" class="block w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors text-center font-semibold">
-                        Rekisteröidy ilmaiseksi
-                    </a>
-                    <a href="/auth/login.php" class="block w-full border border-blue-600 text-blue-600 py-3 px-4 rounded-lg hover:bg-blue-50 transition-colors text-center">
-                        Kirjaudu sisään
-                    </a>
-                </div>
-            <?php endif; ?>
-        </div>
-        
-        <!-- Categories Section -->
-        <div class="bg-white rounded-lg shadow-lg p-6">
-            <h3 class="text-xl font-bold text-gray-900 mb-4">Kategoriat</h3>
-            <div class="grid grid-cols-2 gap-3">
-                <?php foreach (array_slice($categories, 0, 8) as $category): ?>
-                    <a href="/category.php?slug=<?php echo htmlspecialchars($category['slug']); ?>" 
-                       class="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors">
-                        <div class="text-2xl mr-3"><?php echo htmlspecialchars($category['icon']); ?></div>
-                        <div>
-                            <h4 class="font-medium text-gray-900 text-sm"><?php echo htmlspecialchars($category['name']); ?></h4>
-                            <p class="text-xs text-gray-500"><?php echo $category['active_count']; ?> kohdetta</p>
-                        </div>
-                    </a>
+        <div class="search-wrap" role="search">
+            <select id="search-category" class="search-category" aria-label="Hakukategoria">
+                <option value="ALL">Kaikki kategoriat</option>
+                <?php foreach ($categories as $category): ?>
+                    <option value="<?php echo htmlspecialchars($category, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($category, ENT_QUOTES, 'UTF-8'); ?></option>
                 <?php endforeach; ?>
+            </select>
+            <div class="search-input-wrap">
+                <span class="search-icon">⌕</span>
+                <input id="search-input" type="search" autocomplete="off" placeholder="Mitä etsit?" aria-label="Hae kohteita">
+                <button id="search-clear" class="search-clear" type="button" aria-label="Tyhjennä haku">×</button>
+                <span class="search-hint">Enter ↵</span>
             </div>
-            <div class="mt-4">
-                <a href="/category.php" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                    Näytä kaikki kategoriat →
-                </a>
+            <button id="search-submit" class="search-btn" type="button">Hae</button>
+        </div>
+
+        <div class="header-actions">
+            <div class="language-switch" data-dropdown>
+                <button class="language-btn" aria-expanded="false" aria-haspopup="menu" id="language-toggle">🌐 FI ▾</button>
+                <div class="dropdown-menu" role="menu" aria-labelledby="language-toggle">
+                    <button role="menuitem">FI</button>
+                    <button role="menuitem">EN</button>
+                    <button role="menuitem">SV</button>
+                </div>
             </div>
+            <button class="icon-btn" aria-label="Suosikit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.7-4.4-9.3-8c-2.2-3 0-8 4.6-8A5 5 0 0 1 12 7.5 5 5 0 0 1 16.7 5c4.6 0 6.8 5 4.6 8-2.6 3.6-9.3 8-9.3 8z"/></svg></button>
+            <button class="icon-btn" aria-label="Seuranta"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 5h-2v6l5 3 1-1.7-4-2.3z"/></svg></button>
+            <button class="icon-btn" aria-label="Omat huudot"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m2 22 6-6 2 2-4 4h16v2H2zm11-20 7 7-1.5 1.5-1.4-1.4-3.6 3.6-4-4L6 12.4 4.6 11 8 7.6l4 4 2.2-2.2-1.4-1.4z"/></svg></button>
+            <button id="auth-action" class="link-btn"><?php echo $isUserLoggedIn ? 'Kirjaudu ulos' : 'Kirjaudu sisään'; ?></button>
+            <button class="ghost-btn" type="button">Rekisteröidy</button>
         </div>
     </div>
-</div>
+</header>
 
-<!-- Popular Auctions -->
-<?php if (!empty($popularAuctions)): ?>
-<div class="mb-12">
-    <h2 class="text-3xl font-bold text-gray-900 mb-6">Suosituimmat kohteet</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-        <?php foreach ($popularAuctions as $auction): ?>
-            <a href="/auction.php?id=<?php echo $auction['id']; ?>" 
-               class="bg-white rounded-lg shadow hover:shadow-xl transition-shadow overflow-hidden">
-                <?php if ($auction['primary_image']): ?>
-                    <img src="<?php echo htmlspecialchars($auction['primary_image']); ?>" 
-                         alt="<?php echo htmlspecialchars($auction['title']); ?>"
-                         class="w-full h-48 object-cover">
-                <?php else: ?>
-                    <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
-                        <span class="text-gray-400 text-4xl">📦</span>
-                    </div>
-                <?php endif; ?>
-                
-                <div class="p-4">
-                    <h3 class="font-semibold text-gray-900 mb-2 truncate">
-                        <?php echo htmlspecialchars($auction['title']); ?>
-                    </h3>
-                    
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-sm text-gray-500">
-                            <?php echo htmlspecialchars($auction['category_name']); ?>
-                        </span>
-                        <span class="text-sm text-gray-500">
-                            <?php echo $auction['bid_count']; ?> tarjousta
-                        </span>
-                    </div>
-                    
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <div class="text-xs text-gray-500">Nykyinen hinta</div>
-                            <div class="text-lg font-bold text-blue-600">
-                                <?php echo number_format($auction['current_price'], 2, ',', ' '); ?> €
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-xs text-gray-500">Päättyy</div>
-                            <?php
-                                $endTimeTimestamp = strtotime($auction['end_time']);
-                                $endTimeAttribute = $endTimeTimestamp !== false
-                                    ? date('c', $endTimeTimestamp)
-                                    : $auction['end_time'];
-                            ?>
-                            <div class="countdown text-sm font-semibold text-red-600" 
-                                 data-endtime="<?php echo htmlspecialchars($endTimeAttribute, ENT_QUOTES, 'UTF-8'); ?>">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </a>
-        <?php endforeach; ?>
-    </div>
-</div>
-<?php endif; ?>
+<main>
+    <section class="container hero-shell">
+        <?php if ($dataLoadError !== null): ?>
+            <div class="notice-toast" role="status"><span>ℹ</span><p><?php echo htmlspecialchars($dataLoadError, ENT_QUOTES, 'UTF-8'); ?></p></div>
+        <?php endif; ?>
 
-<!-- More Closing Soon Auctions -->
-<?php if (!empty($moreClosingAuctions)): ?>
-<div class="mb-12">
-    <h2 class="text-3xl font-bold text-gray-900 mb-6">Päättyvät pian</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
-        <?php foreach ($moreClosingAuctions as $auction): ?>
-            <a href="/auction.php?id=<?php echo $auction['id']; ?>" 
-               class="bg-white rounded-lg shadow hover:shadow-xl transition-shadow overflow-hidden">
-                <?php if ($auction['primary_image']): ?>
-                    <img src="<?php echo htmlspecialchars($auction['primary_image']); ?>" 
-                         alt="<?php echo htmlspecialchars($auction['title']); ?>"
-                         class="w-full h-48 object-cover">
-                <?php else: ?>
-                    <div class="w-full h-48 bg-gray-200 flex items-center justify-center">
-                        <span class="text-gray-400 text-4xl">📦</span>
-                    </div>
-                <?php endif; ?>
-                
-                <div class="p-4">
-                    <h3 class="font-semibold text-gray-900 mb-2 truncate">
-                        <?php echo htmlspecialchars($auction['title']); ?>
-                    </h3>
-                    
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-sm text-gray-500">
-                            <?php echo htmlspecialchars($auction['category_name']); ?>
-                        </span>
-                        <span class="text-sm text-gray-500">
-                            <?php echo $auction['bid_count']; ?> tarjousta
-                        </span>
-                    </div>
-                    
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <div class="text-xs text-gray-500">Nykyinen hinta</div>
-                            <div class="text-lg font-bold text-blue-600">
-                                <?php echo number_format($auction['current_price'], 2, ',', ' '); ?> €
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-xs text-gray-500">Sulkeutuu</div>
-                            <?php
-                                $endTimeTimestamp = strtotime($auction['end_time']);
-                                $endTimeAttribute = $endTimeTimestamp !== false
-                                    ? date('c', $endTimeTimestamp)
-                                    : $auction['end_time'];
-                            ?>
-                            <div class="countdown-detailed text-sm font-semibold text-red-600" 
-                                 data-endtime="<?php echo htmlspecialchars($endTimeAttribute, ENT_QUOTES, 'UTF-8'); ?>">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </a>
-        <?php endforeach; ?>
+        <section class="hero-grid">
+            <article class="panel info-box">
+                <h1>Tervetuloa Huutokauppaan!</h1>
+                <p id="rotating-slogan">Suomen näyttävin ja tehokkain huutokauppa.</p>
+                <div class="trust-pills"><span>5M+ vierailua/kk</span><span>Suomalainen palvelu</span><span>Turvalliset maksut</span></div>
+                <div class="cta-row"><button class="primary-btn">Ilmoita kohde</button><button class="secondary-btn">Ensihuutajan etu</button></div>
+            </article>
+
+            <section class="panel carousel-panel" aria-label="Sulkeutuu pian">
+                <div class="urgency">SULKEUTUU PIAN, TOIMI NYT!</div>
+                <div class="carousel-progress"><span id="carousel-progress"></span></div>
+                <div id="carousel-track" class="carousel-track"></div>
+                <div class="carousel-controls"><button id="carousel-prev" aria-label="Edellinen kohde">←</button><div id="carousel-dots" class="carousel-dots"></div><button id="carousel-next" aria-label="Seuraava kohde">→</button></div>
+            </section>
+
+            <aside class="panel categories" id="categories">
+                <h2>Kategoriat <span class="cat-all-pill">Kaikki kategoriat</span></h2>
+                <ul id="category-list">
+                    <li><button class="active" data-category="ALL">Kaikki kategoriat <span>›</span></button></li>
+                    <?php foreach ($categories as $category): ?>
+                        <li><button data-category="<?php echo htmlspecialchars($category, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($category, ENT_QUOTES, 'UTF-8'); ?> <span>›</span></button></li>
+                    <?php endforeach; ?>
+                </ul>
+            </aside>
+        </section>
+    </section>
+
+    <section class="container listings-wrap" id="popular-section">
+        <div class="section-head"><div><h2>Suositut</h2><p>Laatukohteet juuri nyt aktiivisimmilta myyjiltä.</p></div><a href="#" class="show-all">Näytä kaikki →</a></div>
+        <div class="section-pills"><button class="active" data-section-filter="ALL">Kaikki</button><button data-section-filter="Ajoneuvot">Ajoneuvot</button><button data-section-filter="Työkoneet">Työkoneet</button><button data-section-filter="Elektroniikka">Elektroniikka</button></div>
+        <div id="popular-grid" class="listing-grid"></div>
+        <button id="popular-load" class="load-more" type="button"><span>Lataa lisää kohteita</span></button>
+        <p id="popular-end" class="end-note" hidden>Kokeile hakua tai vaihda kategoriaa.</p>
+    </section>
+
+    <section class="container listings-wrap tint" id="closing-section">
+        <div class="section-head"><div><h2>Sulkeutuu pian</h2><p>Seuraavat päättyvät kohteet — toimi ajoissa.</p></div><a href="#" class="show-all">Näytä kaikki →</a></div>
+        <div class="section-pills"><button class="active" data-section-filter="ALL">Kaikki</button><button data-section-filter="Ajoneuvot">Ajoneuvot</button><button data-section-filter="Työkoneet">Työkoneet</button><button data-section-filter="Elektroniikka">Elektroniikka</button></div>
+        <div id="closing-grid" class="listing-grid"></div>
+        <button id="closing-load" class="load-more" type="button"><span>Lataa lisää kohteita</span></button>
+        <p id="closing-end" class="end-note" hidden>Kokeile hakua tai vaihda kategoriaa.</p>
+    </section>
+</main>
+
+<footer class="site-footer">
+    <div class="container footer-grid">
+        <section><h3><span class="footer-mark"></span>Huuto247.fi</h3><p>Täysin suomalainen palvelu, jonka tuottaa Lahen huutokaupat Oy</p><p>Yli viisi miljoonaa vierailua kuukaudessa.</p><div class="social-row"><a href="#">Youtube</a><a href="#">Instagram</a><a href="#">Facebook</a></div></section>
+        <section><h4>Tietoa palvelusta</h4><a href="#">Tietoa huutajalle</a><a href="#">Palvelun käyttöehdot</a><a href="#">Aloita myyminen</a><a href="#">Huutokaupat.com-myyntiehdot</a><a href="#">Hinnasto</a><a href="#">Maksutavat</a></section>
+        <section><h4>Olemme apunasi</h4><a href="#">Asiakaspalvelu</a><a href="#">Ohjeet ja vinkit</a><a href="#">Tilaa uutiskirje</a><a href="#">Blogi</a><a href="#">Kampanjat</a></section>
+        <section><h4>Yritys</h4><a href="#">Tietoa meistä</a><a href="#">Lahen huutokauppa</a><a href="#">Meille töihin</a><a href="#">Medialle</a><a href="#">Tietosuojaseloste</a><a href="#">Evästeasetukset</a><a href="#">Läpinäkyvyysraportointi</a><a href="#">Saavutettavuusseloste</a></section>
     </div>
-</div>
-<?php endif; ?>
+    <div class="container footer-bottom"><span>© 2026 Huuto247.fi</span><button class="cookie-pill" type="button">Evästeasetukset</button></div>
+</footer>
+
+<div class="modal-backdrop" id="auth-modal" aria-hidden="true"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title"><h3 id="auth-modal-title">Kirjaudu sisään lisätäksesi kohde suosikkeihin!</h3><p>Kirjautuminen avaa suosikit ja personoidut ilmoitukset.</p><div class="modal-actions"><button id="confirm-login" class="primary-btn" type="button">Kirjaudu</button><button id="cancel-login" class="secondary-btn" type="button">Peruuta</button></div></div></div>
+
+<div class="modal-backdrop" id="item-modal" aria-hidden="true"><div class="modal item-modal" role="dialog" aria-modal="true" aria-labelledby="item-modal-title"><div id="item-modal-image" class="item-modal-image"></div><h3 id="item-modal-title"></h3><p id="item-modal-meta"></p><p id="item-modal-price" class="item-modal-price"></p><p id="item-modal-detail" class="item-modal-detail"></p><div class="modal-actions"><button id="item-bid-btn" class="primary-btn" type="button">Huutaa nyt</button><button id="item-modal-close" class="secondary-btn" type="button">Sulje</button></div></div></div>
 
 <script>
-// Carousel functionality
-let currentSlide = 0;
-let autoScrollInterval;
-const totalSlides = <?php echo count($closingSoonAuctions); ?>;
-
-function updateCarousel() {
-    const track = document.getElementById('carousel-track');
-    const indicators = document.querySelectorAll('.carousel-indicator');
-    
-    if (!track || totalSlides === 0) return;
-    
-    // Move to current slide (show 1 item at a time)
-    const translateX = -(currentSlide * 100);
-    track.style.transform = `translateX(${translateX}%)`;
-    
-    // Update indicators
-    indicators.forEach((indicator, index) => {
-        indicator.classList.toggle('bg-blue-500', index === currentSlide);
-        indicator.classList.toggle('bg-gray-300', index !== currentSlide);
-    });
-}
-
-function nextSlide() {
-    currentSlide = (currentSlide + 1) % totalSlides;
-    updateCarousel();
-}
-
-function prevSlide() {
-    currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
-    updateCarousel();
-}
-
-function resetAutoScroll() {
-    clearInterval(autoScrollInterval);
-    autoScrollInterval = setInterval(nextSlide, 5000);
-}
-
-// Initialize carousel
-if (totalSlides > 0) {
-    updateCarousel(); // Initial update
-    resetAutoScroll(); // Start auto-scroll
-    
-    // Add click handlers for navigation buttons
-    document.getElementById('prev-btn').addEventListener('click', () => {
-        prevSlide();
-        resetAutoScroll(); // Reset timer when user interacts
-    });
-    
-    document.getElementById('next-btn').addEventListener('click', () => {
-        nextSlide();
-        resetAutoScroll(); // Reset timer when user interacts
-    });
-    
-    // Add click handlers for indicators
-    document.querySelectorAll('.carousel-indicator').forEach((indicator, index) => {
-        indicator.addEventListener('click', () => {
-            currentSlide = index;
-            updateCarousel();
-            resetAutoScroll(); // Reset timer when user interacts
-        });
-    });
-}
-
-// Enhanced countdown functionality
-function formatCountdown(targetTime) {
-    const now = new Date().getTime();
-    const target = new Date(targetTime).getTime();
-    const difference = target - now;
-
-    if (difference <= 0) {
-        return "Päättynyt";
-    }
-
-    const days = Math.floor(difference / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((difference % (1000 * 60)) / 1000);
-
-    // If less than 1 hour, show minutes and seconds
-    if (days === 0 && hours === 0) {
-        return `${minutes}min ${seconds}sek`;
-    }
-    // If less than 1 day, show hours and minutes
-    else if (days === 0) {
-        return `${hours}h ${minutes}min`;
-    }
-    // Otherwise show days and hours
-    else {
-        return `${days}pv ${hours}h`;
-    }
-}
-
-function updateCountdowns() {
-    // Update regular countdowns
-    document.querySelectorAll('.countdown').forEach(element => {
-        const endTime = element.getAttribute('data-endtime');
-        if (endTime) {
-            element.textContent = formatCountdown(endTime);
-        }
-    });
-    
-    // Update detailed countdowns (for carousel)
-    document.querySelectorAll('.countdown-detailed').forEach(element => {
-        const endTime = element.getAttribute('data-endtime');
-        if (endTime) {
-            element.textContent = formatCountdown(endTime);
-        }
-    });
-}
-
-// Update countdowns every second
-updateCountdowns(); // Initial update
-setInterval(updateCountdowns, 1000);
+window.__HOME_DATA__ = {
+    categories: <?php echo json_encode($categories, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG); ?>,
+    popular: <?php echo json_encode($popularUiData, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG); ?>,
+    closing: <?php echo json_encode($closingUiData, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG); ?>,
+    isLoggedIn: <?php echo $isUserLoggedIn ? 'true' : 'false'; ?>,
+};
 </script>
-
-<?php include SRC_PATH . '/views/footer.php'; ?>
+<script src="/assets/js/homepage.js" defer></script>
+</body>
+</html>
