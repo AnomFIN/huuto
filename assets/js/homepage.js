@@ -77,9 +77,8 @@
 
   const sanitizeText = (value, maxLen = 80) => String(value ?? '').trim().slice(0, maxLen);
   const decodeHtmlEntities = (text) => {
-    const textarea = document.createElement('textarea');
-    textarea.innerHTML = text;
-    return textarea.value;
+    const doc = new DOMParser().parseFromString(text, 'text/html');
+    return doc.documentElement.textContent;
   };
   const parseDateMs = (value) => {
     const parsed = Date.parse(String(value || ''));

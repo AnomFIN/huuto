@@ -42,10 +42,13 @@ function normalizeAuctionForUi(array $auction, array $fallbackCategories): array
     $category = trim((string) ($auction['category_name'] ?? $fallbackCategories[array_rand($fallbackCategories)]));
     $location = trim((string) ($auction['location'] ?? 'Helsinki'));
     
-    // Apply htmlspecialchars to all user-controlled text fields
+    // Apply htmlspecialchars to user-controlled text fields (from database)
     $title = htmlspecialchars($title, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-    $category = htmlspecialchars($category, ENT_QUOTES | ENT_HTML5, 'UTF-8');
     $location = htmlspecialchars($location, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    // Only sanitize category if it comes from database (not from trusted fallback array)
+    if (isset($auction['category_name'])) {
+        $category = htmlspecialchars($category, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    }
 
     $endTimeRaw = isset($auction['end_time']) ? strtotime((string) $auction['end_time']) : false;
     $endTimestamp = ($endTimeRaw && $endTimeRaw > time()) ? $endTimeRaw : time() + random_int(3600, 60 * 60 * 24 * 6);
