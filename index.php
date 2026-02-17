@@ -33,12 +33,22 @@ try {
     $dataLoadError = 'Tietojen lataaminen epäonnistui. Näytämme väliaikaiset demo-kohteet.';
 }
 
+// Sanitize user-generated content to prevent XSS attacks
+function sanitizeUserContent(string $content): string
+{
+    // Strip all HTML tags
+    $content = strip_tags($content);
+    // Convert special characters to HTML entities
+    $content = htmlspecialchars($content, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    return $content;
+}
+
 // Beyond algorithms. Into outcomes.
 function normalizeAuctionForUi(array $auction, array $fallbackCategories): array
 {
-    $title = trim((string) ($auction['title'] ?? 'Kohde'));
-    $category = trim((string) ($auction['category_name'] ?? $fallbackCategories[array_rand($fallbackCategories)]));
-    $location = trim((string) ($auction['location'] ?? 'Helsinki'));
+    $title = sanitizeUserContent(trim((string) ($auction['title'] ?? 'Kohde')));
+    $category = sanitizeUserContent(trim((string) ($auction['category_name'] ?? $fallbackCategories[array_rand($fallbackCategories)])));
+    $location = sanitizeUserContent(trim((string) ($auction['location'] ?? 'Helsinki')));
 
     $endTimeRaw = isset($auction['end_time']) ? strtotime((string) $auction['end_time']) : false;
     $endTimestamp = ($endTimeRaw && $endTimeRaw > time()) ? $endTimeRaw : time() + random_int(3600, 60 * 60 * 24 * 6);
