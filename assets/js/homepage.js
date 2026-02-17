@@ -177,7 +177,7 @@
     nodes.itemTitle.textContent = decodeHtmlEntities(sanitizeText(item.title, 100));
     nodes.itemMeta.textContent = `${decodeHtmlEntities(sanitizeText(item.location, 32))} • ${decodeHtmlEntities(sanitizeText(item.category, 24))} • ${formatCountdown(item.endTime)}`;
     nodes.itemPrice.textContent = `Hinta nyt ${formatCurrency(item.priceNow)}`;
-    nodes.itemDetail.textContent = `Myyjä: ${decodeHtmlEntities(sanitizeText(item.seller || 'Premium Seller', 30))} • Toimitus: Nouto tai toimitus • Tarjouksia ${item.bidsCount}`;
+    nodes.itemDetail.textContent = `Myyjä: ${sanitizeText(item.seller || 'Premium Seller', 30)} • Toimitus: Nouto tai toimitus • Tarjouksia ${item.bidsCount}`;
     nodes.itemBidBtn.textContent = `Huutaa nyt ${formatCurrency(item.priceNow + item.minIncrement)} (+${formatCurrency(item.minIncrement)})`;
     nodes.itemModal.classList.add('open');
     nodes.itemModal.setAttribute('aria-hidden', 'false');
