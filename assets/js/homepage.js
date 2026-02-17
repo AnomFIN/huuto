@@ -80,6 +80,8 @@
     const doc = new DOMParser().parseFromString(text, 'text/html');
     return doc.documentElement.textContent;
   };
+  // Combined helper for sanitizing and decoding HTML entities
+  const sanitizeAndDecode = (value, maxLen = 80) => decodeHtmlEntities(sanitizeText(value, maxLen));
   const parseDateMs = (value) => {
     const parsed = Date.parse(String(value || ''));
     return Number.isFinite(parsed) ? parsed : Date.now();
@@ -173,11 +175,11 @@
   const openItemModal = (item) => {
     if (!item) return;
     state.activeItemId = item.id;
-    nodes.itemImage.textContent = decodeHtmlEntities(sanitizeText(item.imageLabel || item.title, 28));
-    nodes.itemTitle.textContent = decodeHtmlEntities(sanitizeText(item.title, 100));
-    nodes.itemMeta.textContent = `${decodeHtmlEntities(sanitizeText(item.location, 32))} • ${decodeHtmlEntities(sanitizeText(item.category, 24))} • ${formatCountdown(item.endTime)}`;
+    nodes.itemImage.textContent = sanitizeAndDecode(item.imageLabel || item.title, 28);
+    nodes.itemTitle.textContent = sanitizeAndDecode(item.title, 100);
+    nodes.itemMeta.textContent = `${sanitizeAndDecode(item.location, 32)} • ${sanitizeAndDecode(item.category, 24)} • ${formatCountdown(item.endTime)}`;
     nodes.itemPrice.textContent = `Hinta nyt ${formatCurrency(item.priceNow)}`;
-    nodes.itemDetail.textContent = `Myyjä: ${sanitizeText(item.seller || 'Premium Seller', 30)} • Toimitus: Nouto tai toimitus • Tarjouksia ${item.bidsCount}`;
+    nodes.itemDetail.textContent = `Myyjä: ${sanitizeAndDecode(item.seller || 'Premium Seller', 30)} • Toimitus: Nouto tai toimitus • Tarjouksia ${item.bidsCount}`;
     nodes.itemBidBtn.textContent = `Huutaa nyt ${formatCurrency(item.priceNow + item.minIncrement)} (+${formatCurrency(item.minIncrement)})`;
     nodes.itemModal.classList.add('open');
     nodes.itemModal.setAttribute('aria-hidden', 'false');
