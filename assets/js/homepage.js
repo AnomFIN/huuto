@@ -351,21 +351,17 @@
   nodes.closingLoad.addEventListener('click', () => loadMore(nodes.closingLoad, nodes.closingGrid, 'visibleClosing'));
 
   nodes.authAction.addEventListener('click', () => {
+    // Delegate authentication to the server-side system.
     if (!state.isLoggedIn) {
-      openAuthModal();
+      window.location.href = '/auth/login.php';
       return;
     }
-    state.isLoggedIn = false;
-    state.favorites.clear();
-    saveLocalState();
-    redraw();
+    window.location.href = '/auth/logout.php';
   });
 
   nodes.confirmLogin.addEventListener('click', () => {
-    state.isLoggedIn = true;
-    saveLocalState();
-    closeAuthModal();
-    redraw();
+    // Confirming login should also go through the real authentication flow.
+    window.location.href = '/auth/login.php';
   });
   nodes.cancelLogin.addEventListener('click', closeAuthModal);
 
