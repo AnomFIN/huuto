@@ -45,7 +45,9 @@ function sanitizeUserContent(string $content): string
 function normalizeAuctionForUi(array $auction, array $fallbackCategories): array
 {
     $title = sanitizeUserContent(trim((string) ($auction['title'] ?? 'Kohde')));
-    $category = sanitizeUserContent(trim((string) ($auction['category_name'] ?? $fallbackCategories[array_rand($fallbackCategories)])));
+    $category = isset($auction['category_name']) 
+        ? sanitizeUserContent(trim((string) $auction['category_name']))
+        : trim((string) $fallbackCategories[array_rand($fallbackCategories)]);
     $location = sanitizeUserContent(trim((string) ($auction['location'] ?? 'Helsinki')));
 
     $endTimeRaw = isset($auction['end_time']) ? strtotime((string) $auction['end_time']) : false;
