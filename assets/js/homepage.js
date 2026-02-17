@@ -195,6 +195,11 @@
     nodes.authModal.setAttribute('aria-hidden', 'true');
   };
 
+  const getCarouselSourceLength = () => {
+    const source = applyFilters(payload.closing).slice(0, 12);
+    return source.length || 1;
+  };
+
   const renderCarousel = () => {
     const source = applyFilters(payload.closing).slice(0, 12);
     if (!source.length) {
@@ -229,7 +234,8 @@
   };
 
   const advanceCarousel = () => {
-    state.carouselStart = (state.carouselStart + 1) % 5;
+    const length = getCarouselSourceLength();
+    state.carouselStart = (state.carouselStart + 1) % length;
     renderCarousel();
     resetCarouselProgress();
   };
@@ -384,7 +390,8 @@
   });
 
   nodes.carouselPrev.addEventListener('click', () => {
-    state.carouselStart = (state.carouselStart - 1 + 5) % 5;
+    const length = getCarouselSourceLength();
+    state.carouselStart = (state.carouselStart - 1 + length) % length;
     renderCarousel();
     resetCarouselProgress();
   });
@@ -409,7 +416,8 @@
     if (Math.abs(delta) < 35) return;
     if (delta < 0) advanceCarousel();
     else {
-      state.carouselStart = (state.carouselStart - 1 + 5) % 5;
+      const length = getCarouselSourceLength();
+      state.carouselStart = (state.carouselStart - 1 + length) % length;
       renderCarousel();
       resetCarouselProgress();
     }
