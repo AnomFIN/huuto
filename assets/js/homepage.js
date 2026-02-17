@@ -239,6 +239,13 @@
     resetCarouselProgress();
   };
 
+  const retreatCarousel = () => {
+    if (state.carouselSourceLength === 0) return;
+    state.carouselStart = (state.carouselStart - 1 + state.carouselSourceLength) % state.carouselSourceLength;
+    renderCarousel();
+    resetCarouselProgress();
+  };
+
   const restartCarouselTimer = () => {
     if (carouselTimerId) clearInterval(carouselTimerId);
     carouselTimerId = setInterval(() => {
@@ -388,12 +395,7 @@
     nodes.languageToggle.setAttribute('aria-expanded', String(open));
   });
 
-  nodes.carouselPrev.addEventListener('click', () => {
-    if (state.carouselSourceLength === 0) return;
-    state.carouselStart = (state.carouselStart - 1 + state.carouselSourceLength) % state.carouselSourceLength;
-    renderCarousel();
-    resetCarouselProgress();
-  });
+  nodes.carouselPrev.addEventListener('click', retreatCarousel);
   nodes.carouselNext.addEventListener('click', advanceCarousel);
   nodes.carouselDots.addEventListener('click', (event) => {
     const dot = event.target.closest('[data-dot]');
@@ -414,12 +416,7 @@
     touchStartX = null;
     if (Math.abs(delta) < 35) return;
     if (delta < 0) advanceCarousel();
-    else {
-      if (state.carouselSourceLength === 0) return;
-      state.carouselStart = (state.carouselStart - 1 + state.carouselSourceLength) % state.carouselSourceLength;
-      renderCarousel();
-      resetCarouselProgress();
-    }
+    else retreatCarousel();
   }, { passive: true });
 
   document.addEventListener('keydown', (event) => {
