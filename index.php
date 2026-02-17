@@ -147,7 +147,7 @@ $isUserLoggedIn = function_exists('is_logged_in') && is_logged_in();
             <button class="icon-btn" aria-label="Suosikit"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.7-4.4-9.3-8c-2.2-3 0-8 4.6-8A5 5 0 0 1 12 7.5 5 5 0 0 1 16.7 5c4.6 0 6.8 5 4.6 8-2.6 3.6-9.3 8-9.3 8z"/></svg></button>
             <button class="icon-btn" aria-label="Seuranta"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 5h-2v6l5 3 1-1.7-4-2.3z"/></svg></button>
             <button class="icon-btn" aria-label="Omat huudot"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m2 22 6-6 2 2-4 4h16v2H2zm11-20 7 7-1.5 1.5-1.4-1.4-3.6 3.6-4-4L6 12.4 4.6 11 8 7.6l4 4 2.2-2.2-1.4-1.4z"/></svg></button>
-            <button id="auth-action" class="link-btn"><?php echo $isUserLoggedIn ? 'Kirjaudu ulos' : 'Kirjaudu sisään'; ?></button>
+            <a id="auth-action" class="link-btn" href="<?php echo $isUserLoggedIn ? '/auth/logout.php' : '/auth/login.php'; ?>"><?php echo $isUserLoggedIn ? 'Kirjaudu ulos' : 'Kirjaudu sisään'; ?></a>
             <button class="ghost-btn" type="button">Rekisteröidy</button>
         </div>
     </div>
