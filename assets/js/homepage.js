@@ -66,6 +66,7 @@
     visiblePopular: config.initialVisible,
     visibleClosing: config.initialVisible,
     carouselStart: 0,
+    carouselSourceLength: 0,
     sloganIndex: 0,
     carouselPaused: false,
     activeItemId: null,
@@ -195,13 +196,9 @@
     nodes.authModal.setAttribute('aria-hidden', 'true');
   };
 
-  const getCarouselSourceLength = () => {
-    const source = applyFilters(payload.closing).slice(0, 12);
-    return source.length || 1;
-  };
-
   const renderCarousel = () => {
     const source = applyFilters(payload.closing).slice(0, 12);
+    state.carouselSourceLength = source.length || 1;
     if (!source.length) {
       nodes.carouselTrack.innerHTML = '';
       nodes.carouselDots.innerHTML = '';
@@ -234,8 +231,7 @@
   };
 
   const advanceCarousel = () => {
-    const length = getCarouselSourceLength();
-    state.carouselStart = (state.carouselStart + 1) % length;
+    state.carouselStart = (state.carouselStart + 1) % state.carouselSourceLength;
     renderCarousel();
     resetCarouselProgress();
   };
@@ -390,8 +386,7 @@
   });
 
   nodes.carouselPrev.addEventListener('click', () => {
-    const length = getCarouselSourceLength();
-    state.carouselStart = (state.carouselStart - 1 + length) % length;
+    state.carouselStart = (state.carouselStart - 1 + state.carouselSourceLength) % state.carouselSourceLength;
     renderCarousel();
     resetCarouselProgress();
   });
@@ -416,8 +411,7 @@
     if (Math.abs(delta) < 35) return;
     if (delta < 0) advanceCarousel();
     else {
-      const length = getCarouselSourceLength();
-      state.carouselStart = (state.carouselStart - 1 + length) % length;
+      state.carouselStart = (state.carouselStart - 1 + state.carouselSourceLength) % state.carouselSourceLength;
       renderCarousel();
       resetCarouselProgress();
     }
