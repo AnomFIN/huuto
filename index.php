@@ -77,7 +77,7 @@ function normalizeAuctionForUi(array $auction, array $fallbackCategories): array
         'minIncrement' => (float) (($priceNow >= 1000) ? 20 : (($priceNow >= 200) ? 10 : 5)),
         'isAd' => false,
         'imageLabel' => mb_substr($title !== '' ? $title : 'Huuto247', 0, 24),
-        'seller' => 'Verified-myyjä',
+        'seller' => 'Verified-myyjä', // Hardcoded trusted value, not from database
     ];
 }
 
