@@ -75,7 +75,7 @@
   let observer = null;
   let carouselTimerId = null;
 
-  const sanitizeText = (value, maxLen = 80) => String(value ?? '').replace(/[<>]/g, '').trim().slice(0, maxLen);
+  const sanitizeText = (value, maxLen = 80) => String(value ?? '').trim().slice(0, maxLen);
   const parseDateMs = (value) => {
     const parsed = Date.parse(String(value || ''));
     return Number.isFinite(parsed) ? parsed : Date.now();
