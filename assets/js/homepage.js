@@ -199,7 +199,7 @@
   const renderCarousel = () => {
     const source = applyFilters(payload.closing).slice(0, 12);
     if (!source.length) {
-      state.carouselSourceLength = 1;
+      state.carouselSourceLength = 0;
       state.carouselStart = 0;
       nodes.carouselTrack.innerHTML = '';
       nodes.carouselDots.innerHTML = '';
@@ -233,6 +233,7 @@
   };
 
   const advanceCarousel = () => {
+    if (state.carouselSourceLength === 0) return;
     state.carouselStart = (state.carouselStart + 1) % state.carouselSourceLength;
     renderCarousel();
     resetCarouselProgress();
@@ -388,6 +389,7 @@
   });
 
   nodes.carouselPrev.addEventListener('click', () => {
+    if (state.carouselSourceLength === 0) return;
     state.carouselStart = (state.carouselStart - 1 + state.carouselSourceLength) % state.carouselSourceLength;
     renderCarousel();
     resetCarouselProgress();
@@ -413,6 +415,7 @@
     if (Math.abs(delta) < 35) return;
     if (delta < 0) advanceCarousel();
     else {
+      if (state.carouselSourceLength === 0) return;
       state.carouselStart = (state.carouselStart - 1 + state.carouselSourceLength) % state.carouselSourceLength;
       renderCarousel();
       resetCarouselProgress();
