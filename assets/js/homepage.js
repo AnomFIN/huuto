@@ -198,12 +198,14 @@
 
   const renderCarousel = () => {
     const source = applyFilters(payload.closing).slice(0, 12);
-    state.carouselSourceLength = source.length || 1;
     if (!source.length) {
+      state.carouselSourceLength = 1;
+      state.carouselStart = 0;
       nodes.carouselTrack.innerHTML = '';
       nodes.carouselDots.innerHTML = '';
       return;
     }
+    state.carouselSourceLength = source.length;
 
     const cards = [];
     for (let i = 0; i < 5; i += 1) {
