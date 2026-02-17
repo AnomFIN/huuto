@@ -1,5 +1,6 @@
 <?php
 // Application bootstrap: load shared configuration, autoloading and common setup.
+// Application bootstrap: load shared configuration, autoloading and common setup.
 require_once __DIR__ . '/bootstrap.php';
 
 $pageTitle = SITE_NAME . ' - Etusivu';
