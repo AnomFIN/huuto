@@ -338,11 +338,6 @@
   nodes.popularLoad.addEventListener('click', () => loadMore(nodes.popularLoad, nodes.popularGrid, 'visiblePopular'));
   nodes.closingLoad.addEventListener('click', () => loadMore(nodes.closingLoad, nodes.closingGrid, 'visibleClosing'));
 
-  nodes.authAction.addEventListener('click', (e) => {
-    // Let the link's href handle the navigation to /auth/login.php or /auth/logout.php
-    // No client-side auth state manipulation needed
-  });
-
   nodes.confirmLogin.addEventListener('click', () => {
     // Redirect to actual login page
     window.location.href = '/auth/login.php';

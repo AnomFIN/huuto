@@ -28,24 +28,32 @@ try {
 }
 
 // Normalize auction data for UI rendering
-function normalizeAuctionForUi(array $auction): array
+function normalizeAuctionForUi(array $auction): ?array
 {
+    // Skip auctions with invalid IDs
+    if (!isset($auction['id']) || !is_numeric($auction['id']) || (int)$auction['id'] <= 0) {
+        return null;
+    }
+
     $title = trim((string) ($auction['title'] ?? 'Kohde'));
     $category = trim((string) ($auction['category_name'] ?? 'Muut'));
     $location = trim((string) ($auction['location'] ?? 'Ei sijaintia'));
 
     $endTimeRaw = isset($auction['end_time']) ? strtotime((string) $auction['end_time']) : false;
-    $endTimestamp = ($endTimeRaw && $endTimeRaw > time()) ? $endTimeRaw : time() + 3600;
+    // Skip auctions with invalid or past end times
+    if (!$endTimeRaw || $endTimeRaw <= time()) {
+        return null;
+    }
 
     $priceNow = isset($auction['current_price']) ? (float) $auction['current_price'] : 0;
     $bidCount = isset($auction['bid_count']) ? (int) $auction['bid_count'] : 0;
 
     return [
-        'id' => (int) ($auction['id'] ?? 0),
+        'id' => (int) $auction['id'],
         'title' => mb_substr($title !== '' ? $title : 'Kohde', 0, 80),
         'location' => mb_substr($location !== '' ? $location : 'Ei sijaintia', 0, 40),
         'category' => mb_substr($category !== '' ? $category : 'Muut', 0, 40),
-        'endTime' => gmdate('c', $endTimestamp),
+        'endTime' => gmdate('c', $endTimeRaw),
         'priceNow' => round(max(0, $priceNow), 2),
         'bidsCount' => max(0, $bidCount),
         'minIncrement' => (float) (($priceNow >= 1000) ? 20 : (($priceNow >= 200) ? 10 : 5)),
@@ -62,7 +70,10 @@ function buildUiData(array $source): array
         if (!is_array($auction)) {
             continue;
         }
-        $items[] = normalizeAuctionForUi($auction);
+        $normalized = normalizeAuctionForUi($auction);
+        if ($normalized !== null) {
+            $items[] = $normalized;
+        }
     }
     return $items;
 }
