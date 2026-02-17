@@ -36,11 +36,9 @@ try {
 // Sanitize user-generated content to prevent XSS attacks
 function sanitizeUserContent(string $content): string
 {
-    // Strip all HTML tags
-    $content = strip_tags($content);
-    // Convert special characters to HTML entities
-    $content = htmlspecialchars($content, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-    return $content;
+    // Strip all HTML tags to prevent injection attacks
+    // JSON encoding with JSON_HEX_TAG will handle proper escaping of special characters
+    return strip_tags($content);
 }
 
 // Beyond algorithms. Into outcomes.
