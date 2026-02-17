@@ -38,20 +38,25 @@ try {
 function normalizeAuctionForUi(array $auction, array $fallbackCategories): array
 {
     // Sanitize user-generated content to prevent XSS attacks
-    $title = trim((string) ($auction['title'] ?? 'Kohde'));
-    $category = trim((string) ($auction['category_name'] ?? $fallbackCategories[array_rand($fallbackCategories)]));
-    $location = trim((string) ($auction['location'] ?? 'Helsinki'));
-    
-    // Apply htmlspecialchars only to user-controlled text fields from database
+    // Extract and sanitize title (only if from database)
     if (isset($auction['title'])) {
-        $title = htmlspecialchars($title, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $title = htmlspecialchars(trim((string) $auction['title']), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    } else {
+        $title = 'Kohde'; // Trusted default
     }
+    
+    // Extract and sanitize location (only if from database)
     if (isset($auction['location'])) {
-        $location = htmlspecialchars($location, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $location = htmlspecialchars(trim((string) $auction['location']), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    } else {
+        $location = 'Helsinki'; // Trusted default
     }
-    // Only sanitize category if it comes from database (not from trusted fallback array)
+    
+    // Extract and sanitize category (only if from database)
     if (isset($auction['category_name'])) {
-        $category = htmlspecialchars($category, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $category = htmlspecialchars(trim((string) $auction['category_name']), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    } else {
+        $category = $fallbackCategories[array_rand($fallbackCategories)]; // Trusted fallback
     }
 
     $endTimeRaw = isset($auction['end_time']) ? strtotime((string) $auction['end_time']) : false;

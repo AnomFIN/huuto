@@ -80,7 +80,7 @@
     const doc = new DOMParser().parseFromString(text, 'text/html');
     return doc.documentElement.textContent;
   };
-  // Combined helper for sanitizing and decoding HTML entities
+  // Combined helper: truncates text length and decodes HTML entities for safe textContent display
   const sanitizeAndDecode = (value, maxLen = 80) => decodeHtmlEntities(sanitizeText(value, maxLen));
   const parseDateMs = (value) => {
     const parsed = Date.parse(String(value || ''));
