@@ -26,12 +26,12 @@ try {
     $auctionModel = new Auction();
     $popularAuctions = $auctionModel->getPopularAuctions(120);
     $closingSoonAuctions = $auctionModel->getClosingSoonAuctions(120);
-} catch (Throwable $error) {
+} catch (Exception $error) {
     error_log(json_encode([
         'event' => 'homepage_data_load_failed',
         'message' => $error->getMessage(),
     ], JSON_UNESCAPED_UNICODE));
-    $dataLoadError = 'Tietojen lataaminen epäonnistui. Näytämme väliaikaiset demo-kohteet.';
+    $dataLoadError = 'Tietojen lataaminen epäonnistui. Emme voineet ladata huutokohteita.';
 }
 
 // Beyond algorithms. Into outcomes.
