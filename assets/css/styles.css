@@ -1,45 +1,58 @@
 .carousel {
-  width: 100%;
-  height: 600px;
-  position: relative;
+  display: flex;
   overflow: hidden;
 }
 
 .carousel-item {
+  min-width: 100%;
   transition: transform 0.5s ease;
+}
+
+.carousel-container {
+  position: relative;
+}
+
+.carousel-controls {
   position: absolute;
-  top: 0;
+  top: 50%;
   left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  transform: translateY(-50%);
+}
+
+.carousel-button {
+  background-color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+.carousel-button:hover {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 auto;
+  max-width: 1200px;
+}
+
+.layout-header {
+  padding: 10px 20px;
+  background-color: #f7f7f7;
   width: 100%;
-  height: 100%;
-  background: linear-gradient(45deg, rgba(255, 204, 0, 0.8), rgba(255, 128, 0, 0.8));
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-  backdrop-filter: blur(5px);
 }
 
-.carousel-item img {
+.layout-content {
+  flex: 1;
   width: 100%;
-  height: auto;
-  border-radius: 10px;
 }
 
-.intro-card {
-  background: white;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  padding: 15px;
-  transition: transform 0.3s ease;
-}
-
-.intro-card:hover {
-  transform: scale(1.05);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-}
-
-.urgent-badge {
-  background: linear-gradient(90deg, rgba(255, 50, 50, 0.8), rgba(255, 150, 0, 0.8));
-  color: white;
-  padding: 5px 10px;
-  border-radius: 5px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+.layout-footer {
+  padding: 10px 20px;
+  background-color: #f7f7f7;
+  width: 100%;
 }
