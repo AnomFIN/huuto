@@ -249,19 +249,65 @@
   };
 
   const redraw = () => {
-    renderGrid({ source: payload.popular, gridNode: nodes.popularGrid, loadNode: nodes.popularLoad, endNode: nodes.popularEnd, visible: state.visiblePopular });
-    renderGrid({ source: payload.closing, gridNode: nodes.closingGrid, loadNode: nodes.closingLoad, endNode: nodes.closingEnd, visible: state.visibleClosing });
+    const popularSource = state.searchResults && Array.isArray(state.searchResults.popular) && state.query
+      ? state.searchResults.popular
+      : payload.popular;
+    const closingSource = state.searchResults && Array.isArray(state.searchResults.closing) && state.query
+      ? state.searchResults.closing
+      : payload.closing;
+
+    renderGrid({ source: popularSource, gridNode: nodes.popularGrid, loadNode: nodes.popularLoad, endNode: nodes.popularEnd, visible: state.visiblePopular });
+    renderGrid({ source: closingSource, gridNode: nodes.closingGrid, loadNode: nodes.closingLoad, endNode: nodes.closingEnd, visible: state.visibleClosing });
     renderCarousel();
     updateVisibleCountdowns();
     nodes.authAction.textContent = state.isLoggedIn ? 'Kirjaudu ulos' : 'Kirjaudu sisään';
   };
 
-  const applySearch = () => {
+  const performServerSearch = async (query, category) => {
+    const params = new URLSearchParams();
+    if (query) params.set('q', query);
+    if (category && category !== 'ALL') params.set('category', category);
+
+    try {
+      const response = await fetch(`/api/auctions/search?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Search request failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (!data || !Array.isArray(data.popular) || !Array.isArray(data.closing)) {
+        throw new Error('Search response has invalid shape');
+      }
+
+      return data;
+    } catch (err) {
+      console.error(JSON.stringify({ event: 'home_search_failed', message: err.message }));
+      return null;
+    }
+  };
+
+  const applySearch = async () => {
     state.query = sanitizeText(nodes.searchInput.value, 60);
     state.category = sanitizeText(nodes.searchCategory.value, 32) || 'ALL';
     nodes.categoryButtons.forEach((button) => button.classList.toggle('active', button.dataset.category === state.category));
+
     state.visiblePopular = config.initialVisible;
     state.visibleClosing = config.initialVisible;
+
+    // Clear previous search results before performing a new search
+    state.searchResults = null;
+
+    // Attempt server-side search; fall back to existing client-side behavior on failure
+    const results = await performServerSearch(state.query, state.category);
+    if (results) {
+      state.searchResults = results;
+    }
     redraw();
   };
 
@@ -340,6 +386,17 @@
 
   nodes.confirmLogin.addEventListener('click', () => {
     // Redirect to actual login page
+  nodes.authAction.addEventListener('click', () => {
+    // Delegate authentication to the server-side system.
+    if (!state.isLoggedIn) {
+      window.location.href = '/auth/login.php';
+      return;
+    }
+    window.location.href = '/auth/logout.php';
+  });
+
+  nodes.confirmLogin.addEventListener('click', () => {
+    // Confirming login should also go through the real authentication flow.
     window.location.href = '/auth/login.php';
   });
   nodes.cancelLogin.addEventListener('click', closeAuthModal);

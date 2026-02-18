@@ -1,5 +1,6 @@
 <?php
 // Application bootstrap: load shared configuration, autoloading and common setup.
+// Application bootstrap: load shared configuration, autoloading and common setup.
 require_once __DIR__ . '/bootstrap.php';
 
 $pageTitle = SITE_NAME . ' - Etusivu';
@@ -17,8 +18,8 @@ $dataLoadError = null;
 
 try {
     $auctionModel = new Auction();
-    $popularAuctions = $auctionModel->getPopularAuctions(30);
-    $closingSoonAuctions = $auctionModel->getClosingSoonAuctions(30);
+    $popularAuctions = $auctionModel->getPopularAuctions(120);
+    $closingSoonAuctions = $auctionModel->getClosingSoonAuctions(120);
 } catch (Exception $error) {
     error_log(json_encode([
         'event' => 'homepage_data_load_failed',
