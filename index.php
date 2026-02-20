@@ -57,8 +57,8 @@ function normalizeAuctionForUi(array $auction): ?array
     if (isset($auction['category_name'])) {
         $category = htmlspecialchars(trim((string) $auction['category_name']), ENT_QUOTES | ENT_HTML5, 'UTF-8');
     } else {
-        // $fallbackCategories contains only trusted hardcoded values (see $categories array at top of file)
-        $category = $fallbackCategories[array_rand($fallbackCategories)]; // Trusted fallback
+        // $categories contains only trusted values loaded at the top of this file
+        $category = $categories[array_rand($categories)]; // Trusted fallback
     }
 
     $endTimeRaw = isset($auction['end_time']) ? strtotime((string) $auction['end_time']) : false;
