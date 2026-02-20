@@ -273,7 +273,7 @@
 
   function updateCarouselProgress() {
     const elapsed = Math.max(0, performance.now() - state.carouselTickStartMs);
-    const ratio = state.carouselPaused ? elapsed / CAROUSEL_INTERVAL_MS : Math.min(1, elapsed / CAROUSEL_INTERVAL_MS);
+    const ratio = state.carouselPaused ? Math.min(1, elapsed / CAROUSEL_INTERVAL_MS) : elapsed / CAROUSEL_INTERVAL_MS;
     refs.carouselProgress.style.transform = `scaleX(${Math.max(0, 1 - ratio)})`;
     requestAnimationFrame(updateCarouselProgress);
   }
