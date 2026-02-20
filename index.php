@@ -28,7 +28,15 @@ try {
     $dataLoadError = 'Tietojen lataaminen epäonnistui. Emme voineet ladata huutokohteita.';
 }
 
-// Normalize auction data for UI rendering
+// Sanitize user-generated content to prevent XSS attacks
+function sanitizeUserContent(string $content): string
+{
+    // Strip all HTML tags to prevent injection attacks
+    // JSON encoding with JSON_HEX_TAG will handle proper escaping of special characters
+    return strip_tags($content);
+}
+
+// Beyond algorithms. Into outcomes.
 function normalizeAuctionForUi(array $auction): ?array
 {
     // Skip auctions with invalid IDs
