@@ -203,6 +203,15 @@
       state.carouselStart = 0;
       nodes.carouselTrack.innerHTML = '';
       nodes.carouselDots.innerHTML = '';
+      if (nodes.carouselProgress) {
+        // Reset carousel progress when there is no content
+        nodes.carouselProgress.style.transition = 'none';
+        nodes.carouselProgress.style.width = '0%';
+        nodes.carouselProgress.setAttribute('aria-hidden', 'true');
+        // Force reflow so future transitions (when content returns) work as expected
+        void nodes.carouselProgress.offsetWidth;
+        nodes.carouselProgress.style.transition = '';
+      }
       return;
     }
     state.carouselSourceLength = source.length;
