@@ -415,7 +415,7 @@
 
     refs.itemModalContent.innerHTML = `
       <h3>${escapeHtml(item.title)}</h3>
-      <img src="${item.imageUrl}" alt="${escapeHtml(item.title)}" />
+      <img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.title)}" />
       <p class="price">Hinta nyt: ${formatPrice(item.priceNow)}</p>
       <p class="subline">Tarjouksia ${item.bidsCount} • Minikorotus ${formatPrice(item.minIncrement)}</p>
       <p class="trust-line">Myyjä: ${escapeHtml(item.seller)} • ${escapeHtml(item.delivery)} • ${escapeHtml(item.location)}</p>
