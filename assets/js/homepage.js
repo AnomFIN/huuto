@@ -176,7 +176,7 @@
     nodes.itemMeta.textContent = `${sanitizeText(item.location, 32)} • ${sanitizeText(item.category, 24)} • ${formatCountdown(item.endTime)}`;
     nodes.itemPrice.textContent = `Hinta nyt ${formatCurrency(item.priceNow)}`;
     nodes.itemDetail.textContent = `Myyjä: ${sanitizeText(item.seller || 'Myyjä', 30)} • Tarjouksia ${item.bidsCount}`;
-    nodes.itemViewLink.href = `/auction.php?id=${item.id}`;
+    nodes.itemViewLink.href = `/auction.php?id=${encodeURIComponent(item.id)}`;
     nodes.itemModal.classList.add('open');
     nodes.itemModal.setAttribute('aria-hidden', 'false');
   };
