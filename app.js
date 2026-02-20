@@ -256,7 +256,7 @@
       return `
         <article class="carousel-item ${pos}">
           <div class="carousel-media">
-            <img src="${item.imageUrl}" alt="${escapeHtml(item.title)}" />
+            <img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.title)}" />
             <div class="carousel-overlay">
               <span class="countdown-badge" data-end-time="${item.endTime}">${formatCountdown(item.endTime)}</span>
               <h3>${escapeHtml(item.title)}</h3>
