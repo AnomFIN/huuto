@@ -201,7 +201,9 @@
     nodes.itemMeta.textContent = `${sanitizeAndDecode(item.location, 32)} • ${sanitizeAndDecode(item.category, 24)} • ${formatCountdown(item.endTime)}`;
     nodes.itemPrice.textContent = `Hinta nyt ${formatCurrency(item.priceNow)}`;
     nodes.itemDetail.textContent = `Myyjä: ${sanitizeAndDecode(item.seller || 'Premium Seller', 30)} • Toimitus: Nouto tai toimitus • Tarjouksia ${item.bidsCount}`;
-    nodes.itemBidBtn.textContent = `Huutaa nyt ${formatCurrency(item.priceNow + item.minIncrement)} (+${formatCurrency(item.minIncrement)})`;
+    if (nodes.itemBidBtn) {
+      nodes.itemBidBtn.textContent = `Huutaa nyt ${formatCurrency(item.priceNow + item.minIncrement)} (+${formatCurrency(item.minIncrement)})`;
+    }
     nodes.itemModal.classList.add('open');
     nodes.itemModal.setAttribute('aria-hidden', 'false');
   };
