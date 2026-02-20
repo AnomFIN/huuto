@@ -18,9 +18,16 @@
     'Premium-kokemus ilman backend-kompleksisuutta.',
   ];
 
+  const storedFavorites = readJson('huuto247-favorites', []);
+  const favoriteIterable =
+    Array.isArray(storedFavorites) ||
+    (storedFavorites && typeof storedFavorites[Symbol.iterator] === 'function')
+      ? storedFavorites
+      : [];
+
   const state = {
     user: { loggedIn: false, name: 'Oma tili' },
-    favorites: new Set(readJson('huuto247-favorites', [])),
+    favorites: new Set(favoriteIterable),
     items: [],
     popularShown: INITIAL_COUNT,
     endingShown: INITIAL_COUNT,
