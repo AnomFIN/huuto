@@ -50,7 +50,7 @@ button, input, select { font: inherit; color: inherit; }
 .search-field-wrap { position: relative; border-radius: var(--radius-pill); border: 1px solid var(--hairline); background: var(--surface); display: flex; align-items: center; }
 .search-field-wrap .icon { width: 18px; margin-left: .65rem; fill: #66758b; }
 #searchInput { border: 0; width: 100%; background: transparent; padding: .56rem .5rem; outline: none; }
-.clear-btn { border: 0; background: transparent; margin-right: .35rem; opacity: .5; cursor: pointer; }
+.clear-btn { border: 0; background: transparent; margin-right: .35rem; opacity: .5; cursor: pointer; visibility: hidden; }
 .search-hint { position: absolute; right: 34px; top: -24px; font-size: .72rem; opacity: 0; transition: .22s ease; color: var(--accent-600); font-weight: 600; }
 .search-shell:focus-within .search-hint { opacity: 1; }
 .search-submit { background: linear-gradient(135deg, var(--accent-600), var(--accent-500)); color: #fff; font-weight: 700; cursor: pointer; }
