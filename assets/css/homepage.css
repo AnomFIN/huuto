@@ -1,4 +1,8 @@
-/* Engineered for autonomy, designed for humans. */
+/* Homepage design system
+ * - Global design tokens (:root) for layout, spacing, color, radius, and elevation
+ * - Base element resets and typography
+ * - Shared layout primitives (e.g., .container)
+ */
 :root {
   --container: 1280px;
   --gutter: 24px;

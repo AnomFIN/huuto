@@ -59,12 +59,25 @@
     carouselProgress: document.getElementById('carousel-progress'),
   };
 
+  const loadFavorites = () => {
+    const raw = localStorage.getItem('favorites');
+    if (!raw) return new Set();
+    try {
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return new Set();
+      return new Set(parsed);
+    } catch (e) {
+      console.warn('Failed to parse favorites from localStorage, resetting to empty.', e);
+      return new Set();
+    }
+  };
+
   const state = {
     category: 'ALL',
     sectionCategory: 'ALL',
     query: '',
     isLoggedIn: Boolean(payload.isLoggedIn),
-    favorites: new Set(JSON.parse(localStorage.getItem('favorites') || '[]')),
+    favorites: loadFavorites(),
     visiblePopular: config.initialVisible,
     visibleClosing: config.initialVisible,
     carouselStart: 0,
@@ -184,7 +197,7 @@
     nodes.itemMeta.textContent = `${sanitizeAndDecode(item.location, 32)} • ${sanitizeAndDecode(item.category, 24)} • ${formatCountdown(item.endTime)}`;
     nodes.itemPrice.textContent = `Hinta nyt ${formatCurrency(item.priceNow)}`;
     nodes.itemDetail.textContent = `Myyjä: ${sanitizeAndDecode(item.seller || 'Premium Seller', 30)} • Toimitus: Nouto tai toimitus • Tarjouksia ${item.bidsCount}`;
-    nodes.itemBidBtn.textContent = `Huutaa nyt ${formatCurrency(item.priceNow + item.minIncrement)} (+${formatCurrency(item.minIncrement)})`;
+    nodes.itemViewLink.href = `/auction.php?id=${encodeURIComponent(item.id)}`;
     nodes.itemModal.classList.add('open');
     nodes.itemModal.setAttribute('aria-hidden', 'false');
   };
@@ -274,50 +287,14 @@
   };
 
   const redraw = () => {
-    const popularSource = state.searchResults && Array.isArray(state.searchResults.popular) && state.query
-      ? state.searchResults.popular
-      : payload.popular;
-    const closingSource = state.searchResults && Array.isArray(state.searchResults.closing) && state.query
-      ? state.searchResults.closing
-      : payload.closing;
-
-    renderGrid({ source: popularSource, gridNode: nodes.popularGrid, loadNode: nodes.popularLoad, endNode: nodes.popularEnd, visible: state.visiblePopular });
-    renderGrid({ source: closingSource, gridNode: nodes.closingGrid, loadNode: nodes.closingLoad, endNode: nodes.closingEnd, visible: state.visibleClosing });
+    renderGrid({ source: payload.popular, gridNode: nodes.popularGrid, loadNode: nodes.popularLoad, endNode: nodes.popularEnd, visible: state.visiblePopular });
+    renderGrid({ source: payload.closing, gridNode: nodes.closingGrid, loadNode: nodes.closingLoad, endNode: nodes.closingEnd, visible: state.visibleClosing });
     renderCarousel();
     updateVisibleCountdowns();
     nodes.authAction.textContent = state.isLoggedIn ? 'Kirjaudu ulos' : 'Kirjaudu sisään';
   };
 
-  const performServerSearch = async (query, category) => {
-    const params = new URLSearchParams();
-    if (query) params.set('q', query);
-    if (category && category !== 'ALL') params.set('category', category);
-
-    try {
-      const response = await fetch(`/api/auctions/search?${params.toString()}`, {
-        method: 'GET',
-        headers: {
-          'Accept': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Search request failed with status ${response.status}`);
-      }
-
-      const data = await response.json();
-      if (!data || !Array.isArray(data.popular) || !Array.isArray(data.closing)) {
-        throw new Error('Search response has invalid shape');
-      }
-
-      return data;
-    } catch (err) {
-      console.error(JSON.stringify({ event: 'home_search_failed', message: err.message }));
-      return null;
-    }
-  };
-
-  const applySearch = async () => {
+  const applySearch = () => {
     state.query = sanitizeText(nodes.searchInput.value, 60);
     state.category = sanitizeText(nodes.searchCategory.value, 32) || 'ALL';
     nodes.categoryButtons.forEach((button) => button.classList.toggle('active', button.dataset.category === state.category));
@@ -325,14 +302,6 @@
     state.visiblePopular = config.initialVisible;
     state.visibleClosing = config.initialVisible;
 
-    // Clear previous search results before performing a new search
-    state.searchResults = null;
-
-    // Attempt server-side search; fall back to existing client-side behavior on failure
-    const results = await performServerSearch(state.query, state.category);
-    if (results) {
-      state.searchResults = results;
-    }
     redraw();
   };
 
@@ -409,8 +378,6 @@
   nodes.popularLoad.addEventListener('click', () => loadMore(nodes.popularLoad, nodes.popularGrid, 'visiblePopular'));
   nodes.closingLoad.addEventListener('click', () => loadMore(nodes.closingLoad, nodes.closingGrid, 'visibleClosing'));
 
-  nodes.confirmLogin.addEventListener('click', () => {
-    // Redirect to actual login page
   nodes.authAction.addEventListener('click', () => {
     // Delegate authentication to the server-side system.
     if (!state.isLoggedIn) {
@@ -427,11 +394,6 @@
   nodes.cancelLogin.addEventListener('click', closeAuthModal);
 
   nodes.itemClose.addEventListener('click', closeItemModal);
-
-  nodes.languageToggle.addEventListener('click', () => {
-    const open = nodes.dropdown.classList.toggle('open');
-    nodes.languageToggle.setAttribute('aria-expanded', String(open));
-  });
 
   nodes.carouselPrev.addEventListener('click', retreatCarousel);
   nodes.carouselNext.addEventListener('click', advanceCarousel);
