@@ -136,20 +136,22 @@ $isUserLoggedIn = is_logged_in();
     <div class="container header-inner">
         <a class="logo" href="/">HUUTO247 <span>.fi</span></a>
 
-        <div class="search-wrap" role="search">
-            <select id="search-category" class="search-category" aria-label="Hakukategoria">
-                <option value="ALL">Kaikki kategoriat</option>
-                <?php foreach ($categories as $category): ?>
-                    <option value="<?php echo htmlspecialchars($category, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($category, ENT_QUOTES, 'UTF-8'); ?></option>
-                <?php endforeach; ?>
-            </select>
-            <div class="search-input-wrap">
-                <span class="search-icon">⌕</span>
-                <input id="search-input" type="search" autocomplete="off" placeholder="Mitä etsit?" aria-label="Hae kohteita">
-                <button id="search-clear" class="search-clear" type="button" aria-label="Tyhjennä haku">×</button>
-                <span class="search-hint">Enter ↵</span>
-            </div>
-            <button id="search-submit" class="search-btn" type="button">Hae</button>
+        <div class="search-wrap">
+            <form class="search-form" role="search" onsubmit="return false;">
+                <select id="search-category" class="search-category" aria-label="Hakukategoria">
+                    <option value="ALL">Kaikki kategoriat</option>
+                    <?php foreach ($categories as $category): ?>
+                        <option value="<?php echo htmlspecialchars($category, ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($category, ENT_QUOTES, 'UTF-8'); ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <div class="search-input-wrap">
+                    <span class="search-icon">⌕</span>
+                    <input id="search-input" type="search" autocomplete="off" placeholder="Mitä etsit?" aria-label="Hae kohteita">
+                    <button id="search-clear" class="search-clear" type="button" aria-label="Tyhjennä haku">×</button>
+                    <span class="search-hint">Enter ↵</span>
+                </div>
+                <button id="search-submit" class="search-btn" type="button">Hae</button>
+            </form>
         </div>
 
         <div class="header-actions">
