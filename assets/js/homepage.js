@@ -211,7 +211,7 @@
       const item = source[(state.carouselStart + i) % source.length];
       const active = i === 2 && carouselSize === 5;
       const sideClass = i >= 3 ? 'last' : '';
-      cards.push(`<article class="carousel-card ${active ? 'active' : sideClass}"><div class="carousel-image">${sanitizeText(item.imageLabel || item.title, 24)}${active ? `<span class="overlay-chip">Sulkeutuu ${formatCountdown(item.endTime)}</span><span class="overlay-price">Hinta nyt ${formatCurrency(item.priceNow)}</span>` : ''}</div><div class="carousel-meta"><strong>${sanitizeText(item.title, 56)}</strong><span data-countdown="${sanitizeText(item.endTime, 40)}">${formatCountdown(item.endTime)}</span><span>Tarjouksia ${item.bidsCount}</span>${active ? `<a href="/auction.php?id=${item.id}" class="primary-btn">Näytä kohde</a>` : ''}</div></article>`);
+      cards.push(`<article class="carousel-card ${active ? 'active' : sideClass}"><div class="carousel-image">${sanitizeText(item.imageLabel || item.title, 24)}${active ? `<span class="overlay-chip">Sulkeutuu ${formatCountdown(item.endTime)}</span><span class="overlay-price">Hinta nyt ${formatCurrency(item.priceNow)}</span>` : ''}</div><div class="carousel-meta"><strong>${sanitizeText(item.title, 56)}</strong><span data-countdown="${sanitizeText(item.endTime, 40)}">${formatCountdown(item.endTime)}</span><span>Tarjouksia ${item.bidsCount}</span>${active ? `<a href="/auction.php?id=${encodeURIComponent(item.id)}" class="primary-btn">Näytä kohde</a>` : ''}</div></article>`);
     }
 
     nodes.carouselTrack.innerHTML = cards.join('');
