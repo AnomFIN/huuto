@@ -59,12 +59,29 @@
     carouselProgress: document.getElementById('carousel-progress'),
   };
 
+  const loadFavorites = () => {
+    const raw = localStorage.getItem('favorites');
+    if (!raw) {
+      return new Set();
+    }
+    try {
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) {
+        return new Set();
+      }
+      return new Set(parsed);
+    } catch (e) {
+      console.warn('Failed to parse favorites from localStorage, resetting to empty.', e);
+      return new Set();
+    }
+  };
+
   const state = {
     category: 'ALL',
     sectionCategory: 'ALL',
     query: '',
     isLoggedIn: Boolean(payload.isLoggedIn),
-    favorites: new Set(JSON.parse(localStorage.getItem('favorites') || '[]')),
+    favorites: loadFavorites(),
     visiblePopular: config.initialVisible,
     visibleClosing: config.initialVisible,
     carouselStart: 0,
