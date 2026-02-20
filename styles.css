@@ -50,7 +50,7 @@ button, input, select { font: inherit; color: inherit; }
 .search-field-wrap { position: relative; border-radius: var(--radius-pill); border: 1px solid var(--hairline); background: var(--surface); display: flex; align-items: center; }
 .search-field-wrap .icon { width: 18px; margin-left: .65rem; fill: #66758b; }
 #searchInput { border: 0; width: 100%; background: transparent; padding: .56rem .5rem; outline: none; }
-.clear-btn { border: 0; background: transparent; margin-right: .35rem; opacity: .5; cursor: pointer; }
+.clear-btn { border: 0; background: transparent; margin-right: .35rem; opacity: .5; cursor: pointer; visibility: hidden; }
 .search-hint { position: absolute; right: 34px; top: -24px; font-size: .72rem; opacity: 0; transition: .22s ease; color: var(--accent-600); font-weight: 600; }
 .search-shell:focus-within .search-hint { opacity: 1; }
 .search-submit { background: linear-gradient(135deg, var(--accent-600), var(--accent-500)); color: #fff; font-weight: 700; cursor: pointer; }
@@ -115,7 +115,7 @@ h2 { font-size: clamp(1.2rem, 1.5vw, 1.45rem); }
 .filter-pills { display: flex; gap: .4rem; flex-wrap: wrap; }
 .pill { border: 1px solid var(--line); background: #fff; border-radius: var(--radius-pill); padding: .3rem .6rem; cursor: pointer; font-size: .78rem; font-weight: 600; }
 .pill.active { border-color: var(--accent-600); color: var(--accent-600); }
-.show-all { font-weight: 700; color: var(--accent-600); }
+.show-all { font-weight: 700; color: var(--accent-600); border: 0; background: transparent; cursor: pointer; padding: 0; }
 
 .auction-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .82rem; }
 .card, .ad-card, .skeleton-card {

@@ -18,9 +18,10 @@
     'Premium-kokemus ilman backend-kompleksisuutta.',
   ];
 
+  const storedFavorites = readJson('huuto247-favorites', []);
   const state = {
     user: { loggedIn: false, name: 'Oma tili' },
-    favorites: new Set(readJson('huuto247-favorites', [])),
+    favorites: new Set(Array.isArray(storedFavorites) ? storedFavorites : []),
     items: [],
     popularShown: INITIAL_COUNT,
     endingShown: INITIAL_COUNT,
@@ -29,6 +30,7 @@
     searchQuery: '',
     searchCategory: null,
     carouselIndex: 0,
+    carouselLength: 5,
     carouselPaused: false,
     carouselTickStartMs: performance.now(),
     sloganIndex: 0,
@@ -244,12 +246,13 @@
 
   function renderCarousel() {
     const carouselItems = getEndingItems().slice(0, 5);
+    state.carouselLength = carouselItems.length;
     refs.carouselTrack.innerHTML = carouselItems.map((item, index) => {
       const pos = classifyCarouselPosition(index, state.carouselIndex, carouselItems.length);
       return `
         <article class="carousel-item ${pos}">
           <div class="carousel-media">
-            <img src="${item.imageUrl}" alt="${escapeHtml(item.title)}" />
+            <img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.title)}" />
             <div class="carousel-overlay">
               <span class="countdown-badge" data-end-time="${item.endTime}">${formatCountdown(item.endTime)}</span>
               <h3>${escapeHtml(item.title)}</h3>
@@ -266,7 +269,14 @@
   }
 
   function moveCarousel(step) {
-    state.carouselIndex = (state.carouselIndex + step + 5) % 5;
+    const length = state.carouselLength || 1;
+    if (length <= 1) {
+      state.carouselIndex = 0;
+      state.carouselTickStartMs = performance.now();
+      renderCarousel();
+      return;
+    }
+    state.carouselIndex = (state.carouselIndex + step + length) % length;
     state.carouselTickStartMs = performance.now();
     renderCarousel();
   }
