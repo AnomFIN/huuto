@@ -46,7 +46,18 @@ function normalizeAuctionForUi(array $auction): ?array
         return null;
     }
 
-    $priceNow = isset($auction['current_price']) ? (float) $auction['current_price'] : 0;
+    // Determine current price, falling back to starting_price if needed.
+    $priceNow = null;
+    if (isset($auction['current_price']) && is_numeric($auction['current_price'])) {
+        $priceNow = (float) $auction['current_price'];
+    } elseif (isset($auction['starting_price']) && is_numeric($auction['starting_price'])) {
+        $priceNow = (float) $auction['starting_price'];
+    }
+
+    // Skip auctions without any valid price information
+    if ($priceNow === null) {
+        return null;
+    }
     $bidCount = isset($auction['bid_count']) ? (int) $auction['bid_count'] : 0;
 
     return [
