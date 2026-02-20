@@ -3,6 +3,7 @@
   'use strict';
 
   const CAROUSEL_INTERVAL_MS = 7000;
+  const CAROUSEL_SIZE = 5;
   const INITIAL_COUNT = 20;
   const LOAD_MORE_COUNT = 10;
   const LOAD_DELAY_MS = 550;
@@ -20,7 +21,9 @@
 
   const state = {
     user: { loggedIn: false, name: 'Oma tili' },
-    favorites: new Set(readJson('huuto247-favorites', [])),
+    favorites: new Set(
+      JSON.parse(localStorage.getItem('huuto247-favorites') || '[]')
+    ),
     items: [],
     popularShown: INITIAL_COUNT,
     endingShown: INITIAL_COUNT,
@@ -68,9 +71,24 @@
     itemModalContent: byId('itemModalContent'),
   };
 
+  let booted = false;
+
+  const visibleCountdowns = new Set();
+  const countdownObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) visibleCountdowns.add(entry.target);
+        else visibleCountdowns.delete(entry.target);
+      });
+    },
+    { rootMargin: '80px' }
+  );
+
   boot();
 
   function boot() {
+    if (booted) return;
+    booted = true;
     state.items = createMockItems(190);
     renderStaticBlocks();
     renderAll();
@@ -243,13 +261,13 @@
   }
 
   function renderCarousel() {
-    const carouselItems = getEndingItems().slice(0, 5);
+    const carouselItems = getEndingItems().slice(0, CAROUSEL_SIZE);
     refs.carouselTrack.innerHTML = carouselItems.map((item, index) => {
       const pos = classifyCarouselPosition(index, state.carouselIndex, carouselItems.length);
       return `
         <article class="carousel-item ${pos}">
           <div class="carousel-media">
-            <img src="${item.imageUrl}" alt="${escapeHtml(item.title)}" />
+            <img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.title)}" />
             <div class="carousel-overlay">
               <span class="countdown-badge" data-end-time="${item.endTime}">${formatCountdown(item.endTime)}</span>
               <h3>${escapeHtml(item.title)}</h3>
@@ -263,10 +281,12 @@
     }).join('');
 
     refs.carouselDots.innerHTML = carouselItems.map((_, index) => `<button class="dot ${index === state.carouselIndex ? 'active' : ''}" data-dot="${index}" aria-label="Kohde ${index + 1}"></button>`).join('');
+    observeCountdowns(refs.carouselTrack);
   }
 
   function moveCarousel(step) {
-    state.carouselIndex = (state.carouselIndex + step + 5) % 5;
+    const length = Math.min(getEndingItems().length, CAROUSEL_SIZE);
+    state.carouselIndex = (state.carouselIndex + step + length) % length;
     state.carouselTickStartMs = performance.now();
     renderCarousel();
   }
@@ -292,6 +312,7 @@
     const slice = source.slice(0, state.popularShown);
     refs.popularGrid.innerHTML = renderCards(withAdCard(slice), animated);
     updateLoadButton(refs.loadMorePopular, refs.popularTip, state.popularShown, source.length);
+    observeCountdowns(refs.popularGrid);
   }
 
   function renderEnding(animated = false) {
@@ -299,6 +320,7 @@
     const slice = source.slice(0, state.endingShown);
     refs.endingGrid.innerHTML = renderCards(withAdCard(slice), animated);
     updateLoadButton(refs.loadMoreEnding, refs.endingTip, state.endingShown, source.length);
+    observeCountdowns(refs.endingGrid);
   }
 
   function getPopularItems() {
@@ -327,7 +349,7 @@
   function renderCards(items, animated) {
     return items.map((item, index) => {
       if (item.isAd) {
-        return `<article class="ad-card ${animated ? 'with-enter' : ''}" style="animation-delay:${index * 24}ms"><span class="ad-label">MAINOS</span><h3 class="item-title">Kasvata kohteesi näkyvyyttä premium-sijoittelulla</h3><p class="subline">Yksi kampanja tavoittaa oikeat ostajat huutopiikin hetkellä.</p><a href="#" class="ad-cta">Tutustu kampanjaan →</a></article>`;
+        return `<article class="ad-card ${animated ? 'with-enter' : ''}" style="animation-delay:${Math.min(index * 24, 500)}ms"><span class="ad-label">MAINOS</span><h3 class="item-title">Kasvata kohteesi näkyvyyttä premium-sijoittelulla</h3><p class="subline">Yksi kampanja tavoittaa oikeat ostajat huutopiikin hetkellä.</p><a href="#" class="ad-cta">Tutustu kampanjaan →</a></article>`;
       }
 
       const favoriteClass = state.favorites.has(item.id) ? 'active' : '';
@@ -335,7 +357,7 @@
       const newBadge = item.id % 9 === 0 ? '<span>Uusi</span>' : '';
 
       return `
-        <article class="card ${animated ? 'with-enter' : ''}" style="animation-delay:${index * 24}ms" data-item-card="${item.id}">
+        <article class="card ${animated ? 'with-enter' : ''}" style="animation-delay:${Math.min(index * 24, 500)}ms" data-item-card="${item.id}">
           <div class="thumb">
             <img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.title)}" />
             <button class="watch-btn ${favoriteClass}" data-favorite="${item.id}" aria-label="Lisää suosikiksi">♥</button>
@@ -362,6 +384,7 @@
 
     setTimeout(() => {
       button.classList.remove('loading');
+      grid.querySelectorAll('.skeleton-card').forEach((el) => el.remove());
       if (kind === 'popular') {
         state.popularShown += LOAD_MORE_COUNT;
         renderPopular(true);
@@ -415,7 +438,7 @@
 
     refs.itemModalContent.innerHTML = `
       <h3>${escapeHtml(item.title)}</h3>
-      <img src="${item.imageUrl}" alt="${escapeHtml(item.title)}" />
+      <img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.title)}" />
       <p class="price">Hinta nyt: ${formatPrice(item.priceNow)}</p>
       <p class="subline">Tarjouksia ${item.bidsCount} • Minikorotus ${formatPrice(item.minIncrement)}</p>
       <p class="trust-line">Myyjä: ${escapeHtml(item.seller)} • ${escapeHtml(item.delivery)} • ${escapeHtml(item.location)}</p>
@@ -427,15 +450,25 @@
     refs.itemModal.showModal();
   }
 
+  function observeCountdowns(root = document) {
+    root.querySelectorAll('[data-end-time]:not([data-observed])').forEach((node) => {
+      node.dataset.observed = '1';
+      countdownObserver.observe(node);
+    });
+  }
+
   function updateVisibleCountdowns() {
-    const viewportH = window.innerHeight || 0;
-    document.querySelectorAll('[data-end-time]').forEach((node) => {
-      const rect = node.getBoundingClientRect();
-      if (rect.bottom < 0 || rect.top > viewportH + 80) return;
+    const disconnected = [];
+    visibleCountdowns.forEach((node) => {
+      if (!node.isConnected) {
+        disconnected.push(node);
+        return;
+      }
       const endTime = Number(node.dataset.endTime);
       if (!Number.isFinite(endTime)) return;
       node.textContent = formatCountdown(endTime);
     });
+    disconnected.forEach((node) => visibleCountdowns.delete(node));
   }
 
   function createMockItems(totalCount) {
