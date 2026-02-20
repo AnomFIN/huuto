@@ -68,6 +68,7 @@
     visiblePopular: config.initialVisible,
     visibleClosing: config.initialVisible,
     carouselStart: 0,
+    carouselSourceLength: 0,
     sloganIndex: 0,
     carouselPaused: false,
     activeItemId: null,
@@ -200,10 +201,22 @@
   const renderCarousel = () => {
     const source = applyFilters(payload.closing).slice(0, 12);
     if (!source.length) {
+      state.carouselSourceLength = 0;
+      state.carouselStart = 0;
       nodes.carouselTrack.innerHTML = '';
       nodes.carouselDots.innerHTML = '';
+      if (nodes.carouselProgress) {
+        // Reset carousel progress when there is no content
+        nodes.carouselProgress.style.transition = 'none';
+        nodes.carouselProgress.style.width = '0%';
+        nodes.carouselProgress.setAttribute('aria-hidden', 'true');
+        // Force reflow so future transitions (when content returns) work as expected
+        void nodes.carouselProgress.offsetWidth;
+        nodes.carouselProgress.style.transition = '';
+      }
       return;
     }
+    state.carouselSourceLength = source.length;
 
     const carouselSize = Math.min(source.length, 5);
     const cards = [];
@@ -232,10 +245,15 @@
   };
 
   const advanceCarousel = () => {
-    const source = applyFilters(payload.closing).slice(0, 12);
-    if (source.length > 0) {
-      state.carouselStart = (state.carouselStart + 1) % source.length;
-    }
+    if (state.carouselSourceLength === 0) return;
+    state.carouselStart = (state.carouselStart + 1) % state.carouselSourceLength;
+    renderCarousel();
+    resetCarouselProgress();
+  };
+
+  const retreatCarousel = () => {
+    if (state.carouselSourceLength === 0) return;
+    state.carouselStart = (state.carouselStart - 1 + state.carouselSourceLength) % state.carouselSourceLength;
     renderCarousel();
     resetCarouselProgress();
   };
@@ -403,14 +421,12 @@
 
   nodes.itemClose.addEventListener('click', closeItemModal);
 
-  nodes.carouselPrev.addEventListener('click', () => {
-    const source = applyFilters(payload.closing).slice(0, 12);
-    if (source.length > 0) {
-      state.carouselStart = (state.carouselStart - 1 + source.length) % source.length;
-    }
-    renderCarousel();
-    resetCarouselProgress();
+  nodes.languageToggle.addEventListener('click', () => {
+    const open = nodes.dropdown.classList.toggle('open');
+    nodes.languageToggle.setAttribute('aria-expanded', String(open));
   });
+
+  nodes.carouselPrev.addEventListener('click', retreatCarousel);
   nodes.carouselNext.addEventListener('click', advanceCarousel);
   nodes.carouselDots.addEventListener('click', (event) => {
     const dot = event.target.closest('[data-dot]');
@@ -433,11 +449,7 @@
     const source = applyFilters(payload.closing).slice(0, 12);
     if (source.length === 0) return;
     if (delta < 0) advanceCarousel();
-    else {
-      state.carouselStart = (state.carouselStart - 1 + source.length) % source.length;
-      renderCarousel();
-      resetCarouselProgress();
-    }
+    else retreatCarousel();
   }, { passive: true });
 
   document.addEventListener('keydown', (event) => {
