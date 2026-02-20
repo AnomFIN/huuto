@@ -1,4 +1,8 @@
-// Commit to intelligence. Push innovation. Pull results.
+// Client-side UI management for homepage
+// Note: This implementation has the following limitations that require backend API development:
+// - Bidding is simulated client-side only; real bids need a /api/bids endpoint
+// - Favorites are stored in localStorage; should be persisted via /api/favorites endpoint
+// - Search is client-side filtered; should use /api/auctions/search for full database search
 (() => {
   const payload = window.__HOME_DATA__;
   if (!payload || !Array.isArray(payload.popular) || !Array.isArray(payload.closing)) {
@@ -33,14 +37,12 @@
     itemPrice: document.getElementById('item-modal-price'),
     itemDetail: document.getElementById('item-modal-detail'),
     itemImage: document.getElementById('item-modal-image'),
-    itemBidBtn: document.getElementById('item-bid-btn'),
+    itemViewLink: document.getElementById('item-view-link'),
     itemClose: document.getElementById('item-modal-close'),
     searchInput: document.getElementById('search-input'),
     searchCategory: document.getElementById('search-category'),
     searchSubmit: document.getElementById('search-submit'),
     searchClear: document.getElementById('search-clear'),
-    languageToggle: document.getElementById('language-toggle'),
-    dropdown: document.querySelector('.dropdown-menu'),
     categoryButtons: Array.from(document.querySelectorAll('#category-list [data-category]')),
     sectionFilterButtons: Array.from(document.querySelectorAll('[data-section-filter]')),
     slogan: document.getElementById('rotating-slogan'),
@@ -61,7 +63,7 @@
     category: 'ALL',
     sectionCategory: 'ALL',
     query: '',
-    isLoggedIn: localStorage.getItem('isLoggedIn') === 'true' || Boolean(payload.isLoggedIn),
+    isLoggedIn: Boolean(payload.isLoggedIn),
     favorites: new Set(JSON.parse(localStorage.getItem('favorites') || '[]')),
     visiblePopular: config.initialVisible,
     visibleClosing: config.initialVisible,
@@ -95,7 +97,7 @@
   };
 
   const saveLocalState = () => {
-    localStorage.setItem('isLoggedIn', String(state.isLoggedIn));
+    // Only save favorites to localStorage; authentication is server-side
     localStorage.setItem('favorites', JSON.stringify(Array.from(state.favorites)));
   };
 
@@ -173,8 +175,8 @@
     nodes.itemTitle.textContent = sanitizeText(item.title, 100);
     nodes.itemMeta.textContent = `${sanitizeText(item.location, 32)} • ${sanitizeText(item.category, 24)} • ${formatCountdown(item.endTime)}`;
     nodes.itemPrice.textContent = `Hinta nyt ${formatCurrency(item.priceNow)}`;
-    nodes.itemDetail.textContent = `Myyjä: ${sanitizeText(item.seller || 'Premium Seller', 30)} • Toimitus: Nouto tai toimitus • Tarjouksia ${item.bidsCount}`;
-    nodes.itemBidBtn.textContent = `Huutaa nyt ${formatCurrency(item.priceNow + item.minIncrement)} (+${formatCurrency(item.minIncrement)})`;
+    nodes.itemDetail.textContent = `Myyjä: ${sanitizeText(item.seller || 'Myyjä', 30)} • Tarjouksia ${item.bidsCount}`;
+    nodes.itemViewLink.href = `/auction.php?id=${encodeURIComponent(item.id)}`;
     nodes.itemModal.classList.add('open');
     nodes.itemModal.setAttribute('aria-hidden', 'false');
   };
@@ -203,12 +205,13 @@
       return;
     }
 
+    const carouselSize = Math.min(source.length, 5);
     const cards = [];
-    for (let i = 0; i < 5; i += 1) {
+    for (let i = 0; i < carouselSize; i += 1) {
       const item = source[(state.carouselStart + i) % source.length];
-      const active = i === 2;
+      const active = i === Math.floor(carouselSize / 2);
       const sideClass = i >= 3 ? 'last' : '';
-      cards.push(`<article class="carousel-card ${active ? 'active' : sideClass}"><div class="carousel-image">${sanitizeText(item.imageLabel || item.title, 24)}${active ? `<span class="overlay-chip">Sulkeutuu ${formatCountdown(item.endTime)}</span><span class="overlay-price">Hinta nyt ${formatCurrency(item.priceNow)}</span>` : ''}</div><div class="carousel-meta"><strong>${sanitizeText(item.title, 56)}</strong><span data-countdown="${sanitizeText(item.endTime, 40)}">${formatCountdown(item.endTime)}</span><span>Tarjouksia ${item.bidsCount}</span>${active ? `<button class="primary-btn" data-bid="${item.id}" type="button">Huutaa nyt ${formatCurrency(item.priceNow + item.minIncrement)} (+${formatCurrency(item.minIncrement)})</button>` : ''}</div></article>`);
+      cards.push(`<article class="carousel-card ${active ? 'active' : sideClass}"><div class="carousel-image">${sanitizeText(item.imageLabel || item.title, 24)}${active ? `<span class="overlay-chip">Sulkeutuu ${formatCountdown(item.endTime)}</span><span class="overlay-price">Hinta nyt ${formatCurrency(item.priceNow)}</span>` : ''}</div><div class="carousel-meta"><strong>${sanitizeText(item.title, 56)}</strong><span data-countdown="${sanitizeText(item.endTime, 40)}">${formatCountdown(item.endTime)}</span><span>Tarjouksia ${item.bidsCount}</span>${active ? `<a href="/auction.php?id=${encodeURIComponent(item.id)}" class="primary-btn">Näytä kohde</a>` : ''}</div></article>`);
     }
 
     nodes.carouselTrack.innerHTML = cards.join('');
@@ -229,7 +232,10 @@
   };
 
   const advanceCarousel = () => {
-    state.carouselStart = (state.carouselStart + 1) % 5;
+    const source = applyFilters(payload.closing).slice(0, 12);
+    if (source.length > 0) {
+      state.carouselStart = (state.carouselStart + 1) % source.length;
+    }
     renderCarousel();
     resetCarouselProgress();
   };
@@ -334,19 +340,6 @@
       return;
     }
 
-    const bidBtn = event.target.closest('[data-bid]');
-    if (bidBtn) {
-      const id = Number(bidBtn.getAttribute('data-bid'));
-      getLookupItems().forEach((item) => {
-        if (item.id === id) {
-          item.priceNow += item.minIncrement;
-          item.bidsCount += 1;
-        }
-      });
-      redraw();
-      return;
-    }
-
     const itemCard = event.target.closest('[data-item-id]');
     if (itemCard && !event.target.closest('[data-favorite]')) {
       const id = Number(itemCard.getAttribute('data-item-id'));
@@ -357,11 +350,6 @@
 
     if (event.target === nodes.authModal) closeAuthModal();
     if (event.target === nodes.itemModal) closeItemModal();
-
-    if (!event.target.closest('[data-dropdown]')) {
-      nodes.dropdown.classList.remove('open');
-      nodes.languageToggle.setAttribute('aria-expanded', 'false');
-    }
   });
 
   nodes.searchSubmit.addEventListener('click', applySearch);
@@ -396,6 +384,8 @@
   nodes.popularLoad.addEventListener('click', () => loadMore(nodes.popularLoad, nodes.popularGrid, 'visiblePopular'));
   nodes.closingLoad.addEventListener('click', () => loadMore(nodes.closingLoad, nodes.closingGrid, 'visibleClosing'));
 
+  nodes.confirmLogin.addEventListener('click', () => {
+    // Redirect to actual login page
   nodes.authAction.addEventListener('click', () => {
     // Delegate authentication to the server-side system.
     if (!state.isLoggedIn) {
@@ -411,26 +401,13 @@
   });
   nodes.cancelLogin.addEventListener('click', closeAuthModal);
 
-  nodes.itemBidBtn.addEventListener('click', () => {
-    if (!Number.isFinite(state.activeItemId)) return;
-    getLookupItems().forEach((item) => {
-      if (item.id === state.activeItemId) {
-        item.priceNow += item.minIncrement;
-        item.bidsCount += 1;
-      }
-    });
-    redraw();
-    closeItemModal();
-  });
   nodes.itemClose.addEventListener('click', closeItemModal);
 
-  nodes.languageToggle.addEventListener('click', () => {
-    const open = nodes.dropdown.classList.toggle('open');
-    nodes.languageToggle.setAttribute('aria-expanded', String(open));
-  });
-
   nodes.carouselPrev.addEventListener('click', () => {
-    state.carouselStart = (state.carouselStart - 1 + 5) % 5;
+    const source = applyFilters(payload.closing).slice(0, 12);
+    if (source.length > 0) {
+      state.carouselStart = (state.carouselStart - 1 + source.length) % source.length;
+    }
     renderCarousel();
     resetCarouselProgress();
   });
@@ -453,9 +430,11 @@
     const delta = (event.changedTouches[0]?.clientX ?? touchStartX) - touchStartX;
     touchStartX = null;
     if (Math.abs(delta) < 35) return;
+    const source = applyFilters(payload.closing).slice(0, 12);
+    if (source.length === 0) return;
     if (delta < 0) advanceCarousel();
     else {
-      state.carouselStart = (state.carouselStart - 1 + 5) % 5;
+      state.carouselStart = (state.carouselStart - 1 + source.length) % source.length;
       renderCarousel();
       resetCarouselProgress();
     }
@@ -465,8 +444,6 @@
     if (event.key === 'Escape') {
       closeAuthModal();
       closeItemModal();
-      nodes.dropdown.classList.remove('open');
-      nodes.languageToggle.setAttribute('aria-expanded', 'false');
     }
   });
 

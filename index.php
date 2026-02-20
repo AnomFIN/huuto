@@ -4,19 +4,13 @@
 require_once __DIR__ . '/bootstrap.php';
 
 $pageTitle = SITE_NAME . ' - Etusivu';
-$categories = [
-    'Ajoneuvot',
-    'Työkoneet',
-    'Asunnot',
-    'Vapaa-aika',
-    'Piha',
-    'Työkalut',
-    'Rakennus',
-    'Sisustus',
-    'Elektroniikka',
-    'Keräily',
-    'Muut',
-];
+
+// Load categories from database
+$categoryModel = new Category();
+$categoriesFromDb = $categoryModel->getAllCategories();
+$categories = array_map(function($cat) {
+    return $cat['name'];
+}, $categoriesFromDb);
 
 $popularAuctions = [];
 $closingSoonAuctions = [];
@@ -34,71 +28,70 @@ try {
     $dataLoadError = 'Tietojen lataaminen epäonnistui. Emme voineet ladata huutokohteita.';
 }
 
-// Beyond algorithms. Into outcomes.
-function normalizeAuctionForUi(array $auction, array $fallbackCategories): array
+// Normalize auction data for UI rendering
+function normalizeAuctionForUi(array $auction): ?array
 {
+    // Skip auctions with invalid IDs
+    if (!isset($auction['id']) || !is_numeric($auction['id']) || (int)$auction['id'] <= 0) {
+        return null;
+    }
+
     $title = trim((string) ($auction['title'] ?? 'Kohde'));
-    $category = trim((string) ($auction['category_name'] ?? $fallbackCategories[array_rand($fallbackCategories)]));
-    $location = trim((string) ($auction['location'] ?? 'Helsinki'));
+    $category = trim((string) ($auction['category_name'] ?? 'Muut'));
+    $location = trim((string) ($auction['location'] ?? 'Ei sijaintia'));
 
     $endTimeRaw = isset($auction['end_time']) ? strtotime((string) $auction['end_time']) : false;
-    $endTimestamp = ($endTimeRaw && $endTimeRaw > time()) ? $endTimeRaw : time() + random_int(3600, 60 * 60 * 24 * 6);
+    // Skip auctions with invalid or past end times
+    if (!$endTimeRaw || $endTimeRaw <= time()) {
+        return null;
+    }
 
-    $priceNow = isset($auction['current_price']) ? (float) $auction['current_price'] : (float) random_int(35, 3200);
-    $bidCount = isset($auction['bid_count']) ? (int) $auction['bid_count'] : random_int(1, 31);
+    // Determine current price, falling back to starting_price if needed.
+    $priceNow = null;
+    if (isset($auction['current_price']) && is_numeric($auction['current_price'])) {
+        $priceNow = (float) $auction['current_price'];
+    } elseif (isset($auction['starting_price']) && is_numeric($auction['starting_price'])) {
+        $priceNow = (float) $auction['starting_price'];
+    }
+
+    // Skip auctions without any valid price information
+    if ($priceNow === null) {
+        return null;
+    }
+    $bidCount = isset($auction['bid_count']) ? (int) $auction['bid_count'] : 0;
 
     return [
-        'id' => (int) ($auction['id'] ?? random_int(10000, 99999)),
+        'id' => (int) $auction['id'],
         'title' => mb_substr($title !== '' ? $title : 'Kohde', 0, 80),
-        'location' => mb_substr($location !== '' ? $location : 'Helsinki', 0, 40),
+        'location' => mb_substr($location !== '' ? $location : 'Ei sijaintia', 0, 40),
         'category' => mb_substr($category !== '' ? $category : 'Muut', 0, 40),
-        'endTime' => gmdate('c', $endTimestamp),
-        'priceNow' => round(max(1, $priceNow), 2),
+        'endTime' => date('c', $endTimeRaw),
+        'priceNow' => round(max(0, $priceNow), 2),
         'bidsCount' => max(0, $bidCount),
         'minIncrement' => (float) (($priceNow >= 1000) ? 20 : (($priceNow >= 200) ? 10 : 5)),
         'isAd' => false,
         'imageLabel' => mb_substr($title !== '' ? $title : 'Huuto247', 0, 24),
-        'seller' => 'Verified-myyjä',
+        'seller' => htmlspecialchars($auction['seller_username'] ?? 'Myyjä', ENT_QUOTES, 'UTF-8'),
     ];
 }
 
-function buildUiData(array $source, array $categories, int $targetCount): array
+function buildUiData(array $source): array
 {
     $items = [];
     foreach ($source as $auction) {
-        if (count($items) >= $targetCount) {
-            break;
-        }
         if (!is_array($auction)) {
             continue;
         }
-        $items[] = normalizeAuctionForUi($auction, $categories);
+        $normalized = normalizeAuctionForUi($auction);
+        if ($normalized !== null) {
+            $items[] = $normalized;
+        }
     }
-
-    while (count($items) < $targetCount) {
-        $seed = count($items) + 1;
-        $price = random_int(40, 3600);
-        $cities = ['Helsinki', 'Lahti', 'Tampere', 'Turku', 'Oulu', 'Jyväskylä'];
-        $items[] = [
-            'id' => 500000 + $seed,
-            'title' => sprintf('Premium-kohde %02d', $seed),
-            'location' => $cities[array_rand($cities)],
-            'category' => $categories[array_rand($categories)],
-            'endTime' => gmdate('c', time() + random_int(1200, 60 * 60 * 24 * 8)),
-            'priceNow' => (float) $price,
-            'bidsCount' => random_int(1, 41),
-            'minIncrement' => (float) (($price >= 1000) ? 20 : (($price >= 200) ? 10 : 5)),
-            'isAd' => false,
-            'imageLabel' => 'Huuto247',
-            'seller' => 'Premium Seller',
-        ];
-    }
-
     return $items;
 }
 
-$popularUiData = buildUiData($popularAuctions, $categories, 180);
-$closingUiData = buildUiData($closingSoonAuctions, $categories, 180);
+$popularUiData = buildUiData($popularAuctions);
+$closingUiData = buildUiData($closingSoonAuctions);
 $isUserLoggedIn = is_logged_in();
 ?>
 <!doctype html>
@@ -138,19 +131,11 @@ $isUserLoggedIn = is_logged_in();
         </div>
 
         <div class="header-actions">
-            <div class="language-switch" data-dropdown>
-                <button class="language-btn" aria-expanded="false" aria-haspopup="menu" id="language-toggle">🌐 FI ▾</button>
-                <div class="dropdown-menu" role="menu" aria-labelledby="language-toggle">
-                    <button role="menuitem">FI</button>
-                    <button role="menuitem">EN</button>
-                    <button role="menuitem">SV</button>
-                </div>
-            </div>
             <button class="icon-btn" aria-label="Suosikit" title="Suosikit"><svg viewBox="0 0 24 24" aria-hidden="true"><title>Suosikit</title><path d="M12 21s-6.7-4.4-9.3-8c-2.2-3 0-8 4.6-8A5 5 0 0 1 12 7.5 5 5 0 0 1 16.7 5c4.6 0 6.8 5 4.6 8-2.6 3.6-9.3 8-9.3 8z"/></svg></button>
             <button class="icon-btn" aria-label="Seuranta" title="Seuranta"><svg viewBox="0 0 24 24" aria-hidden="true"><title>Seuranta</title><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 5h-2v6l5 3 1-1.7-4-2.3z"/></svg></button>
             <button class="icon-btn" aria-label="Omat huudot" title="Omat huudot"><svg viewBox="0 0 24 24" aria-hidden="true"><title>Omat huudot</title><path d="m2 22 6-6 2 2-4 4h16v2H2zm11-20 7 7-1.5 1.5-1.4-1.4-3.6 3.6-4-4L6 12.4 4.6 11 8 7.6l4 4 2.2-2.2-1.4-1.4z"/></svg></button>
             <a id="auth-action" class="link-btn" href="<?php echo $isUserLoggedIn ? '/auth/logout.php' : '/auth/login.php'; ?>"><?php echo $isUserLoggedIn ? 'Kirjaudu ulos' : 'Kirjaudu sisään'; ?></a>
-            <button class="ghost-btn" type="button">Rekisteröidy</button>
+            <a href="/auth/register.php" class="ghost-btn">Rekisteröidy</a>
         </div>
     </div>
 </header>
@@ -217,7 +202,7 @@ $isUserLoggedIn = is_logged_in();
 
 <div class="modal-backdrop" id="auth-modal" aria-hidden="true"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title"><h3 id="auth-modal-title">Kirjaudu sisään lisätäksesi kohde suosikkeihin!</h3><p>Kirjautuminen avaa suosikit ja personoidut ilmoitukset.</p><div class="modal-actions"><button id="confirm-login" class="primary-btn" type="button">Kirjaudu</button><button id="cancel-login" class="secondary-btn" type="button">Peruuta</button></div></div></div>
 
-<div class="modal-backdrop" id="item-modal" aria-hidden="true"><div class="modal item-modal" role="dialog" aria-modal="true" aria-labelledby="item-modal-title"><div id="item-modal-image" class="item-modal-image"></div><h3 id="item-modal-title"></h3><p id="item-modal-meta"></p><p id="item-modal-price" class="item-modal-price"></p><p id="item-modal-detail" class="item-modal-detail"></p><div class="modal-actions"><button id="item-bid-btn" class="primary-btn" type="button">Huutaa nyt</button><button id="item-modal-close" class="secondary-btn" type="button">Sulje</button></div></div></div>
+<div class="modal-backdrop" id="item-modal" aria-hidden="true"><div class="modal item-modal" role="dialog" aria-modal="true" aria-labelledby="item-modal-title"><div id="item-modal-image" class="item-modal-image"></div><h3 id="item-modal-title"></h3><p id="item-modal-meta"></p><p id="item-modal-price" class="item-modal-price"></p><p id="item-modal-detail" class="item-modal-detail"></p><div class="modal-actions"><a id="item-view-link" href="#" class="primary-btn">Näytä kokonaan</a><button id="item-modal-close" class="secondary-btn" type="button">Sulje</button></div></div></div>
 
 <script>
 window.__HOME_DATA__ = {
