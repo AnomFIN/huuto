@@ -337,7 +337,7 @@
       return `
         <article class="card ${animated ? 'with-enter' : ''}" style="animation-delay:${index * 24}ms" data-item-card="${item.id}">
           <div class="thumb">
-            <img src="${item.imageUrl}" alt="${escapeHtml(item.title)}" />
+            <img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.title)}" />
             <button class="watch-btn ${favoriteClass}" data-favorite="${item.id}" aria-label="Lisää suosikiksi">♥</button>
           </div>
           <h3 class="item-title">${escapeHtml(item.title)}</h3>
