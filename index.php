@@ -65,7 +65,7 @@ function normalizeAuctionForUi(array $auction): ?array
         'title' => mb_substr($title !== '' ? $title : 'Kohde', 0, 80),
         'location' => mb_substr($location !== '' ? $location : 'Ei sijaintia', 0, 40),
         'category' => mb_substr($category !== '' ? $category : 'Muut', 0, 40),
-        'endTime' => gmdate('c', $endTimeRaw),
+        'endTime' => date('c', $endTimeRaw),
         'priceNow' => round(max(0, $priceNow), 2),
         'bidsCount' => max(0, $bidCount),
         'minIncrement' => (float) (($priceNow >= 1000) ? 20 : (($priceNow >= 200) ? 10 : 5)),
