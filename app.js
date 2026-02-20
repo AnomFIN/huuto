@@ -266,7 +266,18 @@
   }
 
   function moveCarousel(step) {
-    state.carouselIndex = (state.carouselIndex + step + 5) % 5;
+    // Determine current carousel length to avoid hard-coded modulo
+    const carouselLength = Math.min(5, getEndingItems().length);
+
+    if (carouselLength <= 1) {
+      // With 0 or 1 items, always reset index to 0 and just re-render
+      state.carouselIndex = 0;
+      state.carouselTickStartMs = performance.now();
+      renderCarousel();
+      return;
+    }
+
+    state.carouselIndex = (state.carouselIndex + step + carouselLength) % carouselLength;
     state.carouselTickStartMs = performance.now();
     renderCarousel();
   }
