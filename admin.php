@@ -4,7 +4,7 @@ require_once __DIR__ . '/bootstrap.php';
 
 $success = '';
 $error = '';
-$adminPassword = 'huutojussi';
+$adminPassword = env('ADMIN_PASSWORD', 'huutojussi');
 
 if (isset($_GET['logout_admin']) && $_GET['logout_admin'] === '1') {
     unset($_SESSION['panel_admin_authenticated'], $_SESSION['panel_admin_login_at']);
