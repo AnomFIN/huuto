@@ -210,7 +210,7 @@ $isUserLoggedIn = is_logged_in();
 
 <footer class="site-footer">
     <div class="container footer-grid">
-        <section><h3><span class="footer-mark"></span>Huuto247.fi</h3><p>Täysin suomalainen palvelu, jonka tuottaa Lahen huutokaupat Oy</p><p>Yli viisi miljoonaa vierailua kuukaudessa.</p><div class="social-row"><span>Youtube</span><span>Instagram</span><span>Facebook</span></div></section>
+        <section><h3><span class="footer-mark"></span>Huuto247.fi</h3><p>Täysin suomalainen palvelu, jonka tuottaa Lahen huutokaupat Oy</p><p>Yli viisi miljoonaa vierailua kuukaudessa.</p><div class="social-row"><a href="https://youtube.com/@huuto247" target="_blank" rel="noopener noreferrer">Youtube</a><a href="https://www.instagram.com/huuto247" target="_blank" rel="noopener noreferrer">Instagram</a><a href="https://www.facebook.com/huuto247" target="_blank" rel="noopener noreferrer">Facebook</a></div></section>
         <section><h4>Tietoa palvelusta</h4><span>Tietoa huutajalle</span><span>Palvelun käyttöehdot</span><span>Aloita myyminen</span><span>Huutokaupat.com-myyntiehdot</span><span>Hinnasto</span><span>Maksutavat</span></section>
         <section><h4>Olemme apunasi</h4><span>Asiakaspalvelu</span><span>Ohjeet ja vinkit</span><span>Tilaa uutiskirje</span><span>Blogi</span><span>Kampanjat</span></section>
         <section><h4>Yritys</h4><span>Tietoa meistä</span><span>Lahen huutokauppa</span><span>Meille töihin</span><span>Medialle</span><span>Tietosuojaseloste</span><span>Evästeasetukset</span><span>Läpinäkyvyysraportointi</span><span>Saavutettavuusseloste</span></section>
