@@ -64,12 +64,31 @@ try {
 
     // Load images as base64 (limit to 3 for API efficiency)
     $imageContents = [];
+    // Base directory for image paths (project root, one level up from this script)
+    $baseDir = realpath(__DIR__ . '/..');
     foreach ($images as $image) {
-        $filePath = __DIR__ . '/../' . ltrim((string)$image['image_path'], '/');
-        if (file_exists($filePath)) {
-            $fileType = mime_content_type($filePath);
+        if ($baseDir === false) {
+            // If base directory cannot be resolved, skip for safety
+            continue;
+        }
+        $relativePath = ltrim((string)$image['image_path'], '/');
+        $candidatePath = $baseDir . DIRECTORY_SEPARATOR . $relativePath;
+        $resolvedPath = realpath($candidatePath);
+
+        // Ensure the resolved path is within the base directory to prevent path traversal
+        if ($resolvedPath === false) {
+            continue;
+        }
+        $baseDirWithSep = rtrim($baseDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        if (strncmp($resolvedPath, $baseDirWithSep, strlen($baseDirWithSep)) !== 0) {
+            // Resolved path is outside of the allowed base directory
+            continue;
+        }
+
+        if (file_exists($resolvedPath)) {
+            $fileType = mime_content_type($resolvedPath);
             if (in_array($fileType, ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'], true)) {
-                $imageData = file_get_contents($filePath);
+                $imageData = file_get_contents($resolvedPath);
                 $base64 = base64_encode($imageData);
                 $imageContents[] = [
                     'type' => 'image_url',
