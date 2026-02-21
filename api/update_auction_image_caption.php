@@ -42,7 +42,11 @@ try {
         json_error('Kohdetta ei löytynyt.', 404);
     }
 
-    if (is_logged_in() && !is_admin() && (int)$auction['user_id'] !== (int)current_user_id()) {
+    if (!is_logged_in()) {
+        json_error('Kirjaudu sisään jatkaaksesi.', 401);
+    }
+
+    if (!is_admin() && (int)$auction['user_id'] !== (int)current_user_id()) {
         json_error('Ei oikeuksia muokata kohdetta.', 403);
     }
 
