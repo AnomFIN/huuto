@@ -599,7 +599,7 @@ include SRC_PATH . '/views/header.php';
               <p id="imageUploadError" class="hidden" style="font-size: 0.85rem; color: #ef4444; margin-top: 0.5rem;"></p>
             </div>
 
-            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <div style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
               <button type="submit" class="btn-primary">
                 Tallenna muutokset
               </button>
@@ -608,6 +608,15 @@ include SRC_PATH . '/views/header.php';
               </a>
             </div>
           </form>
+
+          <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--line);">
+            <h3 style="margin: 0 0 0.5rem; font-size: 1rem; font-weight: 700;">AI-lisätiedot</h3>
+            <p style="font-size: 0.85rem; color: var(--text-700); margin: 0 0 0.75rem;">Generoi kategoria-spesifiset lisätiedot uudelleen kohteen kuvien perusteella. Hyödyllinen, jos lisätiedot ovat puutteelliset.</p>
+            <button type="button" id="regenerateAiBtn" class="btn-secondary">
+              🤖 Generoi AI-tiedot uudelleen
+            </button>
+            <p id="regenerateAiStatus" style="font-size: 0.85rem; margin-top: 0.5rem;"></p>
+          </div>
         </div>
 
         <!-- Images Section -->
@@ -677,5 +686,44 @@ include SRC_PATH . '/views/header.php';
 </div>
 
 <script src="assets/js/edit_auction_images.js"></script>
+<script>
+(function () {
+    const btn = document.getElementById('regenerateAiBtn');
+    const status = document.getElementById('regenerateAiStatus');
+    if (!btn || !status) return;
+
+    btn.addEventListener('click', async function () {
+        btn.disabled = true;
+        btn.textContent = '⏳ Generoidaan...';
+        status.textContent = '';
+        status.style.color = '';
+
+        try {
+            const formData = new FormData();
+            formData.append('auction_id', '<?php echo (int)$id; ?>');
+
+            const response = await fetch('api/regenerate_ai_details.php', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                throw new Error(data.error || 'AI-generointi epäonnistui');
+            }
+
+            status.style.color = '#15803d';
+            status.textContent = '✅ ' + (data.message || 'AI-lisätiedot tallennettu!');
+        } catch (err) {
+            status.style.color = '#dc2626';
+            status.textContent = '❌ ' + err.message;
+        } finally {
+            btn.disabled = false;
+            btn.textContent = '🤖 Generoi AI-tiedot uudelleen';
+        }
+    });
+}());
+</script>
 
 <?php include SRC_PATH . '/views/footer.php'; ?>

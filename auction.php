@@ -110,11 +110,23 @@ include SRC_PATH . '/views/header.php';
         color: var(--accent-700);
     }
 
+    .auction-category-badge {
+        display: inline-block;
+        background: var(--accent-600);
+        color: #fff;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.25rem 0.75rem;
+        border-radius: 999px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
     .auction-title {
         font-size: 2rem;
         font-weight: 700;
         color: var(--text-900);
-        margin: 0 0 1rem;
+        margin: 0.4rem 0 0.75rem;
         line-height: 1.2;
     }
 
@@ -573,17 +585,19 @@ include SRC_PATH . '/views/header.php';
         <a href="index.php">← Takaisin etusivulle</a>
     </div>
 
+    <div style="margin-bottom: 0.5rem;">
+        <span class="auction-category-badge"><?php echo htmlspecialchars($auction['category_name'] ?? 'Muut'); ?></span>
+    </div>
     <h1 class="auction-title"><?php echo htmlspecialchars($auction['title']); ?></h1>
-    <div class="auction-subtitle"><?php echo htmlspecialchars($auction['description'] ?? ''); ?></div>
 
     <?php if (function_exists('is_admin') && is_admin()): ?>
         <div class="auction-admin-actions">
-            <a class="auction-admin-edit" href="/edit_auction.php?id=<?php echo (int)$auction['id']; ?>">Muokkaa kohdetta</a>
+            <a class="auction-admin-edit" href="/edit_auction.php?id=<?php echo (int)$auction['id']; ?>">✏️ Muokkaa kohdetta</a>
         </div>
     <?php endif; ?>
-    
+
     <div class="auction-stats">
-        <span>Katsottu <?php echo number_format($auction['views']); ?> kertaa</span>
+        <span>👁 <?php echo number_format($auction['views']); ?> katselua</span>
         <span>📍 <?php echo htmlspecialchars($auction['location'] ?? 'Ei sijaintia'); ?></span>
     </div>
 
@@ -620,6 +634,16 @@ include SRC_PATH . '/views/header.php';
                     </div>
                 <?php endif; ?>
             </div>
+
+            <!-- Description -->
+            <?php if (!empty(trim((string)($auction['description'] ?? '')))): ?>
+            <div class="auction-card">
+                <h2>Kuvaus</h2>
+                <p style="font-size: 0.95rem; line-height: 1.7; color: var(--text-800); white-space: pre-wrap; margin: 0;">
+                    <?php echo nl2br(htmlspecialchars($auction['description'])); ?>
+                </p>
+            </div>
+            <?php endif; ?>
 
             <!-- Category Specific Details -->
             <div class="auction-card">
