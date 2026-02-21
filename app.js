@@ -6,11 +6,33 @@
   const INITIAL_COUNT = 20;
   const LOAD_MORE_COUNT = 10;
   const LOAD_DELAY_MS = 550;
+  const IMAGE_FALLBACK = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="320" height="240"><rect width="320" height="240" fill="#f0f0f0"/><text x="50%" y="50%" text-anchor="middle" dy=".35em" fill="#999" font-family="Arial" font-size="14">Ei kuvaa</text></svg>')}`;
   const CATEGORIES = ['Ajoneuvot', 'Työkoneet', 'Asunnot', 'Vapaa-aika', 'Piha', 'Työkalut', 'Rakennus', 'Sisustus', 'Elektroniikka', 'Keräily', 'Muut'];
   const FILTER_PILLS = ['', 'Ajoneuvot', 'Työkoneet', 'Elektroniikka'];
   const LOCATIONS = ['Helsinki', 'Lahti', 'Tampere', 'Oulu', 'Turku', 'Jyväskylä'];
   const SELLERS = ['Kone Keltto Oy', 'Lahden Varaosa Oy', 'Pohjolan Kodit', 'Yritysmyyjä', 'Yksityinen myyjä'];
-  const FOOTER_LINKS = ['Tietoa palvelusta', 'Tietoa huutajalle', 'Palvelun käyttöehdot', 'Aloita myyminen', 'Huutokaupat.com-myyntiehdot', 'Hinnasto', 'Maksutavat', 'Olemme apunasi / Asiakaspalvelu', 'Ohjeet ja vinkit', 'Tilaa uutiskirje', 'Blogi', 'Kampanjat', 'Yritys / Tietoa meistä', 'Lahen huutokauppa', 'Meille töihin', 'Medialle', 'Tietosuojaseloste', 'Evästeasetukset', 'Läpinäkyvyysraportointi', 'Saavutettavuusseloste'];
+  const FOOTER_LINKS = [
+    { label: 'Tietoa palvelusta', page: 'tietoa-palvelusta' },
+    { label: 'Tietoa huutajalle', page: 'tietoa-huutajalle' },
+    { label: 'Palvelun käyttöehdot', page: 'kayttoehdot' },
+    { label: 'Aloita myyminen', page: 'myyminen' },
+    { label: 'Huutokaupat.com-myyntiehdot', page: 'myyntiehdot' },
+    { label: 'Hinnasto', page: 'hinnasto' },
+    { label: 'Maksutavat', page: 'maksutavat' },
+    { label: 'Asiakaspalvelu', page: 'asiakaspalvelu' },
+    { label: 'Ohjeet ja vinkit', page: 'ohjeet' },
+    { label: 'Tilaa uutiskirje', page: 'uutiskirje' },
+    { label: 'Blogi', page: 'blogi' },
+    { label: 'Kampanjat', page: 'kampanjat' },
+    { label: 'Tietoa meistä', page: 'tietoa-meista' },
+    { label: 'Lahen huutokauppa', page: 'lahen-huutokauppa' },
+    { label: 'Meille töihin', page: 'meille-toihin' },
+    { label: 'Medialle', page: 'medialle' },
+    { label: 'Tietosuojaseloste', page: 'tietosuojaseloste' },
+    { label: 'Evästeasetukset', page: 'evasteet' },
+    { label: 'Läpinäkyvyysraportointi', page: 'lapinakyvyys' },
+    { label: 'Saavutettavuusseloste', page: 'saavutettavuus' },
+  ];
   const SLOGANS = [
     'Huuda fiksusti, voita oikeat kohteet.',
     'Luottamusta herättävä markkinapaikka jokaiselle huutajalle.',
@@ -29,6 +51,8 @@
     user: { loggedIn: false, name: 'Oma tili' },
     favorites: new Set(favoriteIterable),
     items: [],
+    popularItems: [],
+    closingItems: [],
     popularShown: INITIAL_COUNT,
     endingShown: INITIAL_COUNT,
     popularFilter: null,
@@ -78,12 +102,34 @@
   boot();
 
   function boot() {
-    state.items = createMockItems(190);
+    // Only use data from server-side (PHP -> JavaScript), never mock data
+    if (window.__HOME_DATA__) {
+      const popularItems = window.__HOME_DATA__.popular || [];
+      const closingItems = window.__HOME_DATA__.closing || [];
+      state.popularItems = normalizeServerItems(popularItems);
+      state.closingItems = normalizeServerItems(closingItems);
+      state.items = normalizeServerItems([...popularItems, ...closingItems]);
+      state.user.loggedIn = window.__HOME_DATA__.isLoggedIn || false;
+      if (Array.isArray(window.__HOME_DATA__.favoriteIds)) {
+        window.__HOME_DATA__.favoriteIds.forEach((id) => {
+          const parsed = Number(id);
+          if (Number.isInteger(parsed) && parsed > 0) {
+            state.favorites.add(parsed);
+          }
+        });
+      }
+    } else {
+      // No fallback to mock data - empty state if no server data
+      state.items = [];
+      console.warn('No server data available (__HOME_DATA__ not found)');
+    }
+    
     renderStaticBlocks();
     renderAll();
     bindEvents();
 
     setInterval(updateVisibleCountdowns, 1000);
+    setInterval(syncEndedAuctions, 15000);
     setInterval(() => {
       if (!state.carouselPaused) moveCarousel(1);
     }, CAROUSEL_INTERVAL_MS);
@@ -93,9 +139,44 @@
     logInfo('boot_complete', { totalItems: state.items.length, favorites: state.favorites.size });
   }
 
+  function normalizeServerItems(items) {
+    if (!Array.isArray(items)) return [];
+
+    const byId = new Map();
+    items.forEach((item) => {
+      if (!item || typeof item !== 'object') return;
+
+      const id = Number(item.id);
+      if (!Number.isInteger(id) || id <= 0) return;
+
+      const parsedEnd = Date.parse(String(item.endTime || item.end_time || ''));
+      const endTime = Number.isFinite(parsedEnd) ? parsedEnd : Date.now() + 86400000;
+      const imageUrl = typeof item.imageUrl === 'string' && item.imageUrl.trim() !== '' ? item.imageUrl.trim() : IMAGE_FALLBACK;
+
+      byId.set(id, {
+        ...item,
+        id,
+        endTime,
+        imageUrl,
+        title: cleanDisplayText(item.title || 'Kohde', 160),
+        category: cleanDisplayText(item.category || 'Muut', 60),
+        location: cleanDisplayText(item.location || 'Ei sijaintia', 120),
+        seller: String(item.seller || 'Tuntematon myyjä'),
+        delivery: String(item.delivery || 'Nouto / Toimitus'),
+        bidsCount: Number.isFinite(Number(item.bidsCount)) ? Number(item.bidsCount) : 0,
+        minIncrement: Number.isFinite(Number(item.minIncrement)) ? Number(item.minIncrement) : 1,
+        priceNow: Number.isFinite(Number(item.priceNow)) ? Number(item.priceNow) : 0,
+        startingPrice: Number.isFinite(Number(item.startingPrice)) ? Number(item.startingPrice) : 0,
+        buyNowPrice: item.buyNowPrice === null || item.buyNowPrice === undefined ? null : Number(item.buyNowPrice),
+      });
+    });
+
+    return Array.from(byId.values());
+  }
+
   function renderStaticBlocks() {
     refs.searchCategory.innerHTML += CATEGORIES.map((category) => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`).join('');
-    refs.footerLinks.innerHTML = FOOTER_LINKS.map((label) => `<a href="#">${escapeHtml(label)}</a>`).join('');
+    refs.footerLinks.innerHTML = FOOTER_LINKS.map((item) => `<a href="/info.php?page=${encodeURIComponent(item.page)}">${escapeHtml(item.label)}</a>`).join('');
     refs.popularPills.innerHTML = renderPills('popular');
     refs.endingPills.innerHTML = renderPills('ending');
     refs.categoryList.innerHTML = CATEGORIES.map((category) => `<li><button data-category="${escapeHtml(category)}">${escapeHtml(category)} ›</button></li>`).join('');
@@ -145,21 +226,32 @@
     refs.loadMorePopular.addEventListener('click', () => loadMore('popular'));
     refs.loadMoreEnding.addEventListener('click', () => loadMore('ending'));
 
-    refs.loginLink.addEventListener('click', () => {
-      if (state.user.loggedIn) return logout();
-      refs.loginModal.showModal();
-    });
-    refs.registerLink.addEventListener('click', () => {
-      if (state.user.loggedIn) return logout();
-      refs.loginModal.showModal();
-    });
+    if (refs.loginLink && refs.loginLink.tagName === 'BUTTON') {
+      refs.loginLink.addEventListener('click', () => {
+        if (state.user.loggedIn) return logout();
+        refs.loginModal.showModal();
+      });
+    }
 
-    refs.simulateLogin.addEventListener('click', () => {
-      state.user.loggedIn = true;
-      refs.loginLink.textContent = state.user.name;
-      refs.registerLink.textContent = 'Kirjaudu ulos';
-      refs.loginModal.close();
-    });
+    if (refs.registerLink && refs.registerLink.tagName === 'BUTTON') {
+      refs.registerLink.addEventListener('click', () => {
+        if (state.user.loggedIn) return logout();
+        refs.loginModal.showModal();
+      });
+    }
+
+    if (refs.simulateLogin) {
+      refs.simulateLogin.addEventListener('click', () => {
+        state.user.loggedIn = true;
+        if (refs.loginLink && refs.loginLink.tagName === 'BUTTON') {
+          refs.loginLink.textContent = state.user.name;
+        }
+        if (refs.registerLink && refs.registerLink.tagName === 'BUTTON') {
+          refs.registerLink.textContent = 'Kirjaudu ulos';
+        }
+        refs.loginModal.close();
+      });
+    }
 
     [refs.loginModal, refs.benefitModal, refs.itemModal].forEach(bindDialogOutsideClose);
     window.addEventListener('keydown', (event) => {
@@ -204,6 +296,9 @@
 
       const bidButton = event.target.closest('[data-bid]');
       if (bidButton) placeBid(Number(bidButton.dataset.bid));
+
+      const buyNowButton = event.target.closest('[data-buy-now]');
+      if (buyNowButton) buyNow(Number(buyNowButton.dataset.buyNow));
 
       const card = event.target.closest('[data-item-card]');
       if (card && !event.target.closest('button')) openItemModal(Number(card.dataset.itemCard));
@@ -256,7 +351,7 @@
       return `
         <article class="carousel-item ${pos}">
           <div class="carousel-media">
-            <img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.title)}" />
+            <img src="${escapeHtml(item.imageUrl || IMAGE_FALLBACK)}" alt="${escapeHtml(item.title)}" />
             <div class="carousel-overlay">
               <span class="countdown-badge" data-end-time="${item.endTime}">${formatCountdown(item.endTime)}</span>
               <h3>${escapeHtml(item.title)}</h3>
@@ -320,7 +415,9 @@
   }
 
   function getPopularItems() {
-    const byBids = [...state.items].sort((a, b) => b.bidsCount - a.bidsCount);
+    const byBids = [...state.popularItems]
+      .filter((item) => item.endTime > Date.now())
+      .sort((a, b) => b.bidsCount - a.bidsCount);
     return byBids.filter((item) => {
       if (state.popularFilter && item.category !== state.popularFilter) return false;
       if (state.searchCategory && item.category !== state.searchCategory) return false;
@@ -330,7 +427,9 @@
   }
 
   function getEndingItems() {
-    const byEnding = [...state.items].sort((a, b) => a.endTime - b.endTime);
+    const byEnding = [...state.closingItems]
+      .filter((item) => item.endTime > Date.now())
+      .sort((a, b) => a.endTime - b.endTime);
     return byEnding.filter((item) => (state.endingFilter ? item.category === state.endingFilter : true));
   }
 
@@ -355,10 +454,10 @@
       return `
         <article class="card ${animated ? 'with-enter' : ''}" style="animation-delay:${index * 24}ms" data-item-card="${item.id}">
           <div class="thumb">
-            <img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.title)}" />
+            <img src="${escapeHtml(item.imageUrl || IMAGE_FALLBACK)}" alt="${escapeHtml(item.title)}" onerror="this.onerror=null;this.src='${IMAGE_FALLBACK}'" />
             <button class="watch-btn ${favoriteClass}" data-favorite="${item.id}" aria-label="Lisää suosikiksi">♥</button>
           </div>
-          <h3 class="item-title">${escapeHtml(item.title)}</h3>
+          <h3 class="item-title"><a href="auction.php?id=${item.id}" class="auction-link">${escapeHtml(item.title)}</a></h3>
           <div class="meta-row"><small>${escapeHtml(item.location)}</small><span class="category-pill">${escapeHtml(item.category)}</span></div>
           <span class="countdown" data-end-time="${item.endTime}">${formatCountdown(item.endTime)}</span>
           <p class="price">Hinta nyt: ${formatPrice(item.priceNow)}</p>
@@ -409,40 +508,114 @@
       return;
     }
 
-    if (state.favorites.has(itemId)) state.favorites.delete(itemId);
-    else state.favorites.add(itemId);
-
-    writeJson('huuto247-favorites', [...state.favorites]);
+    const willFavorite = !state.favorites.has(itemId);
+    if (willFavorite) state.favorites.add(itemId);
+    else state.favorites.delete(itemId);
     renderPopular();
     renderEnding();
+
+    fetch('/api/toggle_favourite.php', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json'
+      },
+      credentials: 'same-origin',
+      body: JSON.stringify({ auction_id: itemId })
+    })
+      .then((response) => response.json())
+      .then((payload) => {
+        if (!payload || payload.ok !== true) {
+          throw new Error((payload && payload.error) || 'Suosikin tallennus epäonnistui');
+        }
+
+        if (payload.favorited === true) state.favorites.add(itemId);
+        if (payload.favorited === false) state.favorites.delete(itemId);
+        writeJson('huuto247-favorites', [...state.favorites]);
+        renderPopular();
+        renderEnding();
+      })
+      .catch(() => {
+        if (willFavorite) state.favorites.delete(itemId);
+        else state.favorites.add(itemId);
+        renderPopular();
+        renderEnding();
+      });
   }
 
   function placeBid(itemId) {
     if (!Number.isInteger(itemId) || itemId <= 0) return;
-    state.items = state.items.map((item) => {
+
+    const updateBid = (item) => {
       if (item.id !== itemId) return item;
       return { ...item, bidsCount: item.bidsCount + 1, priceNow: item.priceNow + item.minIncrement };
-    });
+    };
+
+    state.items = state.items.map(updateBid);
+    state.popularItems = state.popularItems.map(updateBid);
+    state.closingItems = state.closingItems.map(updateBid);
+
     renderAll();
   }
 
-  function openItemModal(itemId) {
+  async function openItemModal(itemId) {
     if (!Number.isInteger(itemId) || itemId <= 0) return;
     const item = state.items.find((entry) => entry.id === itemId);
     if (!item) return;
 
     refs.itemModalContent.innerHTML = `
       <h3>${escapeHtml(item.title)}</h3>
-      <img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.title)}" />
+      <img src="${escapeHtml(item.imageUrl || IMAGE_FALLBACK)}" alt="${escapeHtml(item.title)}" />
       <p class="price">Hinta nyt: ${formatPrice(item.priceNow)}</p>
       <p class="subline">Tarjouksia ${item.bidsCount} • Minikorotus ${formatPrice(item.minIncrement)}</p>
       <p class="trust-line">Myyjä: ${escapeHtml(item.seller)} • ${escapeHtml(item.delivery)} • ${escapeHtml(item.location)}</p>
+      <p class="subline">Ladataan kohteen lisätietoja…</p>
       <div class="modal-actions">
         <button value="cancel" class="btn-secondary">Sulje</button>
+        <a class="btn-secondary" href="auction.php?id=${item.id}">Avaa kohde</a>
+        <button type="button" class="btn-secondary" data-buy-now="${item.id}" ${item.buyNowPrice ? '' : 'disabled'}>
+          ${item.buyNowPrice ? `Osta heti ${formatPrice(item.buyNowPrice)}` : 'Osta heti ei käytössä'}
+        </button>
         <button value="confirm" class="btn-primary" data-bid="${item.id}">Huutaa nyt</button>
       </div>
     `;
     refs.itemModal.showModal();
+
+    try {
+      const response = await fetch(`api/get_auction_popup.php?id=${item.id}`);
+      const data = await response.json();
+      if (!response.ok || !data.success || !data.item) {
+        return;
+      }
+
+      const details = data.item;
+      const bids = Array.isArray(data.bids) ? data.bids : [];
+      const bidHistory = bids.length
+        ? `<ul class="modal-bids">${bids.map((bid) => `<li>${escapeHtml(bid.username)}: <strong>${formatPrice(bid.amount)}</strong> <small>${escapeHtml(formatBidTime(bid.bidTime))}</small></li>`).join('')}</ul>`
+        : '<p class="subline">Ei huutohistoriaa vielä.</p>';
+
+      refs.itemModalContent.innerHTML = `
+        <h3>${escapeHtml(cleanDisplayText(details.title || item.title, 160))}</h3>
+        <img src="${escapeHtml(details.imageUrl || item.imageUrl || IMAGE_FALLBACK)}" alt="${escapeHtml(cleanDisplayText(details.title || item.title, 160))}" />
+        <p class="price">Hinta nyt: ${formatPrice(details.currentPrice ?? item.priceNow)}</p>
+        <p class="subline">Tarjouksia ${Number(details.bidCount ?? item.bidsCount)} • Minikorotus ${formatPrice(details.bidIncrement ?? item.minIncrement)}</p>
+        <p class="trust-line">Sijainti: ${escapeHtml(cleanDisplayText(details.location || item.location, 120))} • Myyjä: ${escapeHtml(cleanDisplayText(details.seller || item.seller, 80))}</p>
+        <p class="subline">Päättyy: ${escapeHtml(formatBidTime(details.endTime || item.endTime))} • Kategoria: ${escapeHtml(cleanDisplayText(details.category || item.category, 60))}</p>
+        <p>${escapeHtml(cleanDisplayText(details.description || '', 600))}</p>
+        <h4 style="margin:.55rem 0 .35rem;">Huutohistoria</h4>
+        ${bidHistory}
+        <div class="modal-actions">
+          <button value="cancel" class="btn-secondary">Sulje</button>
+          <a class="btn-secondary" href="auction.php?id=${item.id}">Avaa kohde</a>
+          <button type="button" class="btn-secondary" data-buy-now="${item.id}" ${details.buyNowPrice ? '' : 'disabled'}>
+            ${details.buyNowPrice ? `Osta heti ${formatPrice(details.buyNowPrice)}` : 'Osta heti ei käytössä'}
+          </button>
+          <button value="confirm" class="btn-primary" data-bid="${item.id}">Huutaa nyt</button>
+        </div>
+      `;
+    } catch (error) {
+      logInfo('popup_details_load_failed', { itemId, message: error.message });
+    }
   }
 
   function updateVisibleCountdowns() {
@@ -454,6 +627,48 @@
       if (!Number.isFinite(endTime)) return;
       node.textContent = formatCountdown(endTime);
     });
+  }
+
+  function syncEndedAuctions() {
+    const now = Date.now();
+    const previousPopular = state.popularItems.length;
+    const previousClosing = state.closingItems.length;
+
+    state.popularItems = state.popularItems.filter((item) => item.endTime > now);
+    state.closingItems = state.closingItems.filter((item) => item.endTime > now);
+    state.items = state.items.filter((item) => item.endTime > now);
+
+    const carouselLength = Math.min(5, getEndingItems().length);
+    if (carouselLength <= 1) {
+      state.carouselIndex = 0;
+    } else if (state.carouselIndex >= carouselLength) {
+      state.carouselIndex = 0;
+    }
+
+    if (previousPopular !== state.popularItems.length || previousClosing !== state.closingItems.length) {
+      renderAll();
+    }
+  }
+
+  function buyNow(itemId) {
+    if (!Number.isInteger(itemId) || itemId <= 0) return;
+
+    const applyBuyNow = (entry) => {
+      if (entry.id !== itemId) return entry;
+      const buyNowPrice = Number(entry.buyNowPrice);
+      if (!Number.isFinite(buyNowPrice) || buyNowPrice <= 0) return entry;
+      return {
+        ...entry,
+        priceNow: buyNowPrice,
+        bidsCount: entry.bidsCount + 1,
+      };
+    };
+
+    state.items = state.items.map(applyBuyNow);
+    state.popularItems = state.popularItems.map(applyBuyNow);
+    state.closingItems = state.closingItems.map(applyBuyNow);
+
+    renderAll();
   }
 
   function createMockItems(totalCount) {
@@ -474,7 +689,7 @@
         minIncrement: 5 + (index % 6) * 5,
         seller,
         delivery: index % 2 === 0 ? 'Nouto / Toimitus' : 'Nouto',
-        imageUrl: `data:image/svg+xml,${buildPhotoLikePlaceholder(category, id, index)}`,
+        imageUrl: null, // No mock images, only real images from database
       };
     });
   }
@@ -497,10 +712,14 @@
 
   function formatCountdown(endTime) {
     const diffSec = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+    if (diffSec <= 0) return 'Sulkeutunut';
+    if (diffSec < 60) return `Sulkeutuu nyt (${diffSec} s)`;
+
     if (diffSec >= 3600) {
       const days = Math.floor(diffSec / 86400);
       const hours = Math.floor((diffSec % 86400) / 3600);
-      return `${days > 0 ? `${days} pv ` : ''}${hours} h`;
+      const minutes = Math.floor((diffSec % 3600) / 60);
+      return `${days > 0 ? `${days} pv ` : ''}${hours} h ${minutes} min`;
     }
     const minutes = Math.floor((diffSec % 3600) / 60);
     const seconds = diffSec % 60;
@@ -522,6 +741,34 @@
   function sanitizeQuery(value) {
     if (typeof value !== 'string') return '';
     return value.replace(/[<>]/g, '').trim().slice(0, 70);
+  }
+
+  function cleanDisplayText(value, maxLength = 120) {
+    const raw = String(value ?? '');
+    const withoutArtifacts = raw
+      .replace(/&quot;/gi, '"')
+      .replace(/&amp;quot;/gi, '"')
+      .replace(/\s*\"\s*\/?\s*>/g, ' ')
+      .replace(/\s*\/?\s*>\s*/g, ' ')
+      .replace(/```(?:json)?/gi, ' ')
+      .replace(/[\u0000-\u001F\u007F]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    return withoutArtifacts.slice(0, maxLength);
+  }
+
+  function formatBidTime(value) {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return new Date(value).toLocaleString('fi-FI');
+    }
+
+    const parsed = Date.parse(String(value || ''));
+    if (!Number.isFinite(parsed)) {
+      return String(value || '');
+    }
+
+    return new Date(parsed).toLocaleString('fi-FI');
   }
 
   function escapeHtml(value) {

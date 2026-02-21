@@ -51,85 +51,265 @@ $pageTitle = 'Rekisteröidy - ' . SITE_NAME;
 include __DIR__ . '/../src/views/header.php';
 ?>
 
-<div class="max-w-md mx-auto bg-white rounded-lg shadow-lg p-8">
-    <h1 class="text-2xl font-bold text-center text-gray-900 mb-8">Luo tili</h1>
+<style>
+    .auth-container {
+        max-width: 400px;
+        margin: 3rem auto;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 2.5rem;
+        box-shadow: var(--shadow-1);
+    }
+
+    .auth-title {
+        text-align: center;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-900);
+        margin: 0 0 2rem;
+    }
+
+    .message-box {
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+    }
+
+    .message-error {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #dc2626;
+    }
+
+    .message-success {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        color: #16a34a;
+    }
+
+    .form-section {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--text-900);
+        font-size: 0.9rem;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        font-size: 0.95rem;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: var(--accent-600);
+        box-shadow: 0 0 0 3px rgba(38,104,255,.16);
+    }
+
+    .form-input.valid {
+        border-color: #16a34a;
+    }
+
+    .form-input.invalid {
+        border-color: #dc2626;
+    }
+
+    .form-help {
+        font-size: 0.8rem;
+        color: var(--text-700);
+        margin-top: 0.25rem;
+    }
+
+    .form-checkbox {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: var(--text-700);
+        line-height: 1.4;
+    }
+
+    .form-checkbox input {
+        margin-top: 0.1rem;
+    }
+
+    .button {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: all 0.2s;
+    }
+
+    .button-primary {
+        background: var(--accent-600);
+        color: white;
+    }
+
+    .button-primary:hover {
+        background: var(--accent-700);
+    }
+
+    .button-google {
+        background: white;
+        border: 1px solid var(--line);
+        color: var(--text-900);
+    }
+
+    .button-google:hover {
+        background: var(--bg-neutral-50);
+    }
+
+    .auth-footer {
+        text-align: center;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--line);
+        color: var(--text-700);
+    }
+
+    .auth-footer a {
+        color: var(--accent-600);
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .auth-footer a:hover {
+        color: var(--accent-700);
+    }
+
+    .section-divider {
+        position: relative;
+        margin: 1.5rem 0;
+        text-align: center;
+    }
+
+    .section-divider::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: var(--line);
+    }
+
+    .section-divider span {
+        background: var(--surface);
+        padding: 0 0.75rem;
+        font-size: 0.9rem;
+        color: var(--text-700);
+    }
+
+    .success-links a {
+        color: #16a34a;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+    }
+
+    .success-links a:hover {
+        color: #15803d;
+    }
+
+    .required {
+        color: var(--accent-600);
+    }
+</style>
+
+<div class="auth-container">
+    <h1 class="auth-title">Luo tili</h1>
 
     <?php if ($error): ?>
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+        <div class="message-box message-error">
             <?php echo htmlspecialchars($error); ?>
         </div>
     <?php endif; ?>
 
     <?php if ($success): ?>
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
+        <div class="message-box message-success">
             <?php echo htmlspecialchars($success); ?>
-            <p class="mt-2">
-                <a href="/auth/login.php" class="text-green-700 underline">Siirry kirjautumissivulle</a>
-            </p>
+            <div class="success-links" style="margin-top: 0.5rem;">
+                <a href="/auth/login.php">Siirry kirjautumissivulle</a>
+            </div>
         </div>
     <?php else: ?>
         <?php if ($canUseGoogleAuth): ?>
-            <div class="mb-6">
-                <a href="/auth/google-login.php"
-                   class="w-full inline-flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors">
-                    <span>Jatka Google-tilillä</span>
+            <div class="form-section">
+                <a href="/auth/google-login.php" class="button button-google">
+                    Jatka Google-tilillä
                 </a>
             </div>
 
-            <div class="relative mb-6">
-                <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-300"></div></div>
-                <div class="relative flex justify-center text-sm"><span class="px-2 bg-white text-gray-500">tai rekisteröidy sähköpostilla</span></div>
+            <div class="section-divider">
+                <span>tai rekisteröidy sähköpostilla</span>
             </div>
         <?php endif; ?>
 
         <form method="POST">
             <input type="hidden" name="action" value="register">
 
-            <div class="mb-4">
-                <label for="full_name" class="block text-sm font-medium text-gray-700 mb-2">Koko nimi *</label>
+            <div class="form-section">
+                <label for="full_name" class="form-label">Koko nimi <span class="required">*</span></label>
                 <input type="text" id="full_name" name="full_name" required
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       class="form-input"
                        value="<?php echo htmlspecialchars($_POST['full_name'] ?? ''); ?>">
             </div>
 
-            <div class="mb-4">
-                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Sähköposti *</label>
+            <div class="form-section">
+                <label for="email" class="form-label">Sähköposti <span class="required">*</span></label>
                 <input type="email" id="email" name="email" required
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       class="form-input"
                        value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>">
             </div>
 
-            <div class="mb-4">
-                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Salasana *</label>
+            <div class="form-section">
+                <label for="password" class="form-label">Salasana <span class="required">*</span></label>
                 <input type="password" id="password" name="password" required
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                <p class="text-xs text-gray-500 mt-1">Vähintään 8 merkkiä, sisällettävä kirjaimia ja numeroita</p>
+                       class="form-input">
+                <p class="form-help">Vähintään 8 merkkiä, sisällettävä kirjaimia ja numeroita</p>
             </div>
 
-            <div class="mb-6">
-                <label for="confirm_password" class="block text-sm font-medium text-gray-700 mb-2">Vahvista salasana *</label>
+            <div class="form-section">
+                <label for="confirm_password" class="form-label">Vahvista salasana <span class="required">*</span></label>
                 <input type="password" id="confirm_password" name="confirm_password" required
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                       class="form-input">
             </div>
 
-            <div class="mb-6">
-                <div class="flex items-center">
-                    <input type="checkbox" id="terms" name="terms" required class="mr-2">
-                    <label for="terms" class="text-sm text-gray-700">
-                        Hyväksyn <a href="/terms" class="text-blue-600 hover:text-blue-800">käyttöehdot</a> ja <a href="/privacy" class="text-blue-600 hover:text-blue-800">tietosuojaselosteen</a> *
+            <div class="form-section">
+                <div class="form-checkbox">
+                    <input type="checkbox" id="terms" name="terms" required>
+                    <label for="terms">
+                        Hyväksyn <a href="/terms" style="color: var(--accent-600); text-decoration: none;">käyttöehdot</a> ja <a href="/privacy" style="color: var(--accent-600); text-decoration: none;">tietosuojaselosteen</a> <span class="required">*</span>
                     </label>
                 </div>
             </div>
 
-            <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+            <button type="submit" class="button button-primary">
                 Luo tili
             </button>
         </form>
     <?php endif; ?>
 
-    <div class="text-center mt-6 pt-6 border-t">
-        <p class="text-gray-600">Onko sinulla jo tili?</p>
-        <a href="/auth/login.php" class="text-blue-600 hover:text-blue-800 font-medium">Kirjaudu sisään</a>
+    <div class="auth-footer">
+        <p>Onko sinulla jo tili?</p>
+        <a href="/auth/login.php">Kirjaudu sisään</a>
     </div>
 </div>
 
@@ -140,17 +320,22 @@ document.getElementById('password')?.addEventListener('input', function() {
     const isValid = password.length >= 8 && /[A-Za-z]/.test(password) && /[0-9]/.test(password);
 
     if (password.length > 0) {
-        this.style.borderColor = isValid ? '#10B981' : '#EF4444';
+        this.classList.toggle('valid', isValid);
+        this.classList.toggle('invalid', !isValid);
     }
 
     if (confirmPassword && confirmPassword.value) {
-        confirmPassword.style.borderColor = password !== confirmPassword.value ? '#EF4444' : '#10B981';
+        const passwordsMatch = password === confirmPassword.value;
+        confirmPassword.classList.toggle('valid', passwordsMatch);
+        confirmPassword.classList.toggle('invalid', !passwordsMatch);
     }
 });
 
 document.getElementById('confirm_password')?.addEventListener('input', function() {
     const password = document.getElementById('password')?.value || '';
-    this.style.borderColor = this.value && password !== this.value ? '#EF4444' : '#10B981';
+    const passwordsMatch = password === this.value;
+    this.classList.toggle('valid', this.value && passwordsMatch);
+    this.classList.toggle('invalid', this.value && !passwordsMatch);
 });
 </script>
 

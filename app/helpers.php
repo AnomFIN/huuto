@@ -238,9 +238,31 @@ function current_user() {
 }
 
 /**
+ * Check if simple admin panel session is active
+ */
+function is_panel_admin_authenticated() {
+    return !empty($_SESSION['panel_admin_authenticated']) && $_SESSION['panel_admin_authenticated'] === true;
+}
+
+/**
+ * Require simple admin panel session or redirect to admin login page
+ */
+function require_panel_admin() {
+    if (!is_panel_admin_authenticated()) {
+        $next = urlencode((string)($_SERVER['REQUEST_URI'] ?? '/admin.php'));
+        header('Location: /admin.php?next=' . $next);
+        exit;
+    }
+}
+
+/**
  * Check if user is admin
  */
 function is_admin() {
+    if (is_panel_admin_authenticated()) {
+        return true;
+    }
+
     $user = current_user();
     return $user && ($user['role'] === 'admin' || $user['role'] === 'moderator');
 }
@@ -559,6 +581,127 @@ function create_thumbnail($source, $destination, $maxWidth = 300, $maxHeight = 3
     imagedestroy($dst);
     
     return $result;
+}
+
+function create_watermarked_variant($source, $destination, $maxWidth = 2200, $maxHeight = 2200) {
+    $imageInfo = getimagesize($source);
+    if ($imageInfo === false) {
+        return false;
+    }
+
+    $width = (int)$imageInfo[0];
+    $height = (int)$imageInfo[1];
+    $type = (int)$imageInfo[2];
+
+    switch ($type) {
+        case IMAGETYPE_JPEG:
+            $src = imagecreatefromjpeg($source);
+            break;
+        case IMAGETYPE_PNG:
+            $src = imagecreatefrompng($source);
+            break;
+        case IMAGETYPE_GIF:
+            $src = imagecreatefromgif($source);
+            break;
+        case IMAGETYPE_WEBP:
+            $src = imagecreatefromwebp($source);
+            break;
+        default:
+            return false;
+    }
+
+    if ($src === false) {
+        return false;
+    }
+
+    $ratio = min($maxWidth / max(1, $width), $maxHeight / max(1, $height), 1);
+    $newWidth = max(1, (int)floor($width * $ratio));
+    $newHeight = max(1, (int)floor($height * $ratio));
+
+    $dst = imagecreatetruecolor($newWidth, $newHeight);
+    if ($type === IMAGETYPE_PNG || $type === IMAGETYPE_GIF || $type === IMAGETYPE_WEBP) {
+        imagealphablending($dst, false);
+        imagesavealpha($dst, true);
+        $transparent = imagecolorallocatealpha($dst, 0, 0, 0, 127);
+        imagefilledrectangle($dst, 0, 0, $newWidth, $newHeight, $transparent);
+    }
+
+    imagecopyresampled($dst, $src, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+
+    $watermarkText = 'HUUTO247.FI  •  LAHEN HUUTOKAUPPAT OY';
+    $fontPathCandidates = [
+        '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+        '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+        '/usr/share/fonts/TTF/DejaVuSans-Bold.ttf',
+    ];
+    $fontPath = null;
+    foreach ($fontPathCandidates as $candidate) {
+        if (is_file($candidate)) {
+            $fontPath = $candidate;
+            break;
+        }
+    }
+
+    if ($fontPath !== null && function_exists('imagettftext')) {
+        $base = min($newWidth, $newHeight);
+        $fontSize = max(28, (int)round($base / 10));
+        $angle = -28;
+
+        $textColor = imagecolorallocatealpha($dst, 235, 235, 235, 82);
+        $shadowColor = imagecolorallocatealpha($dst, 0, 0, 0, 95);
+
+        $bbox = imagettfbbox($fontSize, $angle, $fontPath, $watermarkText);
+        $bboxWidth = (int)(max($bbox[2], $bbox[4]) - min($bbox[0], $bbox[6]));
+        $bboxHeight = (int)(max($bbox[1], $bbox[3]) - min($bbox[5], $bbox[7]));
+
+        $x = (int)(($newWidth - $bboxWidth) / 2);
+        $y = (int)(($newHeight + $bboxHeight) / 2);
+
+        imagettftext($dst, $fontSize, $angle, $x + 3, $y + 3, $shadowColor, $fontPath, $watermarkText);
+        imagettftext($dst, $fontSize, $angle, $x, $y, $textColor, $fontPath, $watermarkText);
+
+        $offset = (int)max(36, $fontSize * 1.4);
+        imagettftext($dst, $fontSize, $angle, $x - $offset, $y - $offset, $shadowColor, $fontPath, $watermarkText);
+        imagettftext($dst, $fontSize, $angle, $x - $offset - 2, $y - $offset - 2, $textColor, $fontPath, $watermarkText);
+        imagettftext($dst, $fontSize, $angle, $x + $offset, $y + $offset, $shadowColor, $fontPath, $watermarkText);
+        imagettftext($dst, $fontSize, $angle, $x + $offset - 2, $y + $offset - 2, $textColor, $fontPath, $watermarkText);
+    } else {
+        $fallbackColor = imagecolorallocatealpha($dst, 220, 220, 220, 80);
+        $shadow = imagecolorallocatealpha($dst, 0, 0, 0, 95);
+        $line = 'HUUTO247.FI / LAHEN HUUTOKAUPPAT OY';
+        $font = 5;
+        $stepY = max(54, (int)($newHeight / 6));
+        for ($y = (int)($newHeight * 0.15); $y < $newHeight; $y += $stepY) {
+            $x = (int)(($y / max(1, $newHeight)) * $newWidth * 0.45);
+            imagestring($dst, $font, $x + 1, $y + 1, $line, $shadow);
+            imagestring($dst, $font, $x, $y, $line, $fallbackColor);
+        }
+    }
+
+    $result = false;
+    switch ($type) {
+        case IMAGETYPE_JPEG:
+            $result = imagejpeg($dst, $destination, 88);
+            break;
+        case IMAGETYPE_PNG:
+            $result = imagepng($dst, $destination, 7);
+            break;
+        case IMAGETYPE_GIF:
+            $result = imagegif($dst, $destination);
+            break;
+        case IMAGETYPE_WEBP:
+            $result = imagewebp($dst, $destination, 88);
+            break;
+    }
+
+    imagedestroy($src);
+    imagedestroy($dst);
+
+    return $result;
+}
+
+function create_listing_thumbnail($source, $destination, $maxWidth = 680, $maxHeight = 520) {
+    return create_thumbnail($source, $destination, $maxWidth, $maxHeight);
 }
 
 // ============================================================

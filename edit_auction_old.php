@@ -8,6 +8,16 @@ require_once __DIR__ . '/src/models/Database.php';
 require_once __DIR__ . '/src/models/Auction.php';
 require_once __DIR__ . '/src/models/Category.php';
 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (empty($_SESSION['panel_admin_authenticated'])) {
+    $next = urlencode((string)($_SERVER['REQUEST_URI'] ?? '/admin.php'));
+    header('Location: /admin.php?next=' . $next);
+    exit;
+}
+
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 $success = false;
 $error = '';

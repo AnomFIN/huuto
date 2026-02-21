@@ -4,23 +4,90 @@
  */
 class Auction {
     private $db;
+    private static $captionColumnEnsured = false;
+    private static $sellerCommitmentColumnEnsured = false;
+    private static $metadataTableEnsured = false;
 
     public function __construct() {
         $this->db = Database::getInstance()->getConnection();
+        $this->ensureImageCaptionColumn();
+        $this->ensureSellerCommitmentColumn();
+        $this->ensureAuctionMetadataTable();
+    }
+
+    private function ensureImageCaptionColumn(): void
+    {
+        if (self::$captionColumnEnsured) {
+            return;
+        }
+
+        try {
+            $this->db->exec("ALTER TABLE auction_images ADD COLUMN IF NOT EXISTS caption VARCHAR(255) NULL AFTER image_path");
+        } catch (Throwable $exception) {
+            // Non-fatal in case DB user has limited ALTER permissions.
+        }
+
+        self::$captionColumnEnsured = true;
+    }
+
+    private function ensureSellerCommitmentColumn(): void
+    {
+        if (self::$sellerCommitmentColumnEnsured) {
+            return;
+        }
+
+        try {
+            $this->db->exec("ALTER TABLE auctions ADD COLUMN IF NOT EXISTS seller_commitment BOOLEAN DEFAULT FALSE");
+        } catch (Throwable $exception) {
+            // Non-fatal in case DB user has limited ALTER permissions or legacy server limitations.
+        }
+
+        self::$sellerCommitmentColumnEnsured = true;
+    }
+
+    private function ensureAuctionMetadataTable(): void
+    {
+        if (self::$metadataTableEnsured) {
+            return;
+        }
+
+        try {
+            $this->db->exec("CREATE TABLE IF NOT EXISTS auction_metadata (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                auction_id INT NOT NULL,
+                field_name VARCHAR(100) NOT NULL,
+                field_value TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY unique_auction_field (auction_id, field_name),
+                INDEX idx_auction (auction_id),
+                INDEX idx_field (field_name)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+        } catch (Throwable $exception) {
+            // Non-fatal; metadata writes are guarded in createAuction.
+        }
+
+        self::$metadataTableEnsured = true;
     }
 
     /**
      * Get popular auctions (most bids/views)
      */
     public function getPopularAuctions($limit = 20) {
-        $sql = "SELECT a.*, c.name as category_name, c.slug as category_slug,
-                       u.username as seller_username,
-                       (SELECT image_path FROM auction_images WHERE auction_id = a.id AND is_primary = 1 LIMIT 1) as primary_image,
+        $sql = "SELECT a.*, 
+                       COALESCE(c.name, 'Luokittelematon') as category_name, 
+                       COALESCE(c.slug, 'other') as category_slug,
+                       COALESCE(u.username, 'Tuntematon myyjä') as seller_username,
+                       (SELECT image_path
+                        FROM auction_images
+                        WHERE auction_id = a.id
+                        ORDER BY is_primary DESC, sort_order ASC, id ASC
+                        LIMIT 1) as primary_image,
                        (SELECT COUNT(*) FROM bids WHERE auction_id = a.id) as bid_count,
                        (SELECT MAX(amount) FROM bids WHERE auction_id = a.id) as highest_bid
                 FROM auctions a
-                JOIN categories c ON a.category_id = c.id
-                JOIN users u ON a.user_id = u.id
+                LEFT JOIN categories c ON a.category_id = c.id
+                LEFT JOIN users u ON a.user_id = u.id
                 WHERE a.status = 'active' AND a.end_time > NOW()
                 ORDER BY (SELECT COUNT(*) FROM bids WHERE auction_id = a.id) DESC, a.views DESC
                 LIMIT :limit";
@@ -42,14 +109,20 @@ class Auction {
      * Get auctions closing soon (within next 24 hours)
      */
     public function getClosingSoonAuctions($limit = 5) {
-        $sql = "SELECT a.*, c.name as category_name, c.slug as category_slug,
-                       u.username as seller_username,
-                       (SELECT image_path FROM auction_images WHERE auction_id = a.id AND is_primary = 1 LIMIT 1) as primary_image,
+        $sql = "SELECT a.*, 
+                       COALESCE(c.name, 'Luokittelematon') as category_name, 
+                       COALESCE(c.slug, 'other') as category_slug,
+                       COALESCE(u.username, 'Tuntematon myyjä') as seller_username,
+                       (SELECT image_path
+                        FROM auction_images
+                        WHERE auction_id = a.id
+                        ORDER BY is_primary DESC, sort_order ASC, id ASC
+                        LIMIT 1) as primary_image,
                        (SELECT COUNT(*) FROM bids WHERE auction_id = a.id) as bid_count,
                        (SELECT MAX(amount) FROM bids WHERE auction_id = a.id) as current_price
                 FROM auctions a
-                JOIN categories c ON a.category_id = c.id
-                JOIN users u ON a.user_id = u.id
+                LEFT JOIN categories c ON a.category_id = c.id
+                LEFT JOIN users u ON a.user_id = u.id
                 WHERE a.status = 'active' 
                   AND a.end_time > NOW() 
                   AND a.end_time <= DATE_ADD(NOW(), INTERVAL 24 HOUR)
@@ -73,13 +146,19 @@ class Auction {
      * Get all active auctions
      */
     public function getActiveAuctions($limit = 20, $offset = 0) {
-        $sql = "SELECT a.*, c.name as category_name, c.slug as category_slug,
-                       u.username as seller_username,
-                       (SELECT image_path FROM auction_images WHERE auction_id = a.id AND is_primary = 1 LIMIT 1) as primary_image,
+        $sql = "SELECT a.*, 
+                       COALESCE(c.name, 'Luokittelematon') as category_name, 
+                       COALESCE(c.slug, 'other') as category_slug,
+                       COALESCE(u.username, 'Tuntematon myyjä') as seller_username,
+                       (SELECT image_path
+                        FROM auction_images
+                        WHERE auction_id = a.id
+                        ORDER BY is_primary DESC, sort_order ASC, id ASC
+                        LIMIT 1) as primary_image,
                        (SELECT COUNT(*) FROM bids WHERE auction_id = a.id) as bid_count
                 FROM auctions a
-                JOIN categories c ON a.category_id = c.id
-                JOIN users u ON a.user_id = u.id
+                LEFT JOIN categories c ON a.category_id = c.id
+                LEFT JOIN users u ON a.user_id = u.id
                 WHERE a.status = 'active' AND a.end_time > NOW()
                 ORDER BY a.end_time ASC
                 LIMIT :limit OFFSET :offset";
@@ -97,7 +176,11 @@ class Auction {
     public function getAuctionsByCategory($categorySlug, $limit = 20, $offset = 0) {
         $sql = "SELECT a.*, c.name as category_name, c.slug as category_slug,
                        u.username as seller_username,
-                       (SELECT image_path FROM auction_images WHERE auction_id = a.id AND is_primary = 1 LIMIT 1) as primary_image,
+                       (SELECT image_path
+                        FROM auction_images
+                        WHERE auction_id = a.id
+                        ORDER BY is_primary DESC, sort_order ASC, id ASC
+                        LIMIT 1) as primary_image,
                        (SELECT COUNT(*) FROM bids WHERE auction_id = a.id) as bid_count
                 FROM auctions a
                 JOIN categories c ON a.category_id = c.id
@@ -222,7 +305,11 @@ class Auction {
     public function searchAuctions($query, $limit = 20, $offset = 0) {
         $sql = "SELECT a.*, c.name as category_name, c.slug as category_slug,
                        u.username as seller_username,
-                       (SELECT image_path FROM auction_images WHERE auction_id = a.id AND is_primary = 1 LIMIT 1) as primary_image,
+                       (SELECT image_path
+                        FROM auction_images
+                        WHERE auction_id = a.id
+                        ORDER BY is_primary DESC, sort_order ASC, id ASC
+                        LIMIT 1) as primary_image,
                        (SELECT COUNT(*) FROM bids WHERE auction_id = a.id) as bid_count
                 FROM auctions a
                 JOIN categories c ON a.category_id = c.id
@@ -251,11 +338,13 @@ class Auction {
             $sql = "INSERT INTO auctions (
                         user_id, category_id, title, description, 
                         starting_price, current_price, reserve_price, buy_now_price, 
-                        bid_increment, end_time, status, location, condition_description
+                        bid_increment, end_time, status, location, condition_description,
+                        seller_commitment
                     ) VALUES (
                         :user_id, :category_id, :title, :description,
                         :starting_price, :current_price, :reserve_price, :buy_now_price,
-                        :bid_increment, :end_time, :status, :location, :condition_description
+                        :bid_increment, :end_time, :status, :location, :condition_description,
+                        :seller_commitment
                     )";
             
             $stmt = $this->db->prepare($sql);
@@ -272,22 +361,50 @@ class Auction {
                 ':end_time' => $data['end_time'],
                 ':status' => $data['status'] ?? 'active',
                 ':location' => $data['location'] ?? null,
-                ':condition_description' => $data['condition_description'] ?? null
+                ':condition_description' => $data['condition_description'] ?? null,
+                ':seller_commitment' => $data['seller_commitment'] ?? false
             ]);
 
             $auctionId = $this->db->lastInsertId();
 
             // Add images if provided
             if (!empty($data['images'])) {
-                foreach ($data['images'] as $index => $imagePath) {
-                    $this->addAuctionImage($auctionId, $imagePath, $index === 0, $index);
+                foreach ($data['images'] as $index => $imageItem) {
+                    if (is_array($imageItem)) {
+                        $imagePath = (string)($imageItem['path'] ?? '');
+                        $caption = isset($imageItem['caption']) ? (string)$imageItem['caption'] : null;
+                    } else {
+                        $imagePath = (string)$imageItem;
+                        $caption = null;
+                    }
+
+                    if ($imagePath === '') {
+                        continue;
+                    }
+
+                    $this->addAuctionImage($auctionId, $imagePath, $index === 0, $index, $caption);
+                }
+            }
+            
+            // Add category-specific metadata
+            if (!empty($data['metadata'])) {
+                foreach ($data['metadata'] as $fieldName => $fieldValue) {
+                    if ($fieldValue !== '' && $fieldValue !== null) {
+                        try {
+                            $this->addAuctionMetadata($auctionId, $fieldName, $fieldValue);
+                        } catch (Throwable $exception) {
+                            // Metadata is optional; ignore failures to keep auction creation working.
+                        }
+                    }
                 }
             }
 
             $this->db->commit();
             return $auctionId;
-        } catch (Exception $e) {
-            $this->db->rollBack();
+        } catch (Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
             throw $e;
         }
     }
@@ -295,14 +412,17 @@ class Auction {
     /**
      * Add an image to an auction
      */
-    public function addAuctionImage($auctionId, $imagePath, $isPrimary = false, $sortOrder = 0) {
-        $sql = "INSERT INTO auction_images (auction_id, image_path, is_primary, sort_order) 
-                VALUES (:auction_id, :image_path, :is_primary, :sort_order)";
+    public function addAuctionImage($auctionId, $imagePath, $isPrimary = false, $sortOrder = 0, $caption = null) {
+        $this->ensureImageCaptionColumn();
+
+        $sql = "INSERT INTO auction_images (auction_id, image_path, caption, is_primary, sort_order) 
+                VALUES (:auction_id, :image_path, :caption, :is_primary, :sort_order)";
         
         $stmt = $this->db->prepare($sql);
         $stmt->execute([
             ':auction_id' => $auctionId,
             ':image_path' => $imagePath,
+            ':caption' => $caption !== null ? mb_substr(trim((string)$caption), 0, 255) : null,
             ':is_primary' => $isPrimary ? 1 : 0,
             ':sort_order' => $sortOrder
         ]);
@@ -352,7 +472,11 @@ class Auction {
     public function getAllAuctions($limit = 100, $offset = 0) {
         $sql = "SELECT a.*, c.name as category_name, c.slug as category_slug,
                        u.username as seller_username,
-                       (SELECT image_path FROM auction_images WHERE auction_id = a.id AND is_primary = 1 LIMIT 1) as primary_image,
+                       (SELECT image_path
+                        FROM auction_images
+                        WHERE auction_id = a.id
+                        ORDER BY is_primary DESC, sort_order ASC, id ASC
+                        LIMIT 1) as primary_image,
                        (SELECT COUNT(*) FROM bids WHERE auction_id = a.id) as bid_count
                 FROM auctions a
                 JOIN categories c ON a.category_id = c.id
@@ -457,5 +581,35 @@ class Auction {
             $this->db->rollBack();
             throw $e;
         }
+    }    
+    /**
+     * Add metadata field for auction
+     */
+    public function addAuctionMetadata($auctionId, $fieldName, $fieldValue) {
+        $sql = "INSERT INTO auction_metadata (auction_id, field_name, field_value) 
+                VALUES (:auction_id, :field_name, :field_value)
+                ON DUPLICATE KEY UPDATE field_value = VALUES(field_value), updated_at = CURRENT_TIMESTAMP";
+        
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([
+            ':auction_id' => $auctionId,
+            ':field_name' => $fieldName,
+            ':field_value' => $fieldValue
+        ]);
     }
-}
+    
+    /**
+     * Get metadata for auction
+     */
+    public function getAuctionMetadata($auctionId) {
+        $sql = "SELECT field_name, field_value FROM auction_metadata WHERE auction_id = :auction_id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':auction_id' => $auctionId]);
+        
+        $metadata = [];
+        while ($row = $stmt->fetch()) {
+            $metadata[$row['field_name']] = $row['field_value'];
+        }
+        
+        return $metadata;
+    }}

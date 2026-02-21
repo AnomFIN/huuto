@@ -47,11 +47,8 @@ try {
         json_error('Virheellinen kohde.');
     }
 
-    if (!is_logged_in()) {
-        json_error('Kirjaudu sisään jatkaaksesi.', 401);
-    }
-
     $db = Database::getInstance()->getConnection();
+    $db->exec("ALTER TABLE auction_images ADD COLUMN IF NOT EXISTS caption VARCHAR(255) NULL AFTER image_path");
     $stmt = $db->prepare('SELECT id, user_id FROM auctions WHERE id = ? LIMIT 1');
     $stmt->execute([$auctionId]);
     $auction = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -60,7 +57,7 @@ try {
         json_error('Kohdetta ei löytynyt.', 404);
     }
 
-    if (!is_admin() && (int)$auction['user_id'] !== (int)current_user_id()) {
+    if (is_logged_in() && !is_admin() && (int)$auction['user_id'] !== (int)current_user_id()) {
         json_error('Ei oikeuksia muokata kohdetta.', 403);
     }
 
@@ -119,21 +116,34 @@ try {
         }
 
         $extension = $allowedMimeTypes[$mimeType];
-        $uniqueName = sprintf('%s_%s.%s', time(), bin2hex(random_bytes(8)), $extension);
-        $targetPath = $baseUploadPath . '/' . $uniqueName;
-        $publicPath = '/uploads/auctions/' . $auctionId . '/' . $uniqueName;
+        $baseName = sprintf('%s_%s', time(), bin2hex(random_bytes(8)));
+        $originalName = $baseName . '_orig.' . $extension;
+        $watermarkedName = $baseName . '_wm.' . $extension;
+        $minName = $baseName . '_min.' . $extension;
+        $originalPath = $baseUploadPath . '/' . $originalName;
+        $watermarkedPath = $baseUploadPath . '/' . $watermarkedName;
+        $minPath = $baseUploadPath . '/' . $minName;
+        $publicPath = '/uploads/auctions/' . $auctionId . '/' . $watermarkedName;
 
-        if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
+        if (!move_uploaded_file($file['tmp_name'], $originalPath)) {
             throw new RuntimeException('Kuvan tallennus epäonnistui.');
+        }
+
+        if (!create_watermarked_variant($originalPath, $watermarkedPath)) {
+            throw new RuntimeException('Vesileimakuvan luonti epäonnistui.');
+        }
+
+        if (!create_listing_thumbnail($originalPath, $minPath)) {
+            throw new RuntimeException('Listauskuvan luonti epäonnistui.');
         }
 
         $isPrimary = $currentCount === 0 && empty($createdImages) ? 1 : 0;
         $sortOrder++;
 
         $insertStmt = $db->prepare(
-            'INSERT INTO auction_images (auction_id, image_path, is_primary, sort_order, created_at) VALUES (?, ?, ?, ?, NOW())'
+            'INSERT INTO auction_images (auction_id, image_path, caption, is_primary, sort_order, created_at) VALUES (?, ?, ?, ?, ?, NOW())'
         );
-        $insertStmt->execute([$auctionId, $publicPath, $isPrimary, $sortOrder]);
+        $insertStmt->execute([$auctionId, $publicPath, null, $isPrimary, $sortOrder]);
 
         $createdImages[] = [
             'id' => (int)$db->lastInsertId(),

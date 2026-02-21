@@ -55,10 +55,18 @@ class Email {
      * Actually send email via SMTP or mail()
      */
     private function sendEmail($to, $subject, $body, $isHtml) {
+        $encodedFromName = function_exists('mb_encode_mimeheader')
+            ? mb_encode_mimeheader((string)MAIL_FROM_NAME, 'UTF-8', 'B', "\r\n")
+            : (string)MAIL_FROM_NAME;
+        $encodedSubject = function_exists('mb_encode_mimeheader')
+            ? mb_encode_mimeheader((string)$subject, 'UTF-8', 'B', "\r\n")
+            : (string)$subject;
+
         $headers = [];
-        $headers[] = 'From: ' . MAIL_FROM_NAME . ' <' . MAIL_FROM . '>';
+        $headers[] = 'From: ' . $encodedFromName . ' <' . MAIL_FROM . '>';
         $headers[] = 'Reply-To: ' . MAIL_FROM;
         $headers[] = 'X-Mailer: PHP/' . phpversion();
+        $headers[] = 'Content-Transfer-Encoding: 8bit';
         
         if ($isHtml) {
             $headers[] = 'MIME-Version: 1.0';
@@ -69,11 +77,11 @@ class Email {
         
         // Only use SMTP if host, username, and password are all configured
         if (!empty(SMTP_HOST) && !empty(SMTP_USERNAME) && !empty(SMTP_PASSWORD)) {
-            return $this->sendViaSMTP($to, $subject, $body, $headers);
+            return $this->sendViaSMTP($to, $encodedSubject, $body, $headers);
         }
         
         // Otherwise use PHP's mail() function
-        return mail($to, $subject, $body, implode("\r\n", $headers));
+        return mail($to, $encodedSubject, $body, implode("\r\n", $headers));
     }
     
     /**
@@ -207,6 +215,9 @@ class Email {
      * Get email HTML template
      */
     private function getEmailTemplate($title, $content) {
+        $baseUrl = rtrim((string)BASE_URL, '/');
+        $logoUrl = $baseUrl . '/assets/logo.png';
+
         return '<!DOCTYPE html>
 <html lang="fi">
 <head>
@@ -234,8 +245,13 @@ class Email {
                     </tr>
                     <tr>
                         <td style="padding: 30px; text-align: center; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px;">
+                            <p style="margin: 0 0 12px 0;">
+                                <img src="' . e($logoUrl) . '" alt="Huuto247" style="max-width: 140px; height: auto; opacity: .96;">
+                            </p>
                             <p style="margin: 0 0 10px 0;">© ' . date('Y') . ' ' . e(SITE_NAME) . '. Kaikki oikeudet pidätetään.</p>
-                            <p style="margin: 0;"><a href="' . e(BASE_URL) . '" style="color: #3b82f6; text-decoration: none;">Siirry sivustolle</a></p>
+                            <p style="margin: 0 0 10px 0;">Lahen Huutokaupat Oy · Y-tunnus 3480428-5 · Pursimiehenkatu 2 A 20, 15140 Lahti</p>
+                            <p style="margin: 0 0 10px 0;">Toimitusjohtaja Samu Petteri Kuitunen · info@huuto247.fi · 0408179806</p>
+                            <p style="margin: 0;"><a href="' . e(BASE_URL) . '" style="color: #3b82f6; text-decoration: none;">Siirry Huuto247-palveluun (huuto247.fi)</a></p>
                         </td>
                     </tr>
                 </table>
