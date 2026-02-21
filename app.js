@@ -19,9 +19,15 @@
   ];
 
   const storedFavorites = readJson('huuto247-favorites', []);
+  const favoriteIterable =
+    Array.isArray(storedFavorites) ||
+    (storedFavorites && typeof storedFavorites[Symbol.iterator] === 'function')
+      ? storedFavorites
+      : [];
+
   const state = {
     user: { loggedIn: false, name: 'Oma tili' },
-    favorites: new Set(Array.isArray(storedFavorites) ? storedFavorites : []),
+    favorites: new Set(favoriteIterable),
     items: [],
     popularShown: INITIAL_COUNT,
     endingShown: INITIAL_COUNT,
@@ -269,14 +275,18 @@
   }
 
   function moveCarousel(step) {
-    const length = state.carouselLength || 1;
-    if (length <= 1) {
+    // Determine current carousel length to avoid hard-coded modulo
+    const carouselLength = Math.min(5, getEndingItems().length);
+
+    if (carouselLength <= 1) {
+      // With 0 or 1 items, always reset index to 0 and just re-render
       state.carouselIndex = 0;
       state.carouselTickStartMs = performance.now();
       renderCarousel();
       return;
     }
-    state.carouselIndex = (state.carouselIndex + step + length) % length;
+
+    state.carouselIndex = (state.carouselIndex + step + carouselLength) % carouselLength;
     state.carouselTickStartMs = performance.now();
     renderCarousel();
   }
