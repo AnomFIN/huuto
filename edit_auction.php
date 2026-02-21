@@ -323,6 +323,18 @@ include SRC_PATH . '/views/header.php';
                 </a>
             </div>
         </form>
+
+        <!-- AI Data Regeneration -->
+        <div class="mt-6 pt-6 border-t border-gray-200">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">🤖 AI-tiedot</h3>
+            <p class="text-xs text-gray-500 mb-3">Generoi kohteelle kategoriasidonnaiset lisätiedot uudelleen OpenAI:lla (otsikon, kuvauksen ja kategorian perusteella).</p>
+            <button type="button" id="btnRegenerateAI"
+                    onclick="regenerateAIDetails()"
+                    class="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 transition-colors font-semibold text-sm">
+                🔄 Generoi AI-tiedot uudelleen
+            </button>
+            <div id="aiRegenerateStatus" class="mt-2 text-sm hidden"></div>
+        </div>
     </div>
 
     <!-- Images Section -->
@@ -374,5 +386,43 @@ include SRC_PATH . '/views/header.php';
 </div>
 
 <script src="/assets/js/edit_auction_images.js"></script>
+
+<script>
+async function regenerateAIDetails() {
+    const btn = document.getElementById('btnRegenerateAI');
+    const status = document.getElementById('aiRegenerateStatus');
+
+    btn.disabled = true;
+    btn.textContent = '⏳ Generoidaan...';
+    status.className = 'mt-2 text-sm text-blue-600';
+    status.textContent = '🤖 AI analysoi kohteen tietoja...';
+    status.classList.remove('hidden');
+
+    try {
+        const formData = new FormData();
+        formData.append('auction_id', <?php echo json_encode($id); ?>);
+
+        const response = await fetch('api_ai_regenerate.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'AI-generointi epäonnistui');
+        }
+
+        status.className = 'mt-2 text-sm text-green-700';
+        status.textContent = '✅ ' + (data.message || 'AI-tiedot päivitetty!') + ' Lataa sivu uudelleen nähdäksesi muutokset.';
+    } catch (error) {
+        status.className = 'mt-2 text-sm text-red-600';
+        status.textContent = '❌ ' + error.message;
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '🔄 Generoi AI-tiedot uudelleen';
+    }
+}
+</script>
 
 <?php include SRC_PATH . '/views/footer.php'; ?>
