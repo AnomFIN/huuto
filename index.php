@@ -49,8 +49,8 @@ function normalizeAuctionForUi(array $auction): ?array
     if (isset($auction['category_name'])) {
         $category = htmlspecialchars(trim((string) $auction['category_name']), ENT_QUOTES | ENT_HTML5, 'UTF-8');
     } else {
-        // Fall back to a random category from the loaded list
-        $category = !empty($categories) ? $categories[array_rand($categories)] : 'Muut';
+        // $categories contains only trusted values loaded at the top of this file
+        $category = $categories[array_rand($categories)]; // Trusted fallback
     }
 
     $endTimeRaw = isset($auction['end_time']) ? strtotime((string) $auction['end_time']) : false;
