@@ -1,84 +1,99 @@
-    </main>
+        </main>
 
-    <footer class="bg-gray-800 text-white mt-12">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <footer class="site-footer">
+            <div class="container footer-grid">
                 <div>
-                    <h3 class="text-lg font-semibold mb-4">Huuto</h3>
-                    <p class="text-gray-300">Suomalainen verkkohuutokauppa-alusta</p>
+                    <div class="footer-brand"><span class="logo-mark" aria-hidden="true"></span>Huuto247.fi</div>
+                    <p>Täysin suomalainen palvelu, jonka tuottaa Lahen Huutokaupat Oy.</p>
+                    <p>Yli viisi miljoonaa vierailua kuukaudessa.</p>
+                    <div class="socials">
+                        <a href="/info.php?page=some">Youtube</a>
+                        <a href="/info.php?page=some">Instagram</a>
+                        <a href="/info.php?page=some">Facebook</a>
+                    </div>
                 </div>
-                <div>
-                    <h3 class="text-lg font-semibold mb-4">Linkit</h3>
-                    <ul class="space-y-2">
-                        <li><a href="/" class="text-gray-300 hover:text-white">Etusivu</a></li>
-                        <li><a href="auction.php" class="text-gray-300 hover:text-white">Kohteet</a></li>
-                        <li><a href="category.php" class="text-gray-300 hover:text-white">Kategoriat</a></li>
-                        <li><a href="admin.php" class="text-gray-300 hover:text-white">Admin</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h3 class="text-lg font-semibold mb-4">Tietoa</h3>
-                    <p class="text-gray-300">© 2026 Huuto. Kaikki oikeudet pidätetään.</p>
+                <div class="links-col">
+                    <a href="/info.php?page=tietoa-palvelusta">Tietoa palvelusta</a>
+                    <a href="/info.php?page=tietoa-huutajalle">Tietoa huutajalle</a>
+                    <a href="/info.php?page=kayttoehdot">Palvelun käyttöehdot</a>
+                    <a href="/info.php?page=myyminen">Aloita myyminen</a>
+                    <a href="/info.php?page=myyjana-huuto247">Mitä tarkoittaa myyjänä Huuto247?</a>
+                    <a href="/info.php?page=kayttajien-valinen-huutokauppa">Mitä tarkoittaa käyttäjien välinen huutokauppa?</a>
+                    <a href="/info.php?page=myyntiehdot">Huuto247-myyntiehdot</a>
+                    <a href="/info.php?page=hinnasto">Hinnasto</a>
+                    <a href="/info.php?page=maksutavat">Maksutavat</a>
+                    <a href="/info.php?page=asiakaspalvelu">Asiakaspalvelu</a>
+                    <a href="/info.php?page=ohjeet">Ohjeet ja vinkit</a>
+                    <a href="/info.php?page=uutiskirje">Tilaa uutiskirje</a>
+                    <a href="/info.php?page=blogi">Blogi</a>
+                    <a href="/info.php?page=kampanjat">Kampanjat</a>
+                    <a href="/info.php?page=tietoa-meista">Tietoa meistä</a>
+                    <a href="/info.php?page=lahen-huutokauppa">Lahen huutokauppa</a>
+                    <a href="/info.php?page=meille-toihin">Meille töihin</a>
+                    <a href="/info.php?page=medialle">Medialle</a>
+                    <a href="/info.php?page=tietosuojaseloste">Tietosuojaseloste</a>
+                    <a href="/info.php?page=evasteet">Evästeasetukset</a>
+                    <a href="/info.php?page=lapinakyvyys">Läpinäkyvyysraportointi</a>
+                    <a href="/info.php?page=saavutettavuus">Saavutettavuusseloste</a>
                 </div>
             </div>
-        </div>
-    </footer>
+            <div class="container footer-bottom">
+                <small>© 2026 Huuto247.fi</small>
+                <a class="cookie-pill" href="/info.php?page=evasteet">Evästeasetukset</a>
+            </div>
+            <div class="container" style="padding-top:.45rem; padding-bottom:.2rem; color:#d3deea; font-size:.78rem; opacity:.92;">
+                Lahen Huutokaupat Oy · Y-tunnus 3480428-5 · PRH/YTJ rekisteritiedot · Toimitusjohtaja Samu Petteri Kuitunen · puh. 0408179806 · info@huuto247.fi
+            </div>
+        </footer>
 
-    <script>
-        // Countdown timer functionality
-        function updateCountdowns() {
-            document.querySelectorAll('.countdown').forEach(element => {
-                const rawEndTime = element.dataset.endtime;
+        <script>
+            function updateCountdowns() {
+                document.querySelectorAll('.countdown[data-endtime], .countdown-time[data-endtime]').forEach((element) => {
+                    const rawEndTime = String(element.dataset.endtime || '').trim();
+                    if (!rawEndTime) {
+                        return;
+                    }
 
-                let endTimeMs = NaN;
-
-                if (rawEndTime) {
-                    // If the value is numeric, treat it as epoch milliseconds.
-                    if (/^\d+$/.test(rawEndTime.trim())) {
-                        endTimeMs = parseInt(rawEndTime.trim(), 10);
+                    let endTimeMs = NaN;
+                    if (/^\d+$/.test(rawEndTime)) {
+                        const parsed = Number(rawEndTime);
+                        endTimeMs = rawEndTime.length <= 10 ? parsed * 1000 : parsed;
                     } else {
-                        // Normalize common "YYYY-MM-DD HH:MM:SS" format to ISO-8601.
-                        let normalized = rawEndTime.trim();
+                        let normalized = rawEndTime;
                         if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(normalized)) {
                             normalized = normalized.replace(' ', 'T') + 'Z';
                         }
-                        const parsed = Date.parse(normalized);
-                        if (!isNaN(parsed)) {
-                            endTimeMs = parsed;
-                        }
+                        endTimeMs = Date.parse(normalized);
                     }
-                }
 
-                if (isNaN(endTimeMs)) {
-                    element.innerHTML = "Päättynyt";
-                    return;
-                }
+                    if (!Number.isFinite(endTimeMs)) {
+                        element.textContent = 'Päättynyt';
+                        return;
+                    }
 
-                const now = Date.now();
-                const distance = endTimeMs - now;
-                if (distance < 0) {
-                    element.innerHTML = "Päättynyt";
-                    return;
-                }
+                    const distance = endTimeMs - Date.now();
+                    if (distance <= 0) {
+                        element.textContent = 'Päättynyt';
+                        return;
+                    }
 
-                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+                    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-                if (days > 0) {
-                    element.innerHTML = `${days}pv ${hours}h`;
-                } else if (hours > 0) {
-                    element.innerHTML = `${hours}h ${minutes}min`;
-                } else {
-                    element.innerHTML = `${minutes}min ${seconds}s`;
-                }
-            });
-        }
+                    if (days > 0) {
+                        element.textContent = `${days}pv ${hours}h`;
+                    } else if (hours > 0) {
+                        element.textContent = `${hours}h ${minutes}min`;
+                    } else {
+                        element.textContent = `${minutes}min ${seconds}s`;
+                    }
+                });
+            }
 
-        // Update countdowns every second
-        setInterval(updateCountdowns, 1000);
-        updateCountdowns();
-    </script>
+            setInterval(updateCountdowns, 1000);
+            updateCountdowns();
+        </script>
 </body>
 </html>

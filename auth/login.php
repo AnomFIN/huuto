@@ -113,72 +113,275 @@ $pageTitle = 'Kirjaudu sisään - ' . SITE_NAME;
 include __DIR__ . '/../src/views/header.php';
 ?>
 
-<div class="max-w-md mx-auto bg-white rounded-lg shadow-lg p-8">
-    <h1 class="text-2xl font-bold text-center text-gray-900 mb-8">Kirjaudu sisään</h1>
+<style>
+    .auth-container {
+        max-width: 400px;
+        margin: 3rem auto;
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 2.5rem;
+        box-shadow: var(--shadow-1);
+    }
+
+    .auth-title {
+        text-align: center;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-900);
+        margin: 0 0 2rem;
+    }
+
+    .message-box {
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+    }
+
+    .message-error {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #dc2626;
+    }
+
+    .message-success {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        color: #16a34a;
+    }
+
+    .form-section {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: var(--text-900);
+        font-size: 0.9rem;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        font-size: 0.95rem;
+    }
+
+    .form-input:focus {
+        outline: none;
+        border-color: var(--accent-600);
+        box-shadow: 0 0 0 3px rgba(38,104,255,.16);
+    }
+
+    .form-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: var(--text-700);
+    }
+
+    .button {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        transition: all 0.2s;
+    }
+
+    .button-primary {
+        background: var(--accent-600);
+        color: white;
+    }
+
+    .button-primary:hover {
+        background: var(--accent-700);
+    }
+
+    .button-secondary {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        color: var(--text-900);
+    }
+
+    .button-secondary:hover {
+        background: var(--bg-neutral-50);
+    }
+
+    .button-google {
+        background: white;
+        border: 1px solid var(--line);
+        color: var(--text-900);
+    }
+
+    .button-google:hover {
+        background: var(--bg-neutral-50);
+    }
+
+    .section-divider {
+        border-top: 1px solid var(--line);
+        padding-top: 1.5rem;
+        margin-top: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .section-divider h3 {
+        text-align: center;
+        color: var(--text-700);
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+
+    .code-input {
+        text-align: center;
+        font-size: 1.25rem;
+        font-family: 'Courier New', monospace;
+        letter-spacing: 0.25rem;
+    }
+
+    .magic-code-info {
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .magic-code-info p {
+        margin-bottom: 0.5rem;
+        color: var(--text-700);
+    }
+
+    .magic-code-info .email {
+        font-weight: 600;
+        color: var(--text-900);
+    }
+
+    .auth-footer {
+        text-align: center;
+        margin-top: 1.5rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid var(--line);
+        color: var(--text-700);
+    }
+
+    .auth-footer a {
+        color: var(--accent-600);
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .auth-footer a:hover {
+        color: var(--accent-700);
+    }
+
+    .back-link {
+        text-align: center;
+        margin-top: 1rem;
+    }
+
+    .back-link a {
+        color: var(--text-700);
+        text-decoration: none;
+        font-size: 0.9rem;
+    }
+
+    .back-link a:hover {
+        color: var(--text-900);
+    }
+
+    .forgot-password-link {
+        color: var(--accent-600);
+        text-decoration: none;
+        font-size: 0.9rem;
+    }
+
+    .forgot-password-link:hover {
+        color: var(--accent-700);
+    }
+
+    .form-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+</style>
+
+<div class="auth-container">
+    <h1 class="auth-title">Kirjaudu sisään</h1>
 
     <?php if ($error): ?>
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+        <div class="message-box message-error">
             <?php echo htmlspecialchars($error); ?>
         </div>
     <?php endif; ?>
 
     <?php if ($success): ?>
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
+        <div class="message-box message-success">
             <?php echo htmlspecialchars($success); ?>
         </div>
     <?php endif; ?>
 
     <?php if (!$showMagicCodeForm): ?>
-        <form method="POST" class="mb-6">
+        <form method="POST" class="form-section">
             <input type="hidden" name="action" value="login">
 
-            <div class="mb-4">
-                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Sähköposti</label>
+            <div class="form-section">
+                <label for="email" class="form-label">Sähköposti</label>
                 <input type="email" id="email" name="email" required
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       class="form-input"
                        value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>">
             </div>
 
-            <div class="mb-4">
-                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Salasana</label>
+            <div class="form-section">
+                <label for="password" class="form-label">Salasana</label>
                 <input type="password" id="password" name="password" required
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                       class="form-input">
             </div>
 
-            <div class="flex items-center justify-between mb-6">
-                <div class="flex items-center">
-                    <input type="checkbox" id="remember" name="remember" class="mr-2">
-                    <label for="remember" class="text-sm text-gray-600">Muista minut</label>
+            <div class="form-row">
+                <div class="form-checkbox">
+                    <input type="checkbox" id="remember" name="remember">
+                    <label for="remember">Muista minut</label>
                 </div>
-                <a href="/auth/reset-password.php" class="text-sm text-blue-600 hover:text-blue-800">Unohtuiko salasana?</a>
+                <a href="/auth/reset-password.php" class="forgot-password-link">Unohtuiko salasana?</a>
             </div>
 
-            <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+            <button type="submit" class="button button-primary">
                 Kirjaudu sisään
             </button>
         </form>
 
         <?php if ($canUseGoogleAuth): ?>
-            <div class="mb-6">
-                <a href="<?php echo htmlspecialchars($googleLoginUrl); ?>"
-                   class="w-full inline-flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors">
-                    <span>Kirjaudu Google-tilillä</span>
+            <div class="form-section">
+                <a href="<?php echo htmlspecialchars($googleLoginUrl); ?>" class="button button-google">
+                    Kirjaudu Google-tilillä
                 </a>
             </div>
         <?php endif; ?>
 
-        <div class="border-t pt-6 mb-6">
-            <h3 class="text-center text-gray-600 mb-4">Tai kirjaudu koodilla</h3>
+        <div class="section-divider">
+            <h3>Tai kirjaudu koodilla</h3>
             <form method="POST">
                 <input type="hidden" name="action" value="send_magic_code">
 
-                <div class="mb-4">
-                    <label for="magic_email" class="block text-sm font-medium text-gray-700 mb-2">Sähköposti</label>
+                <div class="form-section">
+                    <label for="magic_email" class="form-label">Sähköposti</label>
                     <input type="email" id="magic_email" name="magic_email" required
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                           class="form-input">
                 </div>
 
-                <button type="submit" class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors">
+                <button type="submit" class="button button-secondary">
                     Lähetä koodi sähköpostiin
                 </button>
             </form>
@@ -187,31 +390,31 @@ include __DIR__ . '/../src/views/header.php';
         <form method="POST">
             <input type="hidden" name="action" value="verify_magic_code">
 
-            <div class="text-center mb-6">
-                <p class="text-gray-600">Lähetimme 6-numeroisen koodin osoitteeseen:</p>
-                <p class="font-semibold text-gray-900"><?php echo htmlspecialchars($_SESSION['magic_email'] ?? ''); ?></p>
+            <div class="magic-code-info">
+                <p>Lähetimme 6-numeroisen koodin osoitteeseen:</p>
+                <p class="email"><?php echo htmlspecialchars($_SESSION['magic_email'] ?? ''); ?></p>
             </div>
 
-            <div class="mb-6">
-                <label for="code" class="block text-sm font-medium text-gray-700 mb-2">Syötä koodi</label>
+            <div class="form-section">
+                <label for="code" class="form-label">Syötä koodi</label>
                 <input type="text" id="code" name="code" required maxlength="6" pattern="[0-9]{6}"
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-2xl font-mono"
+                       class="form-input code-input"
                        placeholder="123456">
             </div>
 
-            <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+            <button type="submit" class="button button-primary">
                 Vahvista ja kirjaudu
             </button>
         </form>
 
-        <div class="text-center mt-4">
-            <a href="/auth/login.php" class="text-sm text-gray-600 hover:text-gray-800">← Takaisin kirjautumiseen</a>
+        <div class="back-link">
+            <a href="/auth/login.php">← Takaisin kirjautumiseen</a>
         </div>
     <?php endif; ?>
 
-    <div class="text-center mt-6 pt-6 border-t">
-        <p class="text-gray-600">Eikö sinulla ole tiliä?</p>
-        <a href="/auth/register.php" class="text-blue-600 hover:text-blue-800 font-medium">Rekisteröidy tästä</a>
+    <div class="auth-footer">
+        <p>Eikö sinulla ole tiliä?</p>
+        <a href="/auth/register.php">Rekisteröidy tästä</a>
     </div>
 </div>
 
