@@ -36,6 +36,7 @@
     searchQuery: '',
     searchCategory: null,
     carouselIndex: 0,
+    carouselLength: 5,
     carouselPaused: false,
     carouselTickStartMs: performance.now(),
     sloganIndex: 0,
@@ -251,6 +252,7 @@
 
   function renderCarousel() {
     const carouselItems = getEndingItems().slice(0, 5);
+    state.carouselLength = carouselItems.length;
     refs.carouselTrack.innerHTML = carouselItems.map((item, index) => {
       const pos = classifyCarouselPosition(index, state.carouselIndex, carouselItems.length);
       return `
