@@ -115,7 +115,8 @@ h2 { font-size: clamp(1.2rem, 1.5vw, 1.45rem); }
 .filter-pills { display: flex; gap: .4rem; flex-wrap: wrap; }
 .pill { border: 1px solid var(--line); background: #fff; border-radius: var(--radius-pill); padding: .3rem .6rem; cursor: pointer; font-size: .78rem; font-weight: 600; }
 .pill.active { border-color: var(--accent-600); color: var(--accent-600); }
-.show-all { font-weight: 700; color: var(--accent-600); border: 0; background: transparent; cursor: pointer; padding: 0; }
+.show-all { font-weight: 700; color: var(--accent-600); background: none; border: none; padding: 0; cursor: pointer; font-size: inherit; font-family: inherit; }
+.show-all:focus-visible { outline: 2px solid var(--accent-600); outline-offset: 2px; border-radius: 2px; }
 
 .auction-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .82rem; }
 .card, .ad-card, .skeleton-card {
