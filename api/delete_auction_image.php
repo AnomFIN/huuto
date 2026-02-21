@@ -27,10 +27,6 @@ try {
         json_error('Virheellinen pyyntö.');
     }
 
-    if (!is_logged_in()) {
-        json_error('Kirjaudu sisään jatkaaksesi.', 401);
-    }
-
     $db = Database::getInstance()->getConnection();
 
     $stmt = $db->prepare('SELECT id, user_id FROM auctions WHERE id = ? LIMIT 1');
@@ -39,6 +35,10 @@ try {
 
     if (!$auction) {
         json_error('Kohdetta ei löytynyt.', 404);
+    }
+
+    if (!is_logged_in()) {
+        json_error('Kirjaudu sisään jatkaaksesi.', 401);
     }
 
     if (!is_admin() && (int)$auction['user_id'] !== (int)current_user_id()) {

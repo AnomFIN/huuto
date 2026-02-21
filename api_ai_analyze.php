@@ -68,12 +68,23 @@ try {
     $messages = [
         [
             'role' => 'system',
-            'content' => 'Olet asiantuntija huutokauppa-arviointiin. Analysoi kuvia ja anna tuotteelle nimi, kuvaus ja hinnoitteluehdotus euroina. Vastaa JSON-muodossa suomeksi: {"title": "tuotteen nimi", "description": "yksityiskohtainen kuvaus", "suggested_price": 150, "category_suggestion": "ehdotettu kategoria", "condition": "kunnon arviointi"}'
+            'content' => 'Olet asiantuntija huutokauppa-arviointiin. Analysoi KAIKKI kuvat yhdessä ja anna tuotteelle kattavat tiedot SUOMEKSI. VASTAA VAIN PUHTAALLA JSON-MUODOSSA, EI MUUTA TEKSTIÄ! Kategoriavaihtoehtosi: 1=Kiinteiötöt, 2=Ajoneuvot, 3=Elektroniikka, 4=Kodin tavarat, 5=Urheilu, 6=Vaatteet, 7=Keräily, 8=Muut. JSON:
+{
+  "title": "tuotteen tarkka nimi suomeksi",
+  "description": "yksityiskohtainen kuvaus suomeksi",
+  "suggested_price": 150,
+  "reserve_price": 200,
+  "buy_now_price": 300,
+  "category_suggestion": "numero 1-8 parhaiten sopiva kategoria",
+  "condition": "kunnon arviointi suomeksi",
+  "location": "arvioitu sijainti Suomessa",
+  "duration_days": 7
+}'
         ],
         [
             'role' => 'user',
             'content' => array_merge(
-                [['type' => 'text', 'text' => 'Analysoi nämä kuvat ja ehdota huutokauppatuotteelle sopivat tiedot:']],
+                [['type' => 'text', 'text' => 'Analysoi KAIKKI nämä kuvat yhtenä tuotteena. Arvio myös paras kategoria numeroina 1-8. Vastaa VAIN JSON-muodossa suomeksi, ei muuta tekstiä:']],
                 $images
             )
         ]
@@ -115,17 +126,32 @@ try {
 
     $content = $apiResponse['choices'][0]['message']['content'];
     
-    // Try to parse JSON from the response
+    // Clean and parse JSON from the response
+    $content = trim($content);
+    
+    // Remove potential markdown code block markers
+    $content = preg_replace('/^```json\s*/', '', $content);
+    $content = preg_replace('/\s*```$/', '', $content);
+    
+    // Try to extract JSON from text
+    if (preg_match('/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/', $content, $matches)) {
+        $content = $matches[0];
+    }
+    
     $productData = json_decode($content, true);
     
     if (!$productData) {
-        // If JSON parsing fails, create a fallback response
+        // More comprehensive fallback
         $productData = [
             'title' => 'AI-analysoitu tuote',
-            'description' => trim($content),
+            'description' => 'AI-analyysi: ' . substr(trim($content), 0, 500),
             'suggested_price' => 50,
+            'reserve_price' => 75,
+            'buy_now_price' => 100,
             'category_suggestion' => 'muut',
-            'condition' => 'hyvä'
+            'condition' => 'hyvä',
+            'location' => 'Suomi',
+            'duration_days' => 7
         ];
     }
 
@@ -134,21 +160,30 @@ try {
         'title' => '',
         'description' => '',
         'suggested_price' => 0,
+        'reserve_price' => 0,
+        'buy_now_price' => 0,
         'category_suggestion' => '',
-        'condition' => ''
+        'condition' => '',
+        'location' => 'Suomi',
+        'duration_days' => 7
     ], $productData);
 
+    // Add debug info if parsing failed
+    if (isset($matches)) {
+        $productData['_debug'] = 'JSON extracted from: ' . substr($apiResponse['choices'][0]['message']['content'], 0, 200);
+    }
+    
     // Add success flag
     $productData['success'] = true;
     $productData['message'] = 'AI-analyysi valmis! Tarkista ja muokkaa tietoja tarvittaessa.';
 
-    echo json_encode($productData);
+    echo json_encode($productData, JSON_UNESCAPED_UNICODE);
 
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode([
         'error' => $e->getMessage(),
         'success' => false
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
 }
 ?>
