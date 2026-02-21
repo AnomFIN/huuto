@@ -4,21 +4,21 @@ require_once __DIR__ . '/bootstrap.php';
 
 $pageTitle = SITE_NAME . ' - Etusivu';
 
-// Load categories from database
-$categoryModel = new Category();
-$categoriesFromDb = $categoryModel->getAllCategories();
-$categories = array_map(function($cat) {
-    return $cat['name'];
-}, $categoriesFromDb);
-
+$categories = [];
 $popularAuctions = [];
 $closingSoonAuctions = [];
 $dataLoadError = null;
 
 try {
+    $categoryModel = new Category();
+    $categoriesFromDb = $categoryModel->getAllCategories();
+    $categories = array_map(function($cat) {
+        return $cat['name'];
+    }, $categoriesFromDb);
+
     $auctionModel = new Auction();
-    $popularAuctions = $auctionModel->getPopularAuctions(120);
-    $closingSoonAuctions = $auctionModel->getClosingSoonAuctions(120);
+    $popularAuctions = $auctionModel->getPopularAuctions(40);
+    $closingSoonAuctions = $auctionModel->getClosingSoonAuctions(40);
 } catch (Exception $error) {
     error_log(json_encode([
         'event' => 'homepage_data_load_failed',
@@ -27,15 +27,7 @@ try {
     $dataLoadError = 'Tietojen lataaminen epäonnistui. Emme voineet ladata huutokohteita.';
 }
 
-// Sanitize user-generated content to prevent XSS attacks
-function sanitizeUserContent(string $content): string
-{
-    // Strip all HTML tags to prevent injection attacks
-    // JSON encoding with JSON_HEX_TAG will handle proper escaping of special characters
-    return strip_tags($content);
-}
-
-// Beyond algorithms. Into outcomes.
+// Normalize and sanitize an auction record for safe display in the UI.
 function normalizeAuctionForUi(array $auction): ?array
 {
     // Sanitize user-generated content to prevent XSS attacks
@@ -89,6 +81,7 @@ function normalizeAuctionForUi(array $auction): ?array
         'endTime' => date('c', $endTimeRaw),
         'priceNow' => round(max(0, $priceNow), 2),
         'bidsCount' => max(0, $bidCount),
+        // Bid increments by price tier: ≥1000€ → 20€, ≥200€ → 10€, otherwise → 5€
         'minIncrement' => (float) (($priceNow >= 1000) ? 20 : (($priceNow >= 200) ? 10 : 5)),
         'isAd' => false,
         'imageLabel' => mb_substr($title !== '' ? $title : 'Huuto247', 0, 24),
@@ -126,8 +119,8 @@ $isUserLoggedIn = is_logged_in();
 <body>
 <div class="top-bar">
     <div class="container top-bar-inner">
-        <a href="#">Myy yrityksesi varasto tehokkaasti!</a>
-        <a href="#">Löydä todellisia löytöjä</a>
+        <span>Myy yrityksesi varasto tehokkaasti!</span>
+        <span>Löydä todellisia löytöjä</span>
     </div>
 </div>
 
@@ -158,7 +151,9 @@ $isUserLoggedIn = is_logged_in();
             <button class="icon-btn" aria-label="Seuranta" title="Seuranta"><svg viewBox="0 0 24 24" aria-hidden="true"><title>Seuranta</title><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 5h-2v6l5 3 1-1.7-4-2.3z"/></svg></button>
             <button class="icon-btn" aria-label="Omat huudot" title="Omat huudot"><svg viewBox="0 0 24 24" aria-hidden="true"><title>Omat huudot</title><path d="m2 22 6-6 2 2-4 4h16v2H2zm11-20 7 7-1.5 1.5-1.4-1.4-3.6 3.6-4-4L6 12.4 4.6 11 8 7.6l4 4 2.2-2.2-1.4-1.4z"/></svg></button>
             <a id="auth-action" class="link-btn" href="<?php echo $isUserLoggedIn ? '/auth/logout.php' : '/auth/login.php'; ?>"><?php echo $isUserLoggedIn ? 'Kirjaudu ulos' : 'Kirjaudu sisään'; ?></a>
-            <a href="/auth/register.php" class="ghost-btn">Rekisteröidy</a>
+            <?php if (!$isUserLoggedIn): ?>
+                <a href="/auth/register.php" class="ghost-btn">Rekisteröidy</a>
+            <?php endif; ?>
         </div>
     </div>
 </header>
@@ -215,17 +210,38 @@ $isUserLoggedIn = is_logged_in();
 
 <footer class="site-footer">
     <div class="container footer-grid">
-        <section><h3><span class="footer-mark"></span>Huuto247.fi</h3><p>Täysin suomalainen palvelu, jonka tuottaa Lahen huutokaupat Oy</p><p>Yli viisi miljoonaa vierailua kuukaudessa.</p><div class="social-row"><a href="#">Youtube</a><a href="#">Instagram</a><a href="#">Facebook</a></div></section>
-        <section><h4>Tietoa palvelusta</h4><a href="#">Tietoa huutajalle</a><a href="#">Palvelun käyttöehdot</a><a href="#">Aloita myyminen</a><a href="#">Huutokaupat.com-myyntiehdot</a><a href="#">Hinnasto</a><a href="#">Maksutavat</a></section>
-        <section><h4>Olemme apunasi</h4><a href="#">Asiakaspalvelu</a><a href="#">Ohjeet ja vinkit</a><a href="#">Tilaa uutiskirje</a><a href="#">Blogi</a><a href="#">Kampanjat</a></section>
-        <section><h4>Yritys</h4><a href="#">Tietoa meistä</a><a href="#">Lahen huutokauppa</a><a href="#">Meille töihin</a><a href="#">Medialle</a><a href="#">Tietosuojaseloste</a><a href="#">Evästeasetukset</a><a href="#">Läpinäkyvyysraportointi</a><a href="#">Saavutettavuusseloste</a></section>
+        <section><h3><span class="footer-mark"></span>Huuto247.fi</h3><p>Täysin suomalainen palvelu, jonka tuottaa Lahen huutokaupat Oy</p><p>Yli viisi miljoonaa vierailua kuukaudessa.</p><div class="social-row"><a href="https://youtube.com/@huuto247" target="_blank" rel="noopener noreferrer">Youtube</a><a href="https://www.instagram.com/huuto247" target="_blank" rel="noopener noreferrer">Instagram</a><a href="https://www.facebook.com/huuto247" target="_blank" rel="noopener noreferrer">Facebook</a></div></section>
+        <section><h4>Tietoa palvelusta</h4><span>Tietoa huutajalle</span><span>Palvelun käyttöehdot</span><span>Aloita myyminen</span><span>Huutokaupat.com-myyntiehdot</span><span>Hinnasto</span><span>Maksutavat</span></section>
+        <section><h4>Olemme apunasi</h4><span>Asiakaspalvelu</span><span>Ohjeet ja vinkit</span><span>Tilaa uutiskirje</span><span>Blogi</span><span>Kampanjat</span></section>
+        <section><h4>Yritys</h4><span>Tietoa meistä</span><span>Lahen huutokauppa</span><span>Meille töihin</span><span>Medialle</span><span>Tietosuojaseloste</span><span>Evästeasetukset</span><span>Läpinäkyvyysraportointi</span><span>Saavutettavuusseloste</span></section>
     </div>
     <div class="container footer-bottom"><span>© 2026 Huuto247.fi</span><button class="cookie-pill" type="button">Evästeasetukset</button></div>
 </footer>
 
-<div class="modal-backdrop" id="auth-modal" aria-hidden="true"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title"><h3 id="auth-modal-title">Kirjaudu sisään lisätäksesi kohde suosikkeihin!</h3><p>Kirjautuminen avaa suosikit ja personoidut ilmoitukset.</p><div class="modal-actions"><button id="confirm-login" class="primary-btn" type="button">Kirjaudu</button><button id="cancel-login" class="secondary-btn" type="button">Peruuta</button></div></div></div>
+<div class="modal-backdrop" id="auth-modal" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+        <h3 id="auth-modal-title">Kirjaudu sisään lisätäksesi kohde suosikkeihin!</h3>
+        <p>Kirjautuminen avaa suosikit ja personoidut ilmoitukset.</p>
+        <div class="modal-actions">
+            <button id="confirm-login" class="primary-btn" type="button">Kirjaudu</button>
+            <button id="cancel-login" class="secondary-btn" type="button">Peruuta</button>
+        </div>
+    </div>
+</div>
 
-<div class="modal-backdrop" id="item-modal" aria-hidden="true"><div class="modal item-modal" role="dialog" aria-modal="true" aria-labelledby="item-modal-title"><div id="item-modal-image" class="item-modal-image"></div><h3 id="item-modal-title"></h3><p id="item-modal-meta"></p><p id="item-modal-price" class="item-modal-price"></p><p id="item-modal-detail" class="item-modal-detail"></p><div class="modal-actions"><a id="item-view-link" href="#" class="primary-btn">Näytä kokonaan</a><button id="item-modal-close" class="secondary-btn" type="button">Sulje</button></div></div></div>
+<div class="modal-backdrop" id="item-modal" aria-hidden="true">
+    <div class="modal item-modal" role="dialog" aria-modal="true" aria-labelledby="item-modal-title">
+        <div id="item-modal-image" class="item-modal-image"></div>
+        <h3 id="item-modal-title"></h3>
+        <p id="item-modal-meta"></p>
+        <p id="item-modal-price" class="item-modal-price"></p>
+        <p id="item-modal-detail" class="item-modal-detail"></p>
+        <div class="modal-actions">
+            <a id="item-view-link" href="#" class="primary-btn">Näytä kokonaan</a>
+            <button id="item-modal-close" class="secondary-btn" type="button">Sulje</button>
+        </div>
+    </div>
+</div>
 
 <script>
 window.__HOME_DATA__ = {
