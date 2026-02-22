@@ -196,6 +196,28 @@ include SRC_PATH . '/views/header.php';
                 </div>
             </div>
 
+            <!-- Category-specific details panel (in sidebar) -->
+            <?php if (!empty($aiDetails)): ?>
+                <div class="bg-gray-50 rounded-xl p-4 mb-5 border border-gray-100">
+                    <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center">
+                        <svg class="w-3.5 h-3.5 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                        Kohteen tiedot
+                    </h3>
+                    <dl class="space-y-1.5">
+                        <?php foreach ($aiDetails as $field): ?>
+                            <?php if (!empty($field['label']) && isset($field['value']) && $field['value'] !== ''): ?>
+                                <div class="flex justify-between items-baseline text-sm">
+                                    <dt class="text-gray-500 shrink-0 mr-2"><?php echo htmlspecialchars($field['label']); ?></dt>
+                                    <dd class="font-semibold text-gray-900 text-right"><?php echo htmlspecialchars($field['value']); ?></dd>
+                                </div>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    </dl>
+                </div>
+            <?php endif; ?>
+
             <!-- Bid action buttons -->
             <div class="mt-auto space-y-3">
                 <?php if ($auction['buy_now_price'] && $isActive && !$isSeller): ?>
@@ -253,28 +275,6 @@ include SRC_PATH . '/views/header.php';
             </div>
         <?php endif; ?>
     </div>
-
-    <!-- ── AI Category-Specific Details ── -->
-    <?php if (!empty($aiDetails)): ?>
-        <div class="border-t border-gray-100 p-6">
-            <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                </svg>
-                Kohteen tiedot
-            </h2>
-            <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
-                <?php foreach ($aiDetails as $field): ?>
-                    <?php if (!empty($field['label']) && isset($field['value']) && $field['value'] !== ''): ?>
-                        <div class="flex justify-between items-baseline py-2 border-b border-gray-100">
-                            <dt class="text-sm font-semibold text-gray-500 capitalize"><?php echo htmlspecialchars($field['label']); ?></dt>
-                            <dd class="text-sm font-medium text-gray-900 ml-4 text-right"><?php echo htmlspecialchars($field['value']); ?></dd>
-                        </div>
-                    <?php endif; ?>
-                <?php endforeach; ?>
-            </dl>
-        </div>
-    <?php endif; ?>
 
     <!-- ── Bid History ── -->
     <div class="border-t border-gray-100 p-6" id="bidHistorySection">
