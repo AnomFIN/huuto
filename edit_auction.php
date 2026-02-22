@@ -328,6 +328,7 @@ include SRC_PATH . '/views/header.php';
         <div class="mt-6 pt-6 border-t border-gray-200">
             <h3 class="text-sm font-semibold text-gray-700 mb-2">🤖 AI-tiedot</h3>
             <p class="text-xs text-gray-500 mb-3">Generoi kohteelle kategoriasidonnaiset lisätiedot uudelleen OpenAI:lla (otsikon, kuvauksen ja kategorian perusteella).</p>
+            <input type="hidden" id="csrfToken" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
             <button type="button" id="btnRegenerateAI"
                     onclick="regenerateAIDetails()"
                     class="bg-green-600 text-white px-5 py-2 rounded-lg hover:bg-green-700 transition-colors font-semibold text-sm">
@@ -401,6 +402,7 @@ async function regenerateAIDetails() {
     try {
         const formData = new FormData();
         formData.append('auction_id', <?php echo json_encode($id); ?>);
+        formData.append('csrf_token', document.getElementById('csrfToken').value);
 
         const response = await fetch('api_ai_regenerate.php', {
             method: 'POST',

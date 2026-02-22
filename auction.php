@@ -221,7 +221,7 @@ include SRC_PATH . '/views/header.php';
             </h2>
             <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
                 <?php foreach ($aiDetails as $field): ?>
-                    <?php if (!empty($field['label']) && !empty($field['value'])): ?>
+                    <?php if (!empty($field['label']) && isset($field['value']) && $field['value'] !== ''): ?>
                         <div class="flex justify-between items-baseline py-2 border-b border-gray-100">
                             <dt class="text-sm font-semibold text-gray-500 capitalize"><?php echo htmlspecialchars($field['label']); ?></dt>
                             <dd class="text-sm font-medium text-gray-900 ml-4 text-right"><?php echo htmlspecialchars($field['value']); ?></dd>

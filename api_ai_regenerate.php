@@ -14,6 +14,20 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+// Require an authenticated session; return JSON error instead of redirecting
+if (!is_logged_in()) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Kirjautuminen vaaditaan']);
+    exit;
+}
+
+// CSRF protection
+if (!csrf_verify()) {
+    http_response_code(403);
+    echo json_encode(['error' => 'CSRF-virhe. Lataa sivu uudelleen ja yritä uudelleen.']);
+    exit;
+}
+
 // Load AI settings
 $aiSettings = ['openai_api_key' => '', 'ai_enabled' => false];
 $settingsFile = __DIR__ . '/config/ai_settings.php';
@@ -55,6 +69,14 @@ try {
         exit;
     }
 
+    // Authorization: only the auction owner or an admin may regenerate AI details
+    $currentUserId = current_user_id();
+    if (!is_admin() && (int)$auction['user_id'] !== (int)$currentUserId) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Ei käyttöoikeutta']);
+        exit;
+    }
+
     // Get primary image for the auction
     $stmt = $db->prepare(
         "SELECT image_path FROM auction_images WHERE auction_id = ? AND is_primary = 1 LIMIT 1"
@@ -91,16 +113,54 @@ try {
 
     $userContent = [['type' => 'text', 'text' => $userText]];
 
-    // Attach primary image if it exists on disk
+    // Attach primary image if it exists on disk, with path and type validation
     if ($primaryImagePath) {
-        $fullPath = __DIR__ . '/' . ltrim($primaryImagePath, '/');
-        if (file_exists($fullPath)) {
-            $mimeType  = mime_content_type($fullPath);
-            $base64    = base64_encode(file_get_contents($fullPath));
-            $userContent[] = [
-                'type'      => 'image_url',
-                'image_url' => ['url' => "data:{$mimeType};base64,{$base64}"]
-            ];
+        $uploadsDir = realpath(__DIR__ . '/uploads');
+        if ($uploadsDir !== false) {
+            $candidatePath = __DIR__ . '/' . ltrim($primaryImagePath, '/');
+            $realImagePath = realpath($candidatePath);
+
+            // Validate that the resolved path exists, is inside the uploads directory, and is a regular file
+            if ($realImagePath !== false
+                && strncmp($realImagePath, $uploadsDir . DIRECTORY_SEPARATOR, strlen($uploadsDir . DIRECTORY_SEPARATOR)) === 0
+                && is_file($realImagePath)
+                && is_readable($realImagePath)
+            ) {
+                // Enforce upload size limit to avoid excessive memory usage
+                $maxBytes = defined('UPLOAD_MAX_SIZE') ? (int)UPLOAD_MAX_SIZE : 5 * 1024 * 1024;
+                $fileSize = @filesize($realImagePath);
+
+                if ($fileSize !== false && $fileSize > 0 && $fileSize <= $maxBytes) {
+                    // Determine MIME type and only allow known image types
+                    $mimeType = null;
+                    if (function_exists('finfo_open')) {
+                        $finfo = @finfo_open(FILEINFO_MIME_TYPE);
+                        if ($finfo) {
+                            $detected = @finfo_file($finfo, $realImagePath);
+                            if (is_string($detected)) {
+                                $mimeType = $detected;
+                            }
+                            @finfo_close($finfo);
+                        }
+                    }
+                    if ($mimeType === null && function_exists('mime_content_type')) {
+                        $mimeType = @mime_content_type($realImagePath);
+                    }
+
+                    $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
+                    if ($mimeType !== null && in_array($mimeType, $allowedMimeTypes, true)) {
+                        $fileContents = @file_get_contents($realImagePath);
+                        if ($fileContents !== false) {
+                            $base64 = base64_encode($fileContents);
+                            $userContent[] = [
+                                'type'      => 'image_url',
+                                'image_url' => ['url' => "data:{$mimeType};base64,{$base64}"]
+                            ];
+                        }
+                    }
+                }
+            }
         }
     }
 
