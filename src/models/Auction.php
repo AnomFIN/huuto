@@ -145,14 +145,14 @@ class Auction {
     }
 
     /**
-     * Get auction bids
+     * Get auction bids (all, newest first)
      */
-    public function getAuctionBids($auctionId, $limit = 10) {
+    public function getAuctionBids($auctionId, $limit = 200) {
         $sql = "SELECT b.*, u.username 
                 FROM bids b
                 JOIN users u ON b.user_id = u.id
                 WHERE b.auction_id = :auction_id
-                ORDER BY b.amount DESC, b.bid_time DESC
+                ORDER BY b.bid_time DESC
                 LIMIT :limit";
         
         $stmt = $this->db->prepare($sql);
@@ -165,7 +165,7 @@ class Auction {
     /**
      * Place a bid
      */
-    public function placeBid($auctionId, $userId, $amount) {
+    public function placeBid($auctionId, $userId, $amount, $isAutoBid = false) {
         try {
             $this->db->beginTransaction();
 
@@ -175,27 +175,33 @@ class Auction {
                 throw new Exception('Huutokauppa ei ole enää aktiivinen');
             }
 
+            // Seller cannot bid on their own auction
+            if ((int)$auction['user_id'] === (int)$userId) {
+                throw new Exception('Et voi tarjota omaan huutokauppaasi');
+            }
+
             // Check if bid is high enough
             $minBid = $auction['current_price'] + $auction['bid_increment'];
             if ($amount < $minBid) {
-                throw new Exception('Tarjous on liian pieni. Vähimmäistarjous: ' . number_format($minBid, 2) . ' €');
+                throw new Exception('Tarjous on liian pieni. Vähimmäistarjous: ' . number_format($minBid, 0, ',', ' ') . ' €');
             }
 
             // Insert bid
-            $sql = "INSERT INTO bids (auction_id, user_id, amount) VALUES (:auction_id, :user_id, :amount)";
+            $sql = "INSERT INTO bids (auction_id, user_id, amount, is_auto_bid) VALUES (:auction_id, :user_id, :amount, :is_auto_bid)";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([
-                ':auction_id' => $auctionId,
-                ':user_id' => $userId,
-                ':amount' => $amount
+                ':auction_id'  => $auctionId,
+                ':user_id'     => $userId,
+                ':amount'      => $amount,
+                ':is_auto_bid' => $isAutoBid ? 1 : 0,
             ]);
 
             // Update auction current price
             $sql = "UPDATE auctions SET current_price = :amount WHERE id = :auction_id";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([
-                ':amount' => $amount,
-                ':auction_id' => $auctionId
+                ':amount'      => $amount,
+                ':auction_id'  => $auctionId
             ]);
 
             $this->db->commit();

@@ -20,11 +20,24 @@ if (!$auction) {
 
 // Increment view count
 $auctionModel->incrementViews($id);
-// Keep in-memory auction data in sync with incremented view count
 $auction['views'] = (isset($auction['views']) ? (int)$auction['views'] : 0) + 1;
 
 $images = $auctionModel->getAuctionImages($id);
-$bids = $auctionModel->getAuctionBids($id);
+$bids   = $auctionModel->getAuctionBids($id);
+
+// Build anonymous bidder map (Tarjoaja 1, 2, 3 … based on first-bid order)
+$bidderMap     = [];
+$bidderCounter = 0;
+$bidsAsc = array_reverse($bids); // bids are DESC by time; reverse for ASC chronology
+foreach ($bidsAsc as $b) {
+    $uid = $b['user_id'];
+    if (!isset($bidderMap[$uid])) {
+        $bidderCounter++;
+        $bidderMap[$uid] = $bidderCounter;
+    }
+}
+$uniqueBidderCount = count($bidderMap);
+$totalBidCount     = count($bids);
 
 // Parse AI-generated category-specific details
 $aiDetails = [];
@@ -34,6 +47,12 @@ if (!empty($auction['ai_details'])) {
         $aiDetails = $decoded['fields'];
     }
 }
+
+$isActive      = $auction['status'] === 'active';
+$minNextBid    = (float)$auction['current_price'] + (float)$auction['bid_increment'];
+$isLoggedIn    = is_logged_in();
+$currentUserId = current_user_id();
+$isSeller      = $isLoggedIn && (int)$currentUserId === (int)$auction['user_id'];
 
 $pageTitle = $auction['title'] . ' - ' . SITE_NAME;
 include SRC_PATH . '/views/header.php';
@@ -48,27 +67,27 @@ include SRC_PATH . '/views/header.php';
     </a>
 </div>
 
+<!-- Main Card -->
 <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-0">
-        <!-- Images Section -->
+
+        <!-- ── Images ── -->
         <div class="p-6 lg:border-r border-gray-100">
             <?php if (!empty($images)): ?>
                 <div class="mb-3 rounded-xl overflow-hidden bg-gray-50 border border-gray-100" style="aspect-ratio:4/3;">
                     <img src="<?php echo htmlspecialchars($images[0]['image_path']); ?>"
                          alt="<?php echo htmlspecialchars($auction['title']); ?>"
-                         class="w-full h-full object-contain"
-                         id="mainImage">
+                         class="w-full h-full object-contain" id="mainImage">
                 </div>
                 <?php if (count($images) > 1): ?>
                     <div class="grid grid-cols-5 gap-2 mt-2">
-                        <?php foreach ($images as $image): ?>
+                        <?php foreach ($images as $img): ?>
                             <button type="button"
                                     onclick="document.getElementById('mainImage').src = this.querySelector('img').src"
                                     class="rounded-lg overflow-hidden border-2 border-transparent hover:border-blue-500 focus:border-blue-500 focus:outline-none transition-all"
                                     style="aspect-ratio:1/1;">
-                                <img src="<?php echo htmlspecialchars($image['image_path']); ?>"
-                                     alt="Thumbnail"
-                                     class="w-full h-full object-cover">
+                                <img src="<?php echo htmlspecialchars($img['image_path']); ?>"
+                                     alt="Kuva" class="w-full h-full object-cover">
                             </button>
                         <?php endforeach; ?>
                     </div>
@@ -80,19 +99,19 @@ include SRC_PATH . '/views/header.php';
             <?php endif; ?>
         </div>
 
-        <!-- Details Section -->
+        <!-- ── Right column ── -->
         <div class="p-6 flex flex-col">
-            <!-- Category badge -->
-            <div class="mb-3">
+            <!-- Category + status badges -->
+            <div class="mb-3 flex flex-wrap gap-2">
                 <span class="inline-flex items-center bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full border border-blue-100">
                     <?php echo htmlspecialchars($auction['category_name']); ?>
                 </span>
-                <?php if ($auction['status'] === 'active'): ?>
-                    <span class="inline-flex items-center bg-green-50 text-green-700 text-xs font-semibold px-3 py-1 rounded-full border border-green-100 ml-2">
-                        ● Aktiivinen
+                <?php if ($isActive): ?>
+                    <span class="inline-flex items-center bg-green-50 text-green-700 text-xs font-semibold px-3 py-1 rounded-full border border-green-100">
+                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5 animate-pulse"></span>Aktiivinen
                     </span>
                 <?php elseif ($auction['status'] === 'ended'): ?>
-                    <span class="inline-flex items-center bg-gray-100 text-gray-600 text-xs font-semibold px-3 py-1 rounded-full border border-gray-200 ml-2">
+                    <span class="inline-flex items-center bg-gray-100 text-gray-600 text-xs font-semibold px-3 py-1 rounded-full border border-gray-200">
                         Päättynyt
                     </span>
                 <?php endif; ?>
@@ -102,19 +121,19 @@ include SRC_PATH . '/views/header.php';
                 <?php echo htmlspecialchars($auction['title']); ?>
             </h1>
 
-            <!-- Price and Bidding Section -->
+            <!-- Price + stats box -->
             <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 mb-5 border border-blue-100">
                 <div class="grid grid-cols-2 gap-4 mb-4">
                     <div>
                         <div class="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">Aloitushinta</div>
                         <div class="text-base font-semibold text-gray-700">
-                            <?php echo number_format($auction['starting_price'], 2, ',', ' '); ?> €
+                            <?php echo number_format($auction['starting_price'], 0, ',', ' '); ?> €
                         </div>
                     </div>
                     <div>
                         <div class="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">Nykyinen hinta</div>
-                        <div class="text-3xl font-extrabold text-blue-700">
-                            <?php echo number_format($auction['current_price'], 2, ',', ' '); ?> €
+                        <div class="text-3xl font-extrabold text-blue-700" id="currentPriceDisplay">
+                            <?php echo number_format($auction['current_price'], 0, ',', ' '); ?> €
                         </div>
                     </div>
                 </div>
@@ -123,11 +142,12 @@ include SRC_PATH . '/views/header.php';
                     <div class="mb-4 p-3 bg-green-50 rounded-lg border border-green-200">
                         <div class="text-xs text-green-700 uppercase tracking-wide font-semibold mb-1">Osta heti -hinta</div>
                         <div class="text-xl font-bold text-green-700">
-                            <?php echo number_format($auction['buy_now_price'], 2, ',', ' '); ?> €
+                            <?php echo number_format($auction['buy_now_price'], 0, ',', ' '); ?> €
                         </div>
                     </div>
                 <?php endif; ?>
 
+                <!-- Countdown -->
                 <div class="mb-4">
                     <div class="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">Huutokauppa päättyy</div>
                     <div class="countdown text-xl font-bold text-red-600"
@@ -138,9 +158,10 @@ include SRC_PATH . '/views/header.php';
                     </div>
                 </div>
 
+                <!-- Stats bar -->
                 <div class="grid grid-cols-3 gap-2 text-center border-t border-blue-100 pt-4">
                     <div class="bg-white rounded-lg py-2 px-1 shadow-sm">
-                        <div class="text-lg font-bold text-gray-900"><?php echo $auction['bid_count']; ?></div>
+                        <div class="text-lg font-bold text-gray-900" id="bidCountDisplay"><?php echo $totalBidCount; ?></div>
                         <div class="text-xs text-gray-500">Tarjousta</div>
                     </div>
                     <div class="bg-white rounded-lg py-2 px-1 shadow-sm">
@@ -148,13 +169,13 @@ include SRC_PATH . '/views/header.php';
                         <div class="text-xs text-gray-500">Katselukerrat</div>
                     </div>
                     <div class="bg-white rounded-lg py-2 px-1 shadow-sm">
-                        <div class="text-lg font-bold text-gray-900"><?php echo isset($auction['watch_count']) ? $auction['watch_count'] : 0; ?></div>
-                        <div class="text-xs text-gray-500">Seuraajaa</div>
+                        <div class="text-lg font-bold text-gray-900"><?php echo $uniqueBidderCount; ?></div>
+                        <div class="text-xs text-gray-500">Tarjoajaa</div>
                     </div>
                 </div>
             </div>
 
-            <!-- Seller Info -->
+            <!-- Seller -->
             <div class="bg-gray-50 rounded-xl p-4 mb-5 border border-gray-100 flex items-center space-x-3">
                 <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
                     <span class="text-blue-600 font-bold text-sm">
@@ -175,21 +196,44 @@ include SRC_PATH . '/views/header.php';
                 </div>
             </div>
 
-            <!-- Bid Buttons -->
-            <div class="mt-auto">
-                <?php if ($auction['buy_now_price']): ?>
-                    <button class="w-full bg-green-600 text-white py-3 px-6 rounded-xl font-bold hover:bg-green-700 active:bg-green-800 transition-colors mb-3 shadow-sm">
-                        ⚡ Osta heti <?php echo number_format($auction['buy_now_price'], 2, ',', ' '); ?> €
+            <!-- Bid action buttons -->
+            <div class="mt-auto space-y-3">
+                <?php if ($auction['buy_now_price'] && $isActive && !$isSeller): ?>
+                    <button onclick="<?php echo $isLoggedIn ? 'openBuyNowConfirm()' : "window.location='/auth/login.php'"; ?>"
+                            class="w-full bg-green-600 text-white py-3 px-6 rounded-xl font-bold hover:bg-green-700 active:bg-green-800 transition-colors shadow-sm">
+                        ⚡ Osta heti — <?php echo number_format($auction['buy_now_price'], 0, ',', ' '); ?> €
                     </button>
                 <?php endif; ?>
-                <button class="w-full bg-blue-600 text-white py-3 px-6 rounded-xl font-bold hover:bg-blue-700 active:bg-blue-800 transition-colors shadow-sm">
-                    🔨 Tee tarjous
-                </button>
+
+                <?php if ($isActive && !$isSeller): ?>
+                    <button onclick="<?php echo $isLoggedIn ? 'openBidModal()' : "window.location='/auth/login.php'"; ?>"
+                            class="w-full bg-blue-600 text-white py-3 px-6 rounded-xl font-bold hover:bg-blue-700 active:bg-blue-800 transition-colors shadow-sm text-lg">
+                        🔨 Tee tarjous
+                    </button>
+                    <?php if (!$isLoggedIn): ?>
+                        <p class="text-center text-sm text-gray-500">
+                            <a href="/auth/login.php" class="text-blue-600 hover:underline">Kirjaudu sisään</a> tehdäksesi tarjouksen
+                        </p>
+                    <?php else: ?>
+                        <p class="text-center text-xs text-gray-400">
+                            Vähimmäistarjous: <strong><?php echo number_format($minNextBid, 0, ',', ' '); ?> €</strong>
+                            (korotus <?php echo number_format($auction['bid_increment'], 0, ',', ' '); ?> €)
+                        </p>
+                    <?php endif; ?>
+                <?php elseif ($isSeller): ?>
+                    <p class="text-center text-sm text-gray-500 py-2 bg-gray-50 rounded-xl border border-gray-200">
+                        Tämä on oma kohteesi
+                    </p>
+                <?php elseif (!$isActive): ?>
+                    <p class="text-center text-sm text-gray-500 py-2 bg-gray-50 rounded-xl border border-gray-200">
+                        Huutokauppa on päättynyt
+                    </p>
+                <?php endif; ?>
             </div>
         </div>
-    </div>
+    </div><!-- /grid -->
 
-    <!-- Description -->
+    <!-- ── Description ── -->
     <div class="border-t border-gray-100 p-6">
         <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
             <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -210,7 +254,7 @@ include SRC_PATH . '/views/header.php';
         <?php endif; ?>
     </div>
 
-    <!-- AI-generated Category-Specific Details (below description) -->
+    <!-- ── AI Category-Specific Details ── -->
     <?php if (!empty($aiDetails)): ?>
         <div class="border-t border-gray-100 p-6">
             <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
@@ -232,44 +276,210 @@ include SRC_PATH . '/views/header.php';
         </div>
     <?php endif; ?>
 
-    <!-- Bid History -->
-    <?php if (!empty($bids)): ?>
-        <div class="border-t border-gray-100 p-6">
-            <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+    <!-- ── Bid History ── -->
+    <div class="border-t border-gray-100 p-6" id="bidHistorySection">
+        <div class="flex items-center justify-between mb-5">
+            <h2 class="text-xl font-bold text-gray-900 flex items-center">
                 <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
                 </svg>
                 Tarjoushistoria
             </h2>
-            <div class="overflow-x-auto rounded-xl border border-gray-100">
-                <table class="min-w-full divide-y divide-gray-100">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Tarjous</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Käyttäjä</th>
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">Aika</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-50">
-                        <?php foreach ($bids as $index => $bid): ?>
-                            <tr class="<?php echo $index === 0 ? 'bg-blue-50' : ''; ?> hover:bg-gray-50 transition-colors">
-                                <td class="px-4 py-3 font-bold <?php echo $index === 0 ? 'text-blue-700' : 'text-gray-700'; ?>">
-                                    <?php if ($index === 0): ?><span class="text-xs mr-1">🏆</span><?php endif; ?>
-                                    <?php echo number_format($bid['amount'], 2, ',', ' '); ?> €
-                                </td>
-                                <td class="px-4 py-3 text-gray-700 text-sm">
-                                    <?php echo htmlspecialchars($bid['username']); ?>
-                                </td>
-                                <td class="px-4 py-3 text-gray-400 text-xs">
-                                    <?php echo date('d.m.Y H:i', strtotime($bid['bid_time'])); ?>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+            <div class="flex gap-4 text-sm text-gray-500">
+                <span><strong class="text-gray-900" id="bidHistTotalCount"><?php echo $totalBidCount; ?></strong> tarjousta</span>
+                <span><strong class="text-gray-900"><?php echo $uniqueBidderCount; ?></strong> tarjoajaa</span>
             </div>
         </div>
-    <?php endif; ?>
+
+        <?php if (empty($bids)): ?>
+            <div class="text-center py-10 text-gray-400">
+                <svg class="mx-auto h-10 w-10 mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+                </svg>
+                <p class="text-sm">Ei tarjouksia vielä. Ole ensimmäinen!</p>
+            </div>
+        <?php else: ?>
+            <?php
+            // Find the highest amount bid for the top-of-list highlight
+            $maxAmount = 0;
+            foreach ($bids as $b) { if ($b['amount'] > $maxAmount) $maxAmount = $b['amount']; }
+            ?>
+            <div class="bg-blue-600 text-white rounded-xl px-5 py-4 mb-4 flex items-center justify-between">
+                <div>
+                    <div class="text-xs font-semibold uppercase tracking-wide opacity-80 mb-1">Korkein tarjous</div>
+                    <div class="text-3xl font-extrabold"><?php echo number_format($maxAmount, 0, ',', ' '); ?> €</div>
+                </div>
+                <?php if ($isActive): ?>
+                    <button onclick="<?php echo $isLoggedIn ? 'openBidModal()' : "window.location='/auth/login.php'"; ?>"
+                            class="bg-white text-blue-700 font-bold px-5 py-2.5 rounded-lg hover:bg-blue-50 transition-colors text-sm">
+                        🔨 Tee tarjous
+                    </button>
+                <?php endif; ?>
+            </div>
+
+            <!-- Bid rows (newest first) -->
+            <div class="divide-y divide-gray-100" id="bidList">
+                <?php foreach ($bids as $index => $bid):
+                    $bidderNum   = $bidderMap[$bid['user_id']] ?? '?';
+                    $bidderLabel = 'Tarjoaja ' . $bidderNum;
+                    if (!empty($bid['is_auto_bid'])) {
+                        $bidderLabel .= ', korotusautomaatti';
+                    }
+                    $isHighest   = (float)$bid['amount'] === $maxAmount;
+                    $bidTs       = strtotime($bid['bid_time']);
+                    $dateStr     = date('j.n.', $bidTs);
+                    $timeStr     = 'klo ' . date('G.i.s', $bidTs);
+                ?>
+                    <div class="flex items-center py-3 <?php echo $isHighest ? 'bg-blue-50 -mx-6 px-6 font-semibold' : ''; ?>">
+                        <div class="flex-1">
+                            <div class="text-<?php echo $isHighest ? 'blue-700 text-lg' : 'gray-900'; ?> font-bold">
+                                <?php if ($isHighest): ?><span class="text-base mr-1">🏆</span><?php endif; ?>
+                                <?php echo number_format($bid['amount'], 0, ',', ' '); ?> €
+                            </div>
+                            <div class="text-xs text-gray-500 mt-0.5">
+                                <?php echo htmlspecialchars($bidderLabel); ?>
+                            </div>
+                        </div>
+                        <div class="text-right text-xs text-gray-400 ml-4">
+                            <div class="font-medium text-gray-600"><?php echo $dateStr; ?></div>
+                            <div><?php echo $timeStr; ?></div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+    </div><!-- /bid history -->
+</div><!-- /main card -->
+
+<?php if ($isActive && $isLoggedIn && !$isSeller): ?>
+<!-- ── Bid Modal ── -->
+<div id="bidModal" class="fixed inset-0 z-50 hidden" aria-modal="true" role="dialog">
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeBidModal()"></div>
+    <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md pointer-events-auto" onclick="event.stopPropagation()">
+            <div class="flex items-center justify-between p-6 border-b border-gray-100">
+                <h3 class="text-xl font-bold text-gray-900">🔨 Tee tarjous</h3>
+                <button onclick="closeBidModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-6">
+                <div class="bg-blue-50 rounded-xl p-4 mb-5 border border-blue-100">
+                    <div class="flex justify-between text-sm text-gray-600 mb-1">
+                        <span>Nykyinen hinta</span>
+                        <strong class="text-gray-900"><?php echo number_format($auction['current_price'], 0, ',', ' '); ?> €</strong>
+                    </div>
+                    <div class="flex justify-between text-sm text-gray-600">
+                        <span>Vähimmäistarjous</span>
+                        <strong class="text-blue-700"><?php echo number_format($minNextBid, 0, ',', ' '); ?> €</strong>
+                    </div>
+                </div>
+
+                <div id="bidError"   class="bg-red-50   text-red-700   px-4 py-3 rounded-xl mb-4 text-sm hidden"></div>
+                <div id="bidSuccess" class="bg-green-50 text-green-800 px-4 py-3 rounded-xl mb-4 text-sm hidden"></div>
+
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Tarjousmäärä (€)</label>
+                <input type="number" id="bidAmount"
+                       min="<?php echo $minNextBid; ?>"
+                       step="<?php echo $auction['bid_increment']; ?>"
+                       value="<?php echo $minNextBid; ?>"
+                       class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-2xl font-bold text-center focus:border-blue-500 focus:outline-none mb-5"
+                       oninput="validateBidAmount(this)">
+
+                <input type="hidden" id="bidCsrf" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
+
+                <button id="btnSubmitBid" onclick="submitBid()"
+                        class="w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold hover:bg-blue-700 transition-colors text-lg disabled:opacity-50 disabled:cursor-not-allowed">
+                    Vahvista tarjous
+                </button>
+                <p class="text-center text-xs text-gray-400 mt-3">
+                    Tarjoukset ovat sitovia
+                </p>
+            </div>
+        </div>
+    </div>
 </div>
+<?php endif; ?>
+
+<script>
+const BID_MIN  = <?php echo (float)$minNextBid; ?>;
+const BID_STEP = <?php echo (float)$auction['bid_increment']; ?>;
+const AUCTION_ID = <?php echo (int)$id; ?>;
+
+function openBidModal() {
+    const modal = document.getElementById('bidModal');
+    if (!modal) return;
+    document.getElementById('bidError').classList.add('hidden');
+    document.getElementById('bidSuccess').classList.add('hidden');
+    modal.classList.remove('hidden');
+    document.getElementById('bidAmount').focus();
+}
+
+function closeBidModal() {
+    const modal = document.getElementById('bidModal');
+    if (modal) modal.classList.add('hidden');
+}
+
+function validateBidAmount(input) {
+    const val = parseFloat(input.value);
+    const btn = document.getElementById('btnSubmitBid');
+    if (btn) btn.disabled = isNaN(val) || val < BID_MIN;
+}
+
+async function submitBid() {
+    const amountInput = document.getElementById('bidAmount');
+    const csrf        = document.getElementById('bidCsrf').value;
+    const errorEl     = document.getElementById('bidError');
+    const successEl   = document.getElementById('bidSuccess');
+    const btn         = document.getElementById('btnSubmitBid');
+    const amount      = parseFloat(amountInput.value);
+
+    errorEl.classList.add('hidden');
+    successEl.classList.add('hidden');
+
+    if (isNaN(amount) || amount < BID_MIN) {
+        errorEl.textContent = '❌ Tarjous on liian pieni. Vähimmäistarjous: ' + BID_MIN.toLocaleString('fi-FI', {maximumFractionDigits: 0}) + ' €';
+        errorEl.classList.remove('hidden');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = '⏳ Lähetetään...';
+
+    const formData = new FormData();
+    formData.append('auction_id', AUCTION_ID);
+    formData.append('amount', amount);
+    formData.append('csrf_token', csrf);
+
+    try {
+        const response = await fetch('api_place_bid.php', { method: 'POST', body: formData });
+        const data = await response.json();
+
+        if (data.success) {
+            successEl.textContent = '✅ ' + data.message;
+            successEl.classList.remove('hidden');
+            // Reload after short delay to show updated bid history
+            setTimeout(() => location.reload(), 1200);
+        } else {
+            errorEl.textContent = '❌ ' + (data.error || 'Tarjouksen teko epäonnistui');
+            errorEl.classList.remove('hidden');
+            btn.disabled = false;
+            btn.textContent = 'Vahvista tarjous';
+        }
+    } catch (e) {
+        errorEl.textContent = '❌ Verkkovirhe. Yritä uudelleen.';
+        errorEl.classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = 'Vahvista tarjous';
+    }
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeBidModal();
+});
+</script>
 
 <?php include SRC_PATH . '/views/footer.php'; ?>
