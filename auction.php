@@ -276,6 +276,82 @@ include SRC_PATH . '/views/header.php';
         <?php endif; ?>
     </div>
 
+    <!-- ── Auction Info Box ── -->
+    <div class="border-t border-gray-100 p-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Location -->
+            <div>
+                <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center">
+                    <svg class="w-3.5 h-3.5 mr-1.5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                    </svg>
+                    Kohteen sijainti
+                </div>
+                <?php if (!empty($auction['location'])): ?>
+                    <p class="text-sm text-gray-800 font-medium mb-1"><?php echo htmlspecialchars($auction['location']); ?></p>
+                <?php endif; ?>
+                <a href="https://maps.google.com/?q=<?php echo urlencode($auction['location'] ?? ''); ?>"
+                   target="_blank" rel="noopener noreferrer"
+                   class="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors">
+                    <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                    </svg>
+                    Avaa kartta
+                </a>
+            </div>
+
+            <!-- Viewing & Contact -->
+            <div>
+                <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center">
+                    <svg class="w-3.5 h-3.5 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                    </svg>
+                    Tiedustelut
+                </div>
+                <p class="text-sm font-semibold text-gray-800 mb-1">Kohteeseen tutustuminen</p>
+                <p class="text-sm text-gray-600">Sopimuksen mukaan</p>
+            </div>
+
+            <!-- Payment method -->
+            <div>
+                <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center">
+                    <svg class="w-3.5 h-3.5 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                    </svg>
+                    Maksutapa
+                </div>
+                <p class="text-sm text-gray-600">Verkkopankkimaksu, maksuaika 24 tuntia tarjouksen hyväksymisestä.</p>
+            </div>
+        </div>
+
+        <!-- Last updated + Share + Report -->
+        <div class="mt-5 pt-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
+            <p class="text-xs text-gray-400 flex items-center">
+                <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Päivitetty viimeksi
+                <?php echo !empty($auction['updated_at']) ? date('j.n.Y \k\l\o G.i', strtotime($auction['updated_at'])) : date('j.n.Y'); ?>
+            </p>
+            <div class="flex items-center gap-4">
+                <button onclick="navigator.share ? navigator.share({title: <?php echo json_encode($auction['title']); ?>, url: window.location.href}) : navigator.clipboard.writeText(window.location.href).then(() => alert('Linkki kopioitu!'))"
+                        class="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                    </svg>
+                    Jaa kohde kaverillesi
+                </button>
+                <button onclick="if(confirm('Haluatko ilmiantaa tämän ilmoituksen?')) alert('Ilmoitus lähetetty. Kiitos!')"
+                        class="inline-flex items-center text-sm text-gray-400 hover:text-red-500 transition-colors">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/>
+                    </svg>
+                    Ilmianna ilmoitus
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- ── Bid History ── -->
     <div class="border-t border-gray-100 p-6" id="bidHistorySection">
         <div class="flex items-center justify-between mb-5">
