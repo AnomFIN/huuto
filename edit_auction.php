@@ -726,4 +726,43 @@ include SRC_PATH . '/views/header.php';
 }());
 </script>
 
+<script>
+async function regenerateAIDetails() {
+    const btn = document.getElementById('btnRegenerateAI');
+    const status = document.getElementById('aiRegenerateStatus');
+
+    btn.disabled = true;
+    btn.textContent = '⏳ Generoidaan...';
+    status.className = 'mt-2 text-sm text-blue-600';
+    status.textContent = '🤖 AI analysoi kohteen tietoja...';
+    status.classList.remove('hidden');
+
+    try {
+        const formData = new FormData();
+        formData.append('auction_id', <?php echo json_encode($id); ?>);
+        formData.append('csrf_token', document.getElementById('csrfToken').value);
+
+        const response = await fetch('api_ai_regenerate.php', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+            throw new Error(data.error || 'AI-generointi epäonnistui');
+        }
+
+        status.className = 'mt-2 text-sm text-green-700';
+        status.textContent = '✅ ' + (data.message || 'AI-tiedot päivitetty!') + ' Lataa sivu uudelleen nähdäksesi muutokset.';
+    } catch (error) {
+        status.className = 'mt-2 text-sm text-red-600';
+        status.textContent = '❌ ' + error.message;
+    } finally {
+        btn.disabled = false;
+        btn.textContent = '🔄 Generoi AI-tiedot uudelleen';
+    }
+}
+</script>
+
 <?php include SRC_PATH . '/views/footer.php'; ?>
