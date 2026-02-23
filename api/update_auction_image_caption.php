@@ -1,5 +1,4 @@
 <?php
-// Ship intelligence, not excuses.
 require_once dirname(__DIR__) . '/bootstrap.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -22,12 +21,18 @@ try {
 
     $auctionId = isset($payload['auction_id']) ? (int)$payload['auction_id'] : 0;
     $imageId = isset($payload['image_id']) ? (int)$payload['image_id'] : 0;
+    $caption = isset($payload['caption']) ? trim((string)$payload['caption']) : '';
 
     if ($auctionId <= 0 || $imageId <= 0) {
         json_error('Virheellinen pyyntö.');
     }
 
+    if (mb_strlen($caption) > 255) {
+        json_error('Kuvateksti voi olla enintään 255 merkkiä.');
+    }
+
     $db = Database::getInstance()->getConnection();
+    $db->exec("ALTER TABLE auction_images ADD COLUMN IF NOT EXISTS caption VARCHAR(255) NULL AFTER image_path");
 
     $stmt = $db->prepare('SELECT id, user_id FROM auctions WHERE id = ? LIMIT 1');
     $stmt->execute([$auctionId]);
@@ -51,29 +56,19 @@ try {
         json_error('Kuvaa ei löytynyt.', 404);
     }
 
-    $db->beginTransaction();
-
-    $stmt = $db->prepare('UPDATE auction_images SET is_primary = 0 WHERE auction_id = ?');
-    $stmt->execute([$auctionId]);
-
-    $stmt = $db->prepare('UPDATE auction_images SET is_primary = 1 WHERE id = ? AND auction_id = ?');
-    $stmt->execute([$imageId, $auctionId]);
-
-    $db->commit();
+    $stmt = $db->prepare('UPDATE auction_images SET caption = ? WHERE id = ? AND auction_id = ?');
+    $stmt->execute([$caption !== '' ? $caption : null, $imageId, $auctionId]);
 
     echo json_encode([
         'ok' => true,
-        'primary_image_id' => $imageId,
+        'image_id' => $imageId,
+        'caption' => $caption,
     ], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $exception) {
-    if (isset($db) && $db->inTransaction()) {
-        $db->rollBack();
-    }
-
     error_log(json_encode([
-        'event' => 'set_primary_image_failed',
+        'event' => 'update_auction_image_caption_failed',
         'error' => $exception->getMessage(),
     ], JSON_UNESCAPED_UNICODE));
 
-    json_error('Pääkuvan asettaminen epäonnistui.');
+    json_error('Kuvatekstin tallennus epäonnistui.');
 }

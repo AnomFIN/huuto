@@ -7,14 +7,14 @@ $auctionModel = new Auction();
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 if (!$id) {
-    header('Location: /');
+    header('Location: index.php');
     exit;
 }
 
 $auction = $auctionModel->getAuctionById($id);
 
 if (!$auction) {
-    header('Location: /');
+    header('Location: index.php');
     exit;
 }
 
@@ -23,248 +23,878 @@ $auctionModel->incrementViews($id);
 $auction['views'] = (isset($auction['views']) ? (int)$auction['views'] : 0) + 1;
 
 $images = $auctionModel->getAuctionImages($id);
-$bids   = $auctionModel->getAuctionBids($id);
+$bids = $auctionModel->getAuctionBids($id);
+$metadata = $auctionModel->getAuctionMetadata($id);
 
-// Build anonymous bidder map (Tarjoaja 1, 2, 3 … based on first-bid order)
-$bidderMap     = [];
-$bidderCounter = 0;
-$bidsAsc = array_reverse($bids); // bids are DESC by time; reverse for ASC chronology
-foreach ($bidsAsc as $b) {
-    $uid = $b['user_id'];
-    if (!isset($bidderMap[$uid])) {
-        $bidderCounter++;
-        $bidderMap[$uid] = $bidderCounter;
-    }
-}
-$uniqueBidderCount = count($bidderMap);
-$totalBidCount     = count($bids);
-
-// Parse AI-generated category-specific details
-$aiDetails = [];
-if (!empty($auction['ai_details'])) {
-    $decoded = json_decode($auction['ai_details'], true);
-    if ($decoded && !empty($decoded['fields'])) {
-        $aiDetails = $decoded['fields'];
-    }
+if (!is_array($metadata)) {
+    $metadata = [];
 }
 
-$isActive      = $auction['status'] === 'active';
-$minNextBid    = (float)$auction['current_price'] + (float)$auction['bid_increment'];
-$isLoggedIn    = is_logged_in();
-$currentUserId = current_user_id();
-$isSeller      = $isLoggedIn && (int)$currentUserId === (int)$auction['user_id'];
+$categoryName = trim((string)($auction['category_name'] ?? 'Muut'));
+$categoryKey = mb_strtolower($categoryName, 'UTF-8');
+
+if ($categoryKey === 'työkoneet') {
+    $categoryKey = 'ajoneuvot';
+}
+
+$auctionEndUnix = strtotime((string)$auction['end_time']);
+if ($auctionEndUnix === false) {
+    $auctionEndUnix = time();
+}
+
+function meta_value(array $metadata, string $key, string $fallback = '-'): string
+{
+    $value = isset($metadata[$key]) ? trim((string)$metadata[$key]) : '';
+    return $value !== '' ? $value : $fallback;
+}
+
+function meta_bool(array $metadata, string $key, string $yes = 'Kyllä', string $no = 'Ei'): string
+{
+    $value = mb_strtolower(trim((string)($metadata[$key] ?? '')), 'UTF-8');
+    if ($value === '') {
+        return '-';
+    }
+
+    $truthy = ['1', 'true', 'yes', 'kyllä', 'kylla'];
+    $falsy = ['0', 'false', 'no', 'ei'];
+
+    if (in_array($value, $truthy, true)) {
+        return $yes;
+    }
+
+    if (in_array($value, $falsy, true)) {
+        return $no;
+    }
+
+    return ucfirst((string)$metadata[$key]);
+}
+
+function render_specs_table(array $rows): void
+{
+    echo '<table class="specs-table">';
+    foreach ($rows as $label => $value) {
+        echo '<tr>';
+        echo '<th>' . htmlspecialchars((string)$label, ENT_QUOTES, 'UTF-8') . '</th>';
+        echo '<td>' . htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8') . '</td>';
+        echo '</tr>';
+    }
+    echo '</table>';
+}
 
 $pageTitle = $auction['title'] . ' - ' . SITE_NAME;
 include SRC_PATH . '/views/header.php';
 ?>
 
-<div class="mb-4">
-    <a href="/" class="inline-flex items-center text-blue-600 hover:text-blue-800 font-medium transition-colors">
-        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
-        </svg>
-        Takaisin etusivulle
-    </a>
-</div>
+<style>
+    .auction-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
 
-<!-- Main Card -->
-<div class="bg-white rounded-2xl shadow-xl overflow-hidden">
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-0">
+    .auction-breadcrumb {
+        margin-bottom: 1.5rem;
+    }
 
-        <!-- ── Images ── -->
-        <div class="p-6 lg:border-r border-gray-100">
-            <?php if (!empty($images)): ?>
-                <div class="mb-3 rounded-xl overflow-hidden bg-gray-50 border border-gray-100" style="aspect-ratio:4/3;">
-                    <img src="<?php echo htmlspecialchars($images[0]['image_path']); ?>"
-                         alt="<?php echo htmlspecialchars($auction['title']); ?>"
-                         class="w-full h-full object-contain" id="mainImage">
-                </div>
-                <?php if (count($images) > 1): ?>
-                    <div class="grid grid-cols-5 gap-2 mt-2">
-                        <?php foreach ($images as $img): ?>
-                            <button type="button"
-                                    onclick="document.getElementById('mainImage').src = this.querySelector('img').src"
-                                    class="rounded-lg overflow-hidden border-2 border-transparent hover:border-blue-500 focus:border-blue-500 focus:outline-none transition-all"
-                                    style="aspect-ratio:1/1;">
-                                <img src="<?php echo htmlspecialchars($img['image_path']); ?>"
-                                     alt="Kuva" class="w-full h-full object-cover">
-                            </button>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
-            <?php else: ?>
-                <div class="w-full rounded-xl bg-gray-100 flex items-center justify-center" style="aspect-ratio:4/3;">
-                    <span class="text-gray-300 text-8xl">📦</span>
-                </div>
-            <?php endif; ?>
+    .auction-breadcrumb a {
+        color: var(--accent-600);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .auction-breadcrumb a:hover {
+        color: var(--accent-700);
+    }
+
+    .auction-category-badge {
+        display: inline-block;
+        background: var(--accent-600);
+        color: #fff;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 0.25rem 0.75rem;
+        border-radius: 999px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+    }
+
+    .auction-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--text-900);
+        margin: 0.4rem 0 0.75rem;
+        line-height: 1.2;
+    }
+
+    .auction-subtitle {
+        font-size: 1.1rem;
+        color: var(--text-700);
+        margin-bottom: 0.5rem;
+    }
+
+    .auction-stats {
+        display: inline-flex;
+        align-items: center;
+        gap: 1rem;
+        font-size: 0.9rem;
+        color: var(--text-600);
+        margin-bottom: 1.5rem;
+    }
+
+    .auction-admin-actions {
+        margin: 0 0 1rem;
+        display: flex;
+        justify-content: flex-start;
+        gap: .6rem;
+    }
+
+    .auction-admin-edit {
+        display: inline-flex;
+        align-items: center;
+        gap: .35rem;
+        background: #111827;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 999px;
+        padding: .5rem .9rem;
+        font-size: .82rem;
+        font-weight: 700;
+    }
+
+    .auction-admin-edit:hover {
+        opacity: .9;
+    }
+
+    .auction-grid {
+        display: grid;
+        grid-template-columns: 1fr 400px;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .auction-main {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+    }
+
+    .auction-sidebar {
+        position: sticky;
+        top: 2rem;
+        height: fit-content;
+    }
+
+    .auction-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        box-shadow: var(--shadow-1);
+    }
+
+    .auction-card h2, .auction-card h3 {
+        margin: 0 0 1rem;
+        font-weight: 700;
+        color: var(--text-900);
+    }
+
+    .auction-card h2 {
+        font-size: 1.25rem;
+    }
+
+    .auction-card h3 {
+        font-size: 1.1rem;
+    }
+
+    .image-gallery {
+        margin-bottom: 1rem;
+    }
+
+    .main-image {
+        width: 100%;
+        height: min(62vh, 560px);
+        object-fit: contain;
+        background: #f2f5f9;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        margin-bottom: 1rem;
+        cursor: zoom-in;
+    }
+
+    .image-thumbnails {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+        gap: 0.5rem;
+    }
+
+    .image-caption {
+        margin-top: .5rem;
+        font-size: .9rem;
+        color: var(--text-700);
+    }
+
+    .thumbnail {
+        width: 100%;
+        height: 60px;
+        object-fit: contain;
+        background: #f2f5f9;
+        border-radius: 4px;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: all 0.2s;
+    }
+
+    .thumbnail:hover, .thumbnail.active {
+        border-color: var(--accent-600);
+    }
+
+    .price-section {
+        background: var(--bg-neutral-50);
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .price-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .price-item {
+        text-align: center;
+    }
+
+    .price-label {
+        font-size: 0.8rem;
+        color: var(--text-600);
+        margin-bottom: 0.25rem;
+    }
+
+    .price-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--accent-600);
+    }
+
+    .auction-deadline {
+        text-align: center;
+        margin: 1rem auto;
+        width: 200px;
+        min-height: 200px;
+        border-radius: 999px;
+        border: 2px solid rgba(201,138,45,.45);
+        background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.85), rgba(250,239,220,.65));
+        display: grid;
+        place-content: center;
+        padding: .8rem;
+    }
+
+    .auction-deadline-label {
+        font-size: 0.8rem;
+        color: var(--text-600);
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+    }
+
+    .auction-deadline-time {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #dc2626;
+        line-height: 1.28;
+    }
+
+    .auction-stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 1rem;
+        text-align: center;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--line);
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-number {
+        font-weight: 700;
+        color: var(--text-900);
+        font-size: 1.1rem;
+    }
+
+    .stat-label {
+        font-size: 0.8rem;
+        color: var(--text-600);
+    }
+
+    .bid-button {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background: var(--accent-600);
+        color: white;
+        border: none;
+        border-radius: var(--radius);
+        font-weight: 600;
+        font-size: 1rem;
+        cursor: pointer;
+        margin-top: 1rem;
+        transition: all 0.2s;
+    }
+
+    .bid-button:hover {
+        background: var(--accent-700);
+    }
+
+    .specs-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
+
+    .specs-table th, .specs-table td {
+        padding: 0.5rem;
+        text-align: left;
+        border-bottom: 1px solid var(--line);
+        font-size: 0.9rem;
+    }
+
+    .specs-table th {
+        font-weight: 600;
+        color: var(--text-700);
+        width: 40%;
+    }
+
+    .specs-table td {
+        color: var(--text-900);
+    }
+
+    .equipment-list {
+        margin-top: 1rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 0.5rem;
+    }
+
+    .equipment-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: var(--text-700);
+    }
+
+    .equipment-item::before {
+        content: '✓';
+        color: #16a34a;
+        font-weight: bold;
+    }
+
+    .condition-section {
+        margin-top: 1rem;
+    }
+
+    .condition-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--line);
+        font-size: 0.9rem;
+    }
+
+    .condition-item:last-child {
+        border-bottom: none;
+    }
+
+    .condition-label {
+        font-weight: 600;
+        color: var(--text-700);
+        flex: 1;
+    }
+
+    .condition-value {
+        color: var(--text-900);
+        flex: 2;
+        text-align: right;
+    }
+
+    .terms-section {
+        background: var(--bg-neutral-50);
+        border-radius: var(--radius);
+        padding: 1rem;
+        margin-top: 1rem;
+        font-size: 0.85rem;
+        line-height: 1.5;
+        color: var(--text-700);
+    }
+
+    .terms-section h4 {
+        margin: 0 0 0.5rem;
+        font-weight: 700;
+        color: var(--text-900);
+    }
+
+    .bids-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
+
+    .bids-table th, .bids-table td {
+        padding: 0.75rem 0.5rem;
+        text-align: left;
+        border-bottom: 1px solid var(--line);
+        font-size: 0.9rem;
+    }
+
+    .bids-table th {
+        font-weight: 600;
+        color: var(--text-700);
+        background: var(--bg-neutral-50);
+    }
+
+    .seller-info {
+        background: var(--bg-neutral-50);
+        border-radius: var(--radius);
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .seller-rating {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .lightbox {
+        position: fixed;
+        inset: 0;
+        z-index: 3000;
+        display: none;
+        background: rgba(8, 12, 22, .88);
+        backdrop-filter: blur(4px);
+    }
+
+    .lightbox.open {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+    }
+
+    .lightbox-top {
+        display: flex;
+        justify-content: flex-end;
+        padding: .9rem 1rem 0;
+    }
+
+    .lightbox-close {
+        border: 1px solid rgba(255,255,255,.4);
+        background: rgba(255,255,255,.1);
+        color: #fff;
+        width: 40px;
+        height: 40px;
+        border-radius: 999px;
+        cursor: pointer;
+        font-size: 1.1rem;
+    }
+
+    .lightbox-main {
+        display: grid;
+        grid-template-columns: 56px 1fr 56px;
+        align-items: center;
+        gap: .8rem;
+        width: min(1600px, 96vw);
+        margin: 0 auto;
+    }
+
+    .lightbox-image-wrap {
+        display: grid;
+        place-items: center;
+        min-height: 72vh;
+    }
+
+    .lightbox-image {
+        max-width: 100%;
+        max-height: 75vh;
+        object-fit: contain;
+        border-radius: 12px;
+        background: #0d1424;
+    }
+
+    .lightbox-arrow {
+        border: 1px solid rgba(255,255,255,.35);
+        background: rgba(255,255,255,.12);
+        color: #fff;
+        width: 46px;
+        height: 46px;
+        border-radius: 999px;
+        cursor: pointer;
+        font-size: 1.25rem;
+    }
+
+    .lightbox-meta {
+        color: #e6edf8;
+        text-align: center;
+        padding: 0 1rem 1rem;
+    }
+
+    .lightbox-caption {
+        margin: 0 0 .35rem;
+        font-size: .95rem;
+    }
+
+    .lightbox-index {
+        font-size: .85rem;
+        opacity: .86;
+    }
+
+    .rating-stars {
+        color: #f59e0b;
+        font-weight: bold;
+    }
+
+    @media (max-width: 768px) {
+        .auction-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .auction-sidebar {
+            position: static;
+        }
+        
+        .price-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .auction-stats-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+</style>
+
+<div class="auction-container">
+    <div class="auction-breadcrumb">
+        <a href="index.php">← Takaisin etusivulle</a>
+    </div>
+
+    <div style="margin-bottom: 0.5rem;">
+        <span class="auction-category-badge"><?php echo htmlspecialchars($auction['category_name'] ?? 'Muut'); ?></span>
+    </div>
+    <h1 class="auction-title"><?php echo htmlspecialchars($auction['title']); ?></h1>
+
+    <?php if (function_exists('is_admin') && is_admin()): ?>
+        <div class="auction-admin-actions">
+            <a class="auction-admin-edit" href="/edit_auction.php?id=<?php echo (int)$auction['id']; ?>">✏️ Muokkaa kohdetta</a>
         </div>
+    <?php endif; ?>
 
-        <!-- ── Right column ── -->
-        <div class="p-6 flex flex-col">
-            <!-- Category + status badges -->
-            <div class="mb-3 flex flex-wrap gap-2">
-                <span class="inline-flex items-center bg-blue-50 text-blue-700 text-xs font-semibold px-3 py-1 rounded-full border border-blue-100">
-                    <?php echo htmlspecialchars($auction['category_name']); ?>
-                </span>
-                <?php if ($isActive): ?>
-                    <span class="inline-flex items-center bg-green-50 text-green-700 text-xs font-semibold px-3 py-1 rounded-full border border-green-100">
-                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5 animate-pulse"></span>Aktiivinen
-                    </span>
-                <?php elseif ($auction['status'] === 'ended'): ?>
-                    <span class="inline-flex items-center bg-gray-100 text-gray-600 text-xs font-semibold px-3 py-1 rounded-full border border-gray-200">
-                        Päättynyt
-                    </span>
+    <div class="auction-stats">
+        <span>👁 <?php echo number_format($auction['views']); ?> katselua</span>
+        <span>📍 <?php echo htmlspecialchars($auction['location'] ?? 'Ei sijaintia'); ?></span>
+    </div>
+
+    <div class="auction-grid">
+        <div class="auction-main">
+            <!-- Images Section -->
+            <div class="auction-card">
+                <?php if (!empty($images)): ?>
+                    <div class="image-gallery">
+                        <img src="<?php echo htmlspecialchars($images[0]['image_path']); ?>" 
+                             alt="<?php echo htmlspecialchars($auction['title']); ?>"
+                                class="main-image" id="mainImage" onclick="openLightbox(currentImageIndex)">
+                        <p class="image-caption" id="mainImageCaption"><?php echo htmlspecialchars((string)($images[0]['caption'] ?? '')); ?></p>
+                        
+                        <?php if (count($images) > 1): ?>
+                            <div class="image-thumbnails">
+                                <?php foreach ($images as $index => $image): ?>
+                                    <img src="<?php echo htmlspecialchars($image['image_path']); ?>" 
+                                         alt="Kuva <?php echo $index + 1; ?>"
+                                         class="thumbnail <?php echo $index === 0 ? 'active' : ''; ?>"
+                                         data-index="<?php echo (int)$index; ?>"
+                                         data-caption="<?php echo htmlspecialchars((string)($image['caption'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>"
+                                         onclick="setMainImage(this, '<?php echo htmlspecialchars($image['image_path']); ?>', this.dataset.caption || '', <?php echo (int)$index; ?>)">
+                                <?php endforeach; ?>
+                            </div>
+                        <?php endif; ?>
+                        
+                        <div id="galleryImageCount" style="text-align: center; margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-600);">1 / <?php echo count($images); ?></div>
+                    </div>
+                <?php else: ?>
+                    <div style="text-align: center; padding: 3rem; color: var(--text-600);">
+                        <div style="font-size: 4rem; margin-bottom: 1rem;">📦</div>
+                        <p>Ei kuvia saatavilla</p>
+                    </div>
                 <?php endif; ?>
             </div>
 
-            <h1 class="text-2xl lg:text-3xl font-bold text-gray-900 mb-5 leading-tight">
-                <?php echo htmlspecialchars($auction['title']); ?>
-            </h1>
+            <!-- Description -->
+            <?php if (!empty(trim((string)($auction['description'] ?? '')))): ?>
+            <div class="auction-card">
+                <h2>Kuvaus</h2>
+                <p style="font-size: 0.95rem; line-height: 1.7; color: var(--text-800); white-space: pre-wrap; margin: 0;">
+                    <?php echo nl2br(htmlspecialchars($auction['description'])); ?>
+                </p>
+            </div>
+            <?php endif; ?>
 
-            <!-- Price + stats box -->
-            <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 mb-5 border border-blue-100">
-                <div class="grid grid-cols-2 gap-4 mb-4">
-                    <div>
-                        <div class="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">Aloitushinta</div>
-                        <div class="text-base font-semibold text-gray-700">
-                            <?php echo number_format($auction['starting_price'], 0, ',', ' '); ?> €
+            <!-- Category Specific Details -->
+            <div class="auction-card">
+                <?php if ($categoryKey === 'ajoneuvot'): ?>
+                    <h2>Ajoneuvon tiedot</h2>
+                    <?php
+                    $vehicleRows = [
+                        'Merkki' => meta_value($metadata, 'vehicle_brand'),
+                        'Malli' => meta_value($metadata, 'vehicle_model', $auction['title'] ?? '-'),
+                        'Vuosimalli' => meta_value($metadata, 'vehicle_year'),
+                        'Mittarilukema' => meta_value($metadata, 'mileage', '-') === '-' ? '-' : meta_value($metadata, 'mileage') . ' km',
+                        'Moottori' => meta_value($metadata, 'engine'),
+                        'Polttoaine' => meta_value($metadata, 'fuel_type'),
+                        'Huoltokirja' => meta_bool($metadata, 'service_book'),
+                        'Rekisterissä' => meta_bool($metadata, 'registered'),
+                        'Liikennevakuutus voimassa' => meta_bool($metadata, 'traffic_insurance'),
+                        'Katsastettu' => meta_bool($metadata, 'inspected'),
+                        'Seuraava katsastus' => meta_value($metadata, 'next_inspection'),
+                        'Avainten lukumäärä' => meta_value($metadata, 'key_count'),
+                    ];
+                    render_specs_table($vehicleRows);
+                    ?>
+                <?php elseif ($categoryKey === 'kiinteistöt' || $categoryKey === 'asunnot'): ?>
+                    <h2>Kiinteistötiedot</h2>
+                    <?php
+                    $propertyRows = [
+                        'Myytävä omaisuus' => meta_value($metadata, 'property_type'),
+                        'Huoneistotyyppi' => meta_value($metadata, 'room_type'),
+                        'Asuinpinta-ala' => meta_value($metadata, 'living_area', '-') === '-' ? '-' : meta_value($metadata, 'living_area') . ' m²',
+                        'Tontin pinta-ala' => meta_value($metadata, 'plot_area', '-') === '-' ? '-' : meta_value($metadata, 'plot_area') . ' m²',
+                        'Rakennusvuosi' => meta_value($metadata, 'build_year'),
+                        'Energialuokka' => meta_value($metadata, 'energy_class'),
+                        'Hoitovastike' => meta_value($metadata, 'maintenance_fee', '-') === '-' ? '-' : meta_value($metadata, 'maintenance_fee') . ' €/kk',
+                        'Rahoitusvastike' => meta_value($metadata, 'finance_fee', '-') === '-' ? '-' : meta_value($metadata, 'finance_fee') . ' €/kk',
+                    ];
+                    render_specs_table($propertyRows);
+                    ?>
+                <?php elseif ($categoryKey === 'elektroniikka'): ?>
+                    <h2>Elektroniikan tiedot</h2>
+                    <?php
+                    $electronicsRows = [
+                        'Merkki' => meta_value($metadata, 'electronics_brand'),
+                        'Malli' => meta_value($metadata, 'electronics_model', $auction['title'] ?? '-'),
+                        'Kapasiteetti / Koko' => meta_value($metadata, 'capacity'),
+                        'Takuu voimassa' => meta_value($metadata, 'warranty_until'),
+                        'Alkuperäispakkaus' => meta_bool($metadata, 'original_box'),
+                        'Laturi mukana' => meta_bool($metadata, 'charger_included'),
+                    ];
+                    render_specs_table($electronicsRows);
+                    ?>
+                <?php elseif ($categoryKey === 'kodin tavarat'): ?>
+                    <h2>Kodin tavaroiden tiedot</h2>
+                    <?php
+                    $homeRows = [
+                        'Tuotetyyppi' => meta_value($metadata, 'home_item_type'),
+                        'Materiaali' => meta_value($metadata, 'material'),
+                        'Mitat' => meta_value($metadata, 'dimensions'),
+                        'Valmistaja' => meta_value($metadata, 'manufacturer'),
+                    ];
+                    render_specs_table($homeRows);
+                    ?>
+                <?php elseif ($categoryKey === 'urheilu'): ?>
+                    <h2>Urheiluvälineen tiedot</h2>
+                    <?php
+                    $sportsRows = [
+                        'Laji' => meta_value($metadata, 'sport_type'),
+                        'Koko / Mitat' => meta_value($metadata, 'size'),
+                        'Merkki' => meta_value($metadata, 'sports_brand'),
+                        'Käyttötiheys' => meta_value($metadata, 'usage_frequency'),
+                    ];
+                    render_specs_table($sportsRows);
+                    ?>
+                <?php elseif ($categoryKey === 'vaatteet'): ?>
+                    <h2>Vaatteiden tiedot</h2>
+                    <?php
+                    $clothingRows = [
+                        'Tyyppi' => meta_value($metadata, 'clothing_type'),
+                        'Koko' => meta_value($metadata, 'clothing_size'),
+                        'Merkki' => meta_value($metadata, 'clothing_brand'),
+                        'Väri' => meta_value($metadata, 'color'),
+                        'Materiaali' => meta_value($metadata, 'clothing_material'),
+                        'Kunto' => meta_value($metadata, 'clothing_condition'),
+                    ];
+                    render_specs_table($clothingRows);
+                    ?>
+                <?php elseif ($categoryKey === 'keräily'): ?>
+                    <h2>Keräilykohteen tiedot</h2>
+                    <?php
+                    $collectibleRows = [
+                        'Keräilytyyppi' => meta_value($metadata, 'collectible_type'),
+                        'Ikä / Ajanjakso' => meta_value($metadata, 'age_period'),
+                        'Tekijä / Valmistaja' => meta_value($metadata, 'creator'),
+                        'Harvinaisuus' => meta_value($metadata, 'rarity'),
+                    ];
+                    render_specs_table($collectibleRows);
+                    ?>
+                <?php else: ?>
+                    <h2>Kohteen lisätiedot</h2>
+                    <?php
+                    $generalRows = [
+                        'Tuotetyyppi' => meta_value($metadata, 'general_type'),
+                        'Paino' => meta_value($metadata, 'weight', '-') === '-' ? '-' : meta_value($metadata, 'weight') . ' kg',
+                        'Mitat' => meta_value($metadata, 'general_dimensions'),
+                        'Valmistusmaa' => meta_value($metadata, 'country_origin'),
+                        'Sijainti' => meta_value($metadata, 'detailed_address', $auction['location'] ?? '-'),
+                        'Lisätietoja sijainnista' => meta_value($metadata, 'location_notes'),
+                    ];
+                    render_specs_table($generalRows);
+                    ?>
+                <?php endif; ?>
+
+                <div style="margin-top: 1.25rem;">
+                    <h3>Kunnon kuvaus</h3>
+                    <p style="font-size: 0.9rem; line-height: 1.5; color: var(--text-700);">
+                        <?php echo nl2br(htmlspecialchars($auction['condition_description'] ?? 'Ei erillistä kunnon kuvausta.')); ?>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Bid History -->
+            <?php if (!empty($bids)): ?>
+                <div class="auction-card">
+                    <h2>Tarjoushistoria</h2>
+                    <table class="bids-table">
+                        <thead>
+                            <tr>
+                                <th>Tarjous</th>
+                                <th>Tarjoaja</th>
+                                <th>Aika</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($bids as $bid): ?>
+                                <tr>
+                                    <td style="font-weight: 600; color: var(--accent-600);">
+                                        <?php echo number_format($bid['amount'], 2, ',', ' '); ?> €
+                                    </td>
+                                    <td><?php echo htmlspecialchars($bid['username']); ?></td>
+                                    <td style="color: var(--text-600);">
+                                        <?php echo date('d.m.Y H:i', strtotime($bid['bid_time'])); ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
+
+            <!-- Terms and Conditions -->
+            <div class="auction-card">
+                <h2>Myyntiehdot</h2>
+                <div class="terms-section">
+                    <h4>Yleistä</h4>
+                    <p>Myyjä sitoutuu myymään kohteen korkeimman tarjouksen tekijälle.</p>
+                    
+                    <h4>Maksu ja nouto</h4>
+                    <p>Ajoneuvo noudettava 5 arkipäivän kuluessa huutokaupan päättymisestä, ellei toisin sovita. Tämän ylittävät päivät varastointi kulu on 40€/päivä.</p>
+                    
+                    <h4>Huomioitavaa</h4>
+                    <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                        <li>Huutokauppaan osallistuminen ilman ostoaikomusta on kiellettyä</li>
+                        <li>Sinun tulee tutustua kohteeseen ennen tarjoamista</li>
+                        <li>Kohteet myydään sellaisena kuin ovat</li>
+                        <li>Kohde on maksettava yhden (1) arkipäivän kuluessa</li>
+                    </ul>
+                    
+                    <p>Tutustuthan huutokauppaehtoihin ennen tarjouksen tekemistä.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="auction-sidebar">
+            <div class="auction-card">
+                <div class="price-section">
+                    <div class="price-grid">
+                        <div class="price-item">
+                            <div class="price-label">Aloitushinta</div>
+                            <div class="price-value" style="font-size: 1.1rem; color: var(--text-700);">
+                                <?php echo number_format($auction['starting_price'], 2, ',', ' '); ?> €
+                            </div>
+                        </div>
+                        <div class="price-item">
+                            <div class="price-label">Nykyinen hinta</div>
+                            <div class="price-value">
+                                <?php echo number_format($auction['current_price'], 2, ',', ' '); ?> €
+                            </div>
                         </div>
                     </div>
-                    <div>
-                        <div class="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">Nykyinen hinta</div>
-                        <div class="text-3xl font-extrabold text-blue-700" id="currentPriceDisplay">
-                            <?php echo number_format($auction['current_price'], 0, ',', ' '); ?> €
+
+                    <?php if ($auction['buy_now_price']): ?>
+                        <div style="text-align: center; margin: 1rem 0;">
+                            <div class="price-label">Osta heti -hinta</div>
+                            <div class="price-value" style="color: #16a34a;">
+                                <?php echo number_format($auction['buy_now_price'], 2, ',', ' '); ?> €
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
+                    <div class="auction-deadline">
+                        <div class="auction-deadline-label">Huutokauppa päättyy</div>
+                        <div class="auction-deadline-time" data-endtime="<?php echo (int)$auctionEndUnix; ?>">
+                            <!-- JavaScript will populate this -->
+                        </div>
+                        <div style="font-size: 0.8rem; color: var(--text-600); margin-top: 0.25rem;">
+                            <?php echo date('d.m.Y H:i', strtotime($auction['end_time'])); ?>
+                        </div>
+                    </div>
+
+                    <div class="auction-stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-number"><?php echo $auction['bid_count'] ?? 0; ?></div>
+                            <div class="stat-label">Tarjousta</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number"><?php echo $auction['views']; ?></div>
+                            <div class="stat-label">Katselua</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number"><?php echo $auction['watch_count'] ?? 0; ?></div>
+                            <div class="stat-label">Seuraajaa</div>
                         </div>
                     </div>
                 </div>
 
+                <button class="bid-button">Tee tarjous</button>
+                
                 <?php if ($auction['buy_now_price']): ?>
-                    <div class="mb-4 p-3 bg-green-50 rounded-lg border border-green-200">
-                        <div class="text-xs text-green-700 uppercase tracking-wide font-semibold mb-1">Osta heti -hinta</div>
-                        <div class="text-xl font-bold text-green-700">
-                            <?php echo number_format($auction['buy_now_price'], 0, ',', ' '); ?> €
-                        </div>
-                    </div>
-                <?php endif; ?>
-
-                <!-- Countdown -->
-                <div class="mb-4">
-                    <div class="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">Huutokauppa päättyy</div>
-                    <div class="countdown text-xl font-bold text-red-600"
-                         data-endtime="<?php echo htmlspecialchars(date('c', strtotime($auction['end_time'])), ENT_QUOTES, 'UTF-8'); ?>">
-                    </div>
-                    <div class="text-xs text-gray-500 mt-1">
-                        <?php echo date('d.m.Y H:i', strtotime($auction['end_time'])); ?>
-                    </div>
-                </div>
-
-                <!-- Stats bar -->
-                <div class="grid grid-cols-3 gap-2 text-center border-t border-blue-100 pt-4">
-                    <div class="bg-white rounded-lg py-2 px-1 shadow-sm">
-                        <div class="text-lg font-bold text-gray-900" id="bidCountDisplay"><?php echo $totalBidCount; ?></div>
-                        <div class="text-xs text-gray-500">Tarjousta</div>
-                    </div>
-                    <div class="bg-white rounded-lg py-2 px-1 shadow-sm">
-                        <div class="text-lg font-bold text-gray-900"><?php echo $auction['views']; ?></div>
-                        <div class="text-xs text-gray-500">Katselukerrat</div>
-                    </div>
-                    <div class="bg-white rounded-lg py-2 px-1 shadow-sm">
-                        <div class="text-lg font-bold text-gray-900"><?php echo $uniqueBidderCount; ?></div>
-                        <div class="text-xs text-gray-500">Tarjoajaa</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Seller -->
-            <div class="bg-gray-50 rounded-xl p-4 mb-5 border border-gray-100 flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                    <span class="text-blue-600 font-bold text-sm">
-                        <?php echo mb_strtoupper(mb_substr($auction['seller_username'], 0, 1)); ?>
-                    </span>
-                </div>
-                <div class="flex-1 min-w-0">
-                    <div class="text-xs text-gray-500 uppercase tracking-wide font-semibold">Myyjä</div>
-                    <div class="font-semibold text-gray-900 truncate"><?php echo htmlspecialchars($auction['seller_username']); ?></div>
-                    <?php if ($auction['location']): ?>
-                        <div class="text-sm text-gray-500 flex items-center mt-0.5">
-                            <svg class="w-3 h-3 mr-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
-                            </svg>
-                            <?php echo htmlspecialchars($auction['location']); ?>
-                        </div>
-                    <?php endif; ?>
-                </div>
-            </div>
-
-            <!-- Category-specific details panel (in sidebar) -->
-            <?php if (!empty($aiDetails)): ?>
-                <div class="bg-gray-50 rounded-xl p-4 mb-5 border border-gray-100">
-                    <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3 flex items-center">
-                        <svg class="w-3.5 h-3.5 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                        </svg>
-                        Kohteen tiedot
-                    </h3>
-                    <dl class="space-y-1.5">
-                        <?php foreach ($aiDetails as $field): ?>
-                            <?php if (!empty($field['label']) && isset($field['value']) && $field['value'] !== ''): ?>
-                                <div class="flex justify-between items-baseline text-sm">
-                                    <dt class="text-gray-500 shrink-0 mr-2"><?php echo htmlspecialchars($field['label']); ?></dt>
-                                    <dd class="font-semibold text-gray-900 text-right"><?php echo htmlspecialchars($field['value']); ?></dd>
-                                </div>
-                            <?php endif; ?>
-                        <?php endforeach; ?>
-                    </dl>
-                </div>
-            <?php endif; ?>
-
-            <!-- Bid action buttons -->
-            <div class="mt-auto space-y-3">
-                <?php if ($auction['buy_now_price'] && $isActive && !$isSeller): ?>
-                    <button onclick="<?php echo $isLoggedIn ? 'openBuyNowConfirm()' : "window.location='/auth/login.php'"; ?>"
-                            class="w-full bg-green-600 text-white py-3 px-6 rounded-xl font-bold hover:bg-green-700 active:bg-green-800 transition-colors shadow-sm">
-                        ⚡ Osta heti — <?php echo number_format($auction['buy_now_price'], 0, ',', ' '); ?> €
+                    <button class="bid-button" style="background: #16a34a; margin-top: 0.5rem;">
+                        Osta heti
                     </button>
                 <?php endif; ?>
-
-                <?php if ($isActive && !$isSeller): ?>
-                    <button onclick="<?php echo $isLoggedIn ? 'openBidModal()' : "window.location='/auth/login.php'"; ?>"
-                            class="w-full bg-blue-600 text-white py-3 px-6 rounded-xl font-bold hover:bg-blue-700 active:bg-blue-800 transition-colors shadow-sm text-lg">
-                        🔨 Tee tarjous
-                    </button>
-                    <?php if (!$isLoggedIn): ?>
-                        <p class="text-center text-sm text-gray-500">
-                            <a href="/auth/login.php" class="text-blue-600 hover:underline">Kirjaudu sisään</a> tehdäksesi tarjouksen
-                        </p>
-                    <?php else: ?>
-                        <p class="text-center text-xs text-gray-400">
-                            Vähimmäistarjous: <strong><?php echo number_format($minNextBid, 0, ',', ' '); ?> €</strong>
-                            (korotus <?php echo number_format($auction['bid_increment'], 0, ',', ' '); ?> €)
-                        </p>
-                    <?php endif; ?>
-                <?php elseif ($isSeller): ?>
-                    <p class="text-center text-sm text-gray-500 py-2 bg-gray-50 rounded-xl border border-gray-200">
-                        Tämä on oma kohteesi
-                    </p>
-                <?php elseif (!$isActive): ?>
-                    <p class="text-center text-sm text-gray-500 py-2 bg-gray-50 rounded-xl border border-gray-200">
-                        Huutokauppa on päättynyt
-                    </p>
-                <?php endif; ?>
             </div>
-        </div>
-    </div><!-- /grid -->
 
-    <!-- ── Description ── -->
-    <div class="border-t border-gray-100 p-6">
-        <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
-            <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h12"/>
-            </svg>
-            Kuvaus
-        </h2>
-        <div class="text-gray-700 leading-relaxed whitespace-pre-line">
-            <?php echo htmlspecialchars($auction['description'] ?? ''); ?>
+            <!-- Seller Information -->
+            <div class="auction-card" style="margin-top: 1rem;">
+                <h3>Myyjä</h3>
+                <div class="seller-info">
+                    <div style="font-weight: 600; color: var(--text-900);">
+                        <?php echo htmlspecialchars($auction['seller_username'] ?? 'Huutokaupat.com'); ?>
+                    </div>
+                    <div class="seller-rating">
+                        <span class="rating-stars">★★★★☆</span>
+                        <span>3,8</span>
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-600); margin-top: 0.5rem;">
+                        <div>44 ilmoitusta tällä hetkellä</div>
+                        <div>7 701 myytyä kohdetta</div>
+                        <div>98% hyväksyntäaste</div>
+                    </div>
+                </div>
+            </div>
         </div>
         <?php if ($auction['condition_description']): ?>
             <div class="mt-4 inline-flex items-center bg-amber-50 text-amber-800 text-sm font-medium px-3 py-1.5 rounded-lg border border-amber-100">
@@ -275,287 +905,181 @@ include SRC_PATH . '/views/header.php';
             </div>
         <?php endif; ?>
     </div>
+</div>
 
-    <!-- ── Auction Info Box ── -->
-    <div class="border-t border-gray-100 p-6">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Location -->
-            <div>
-                <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center">
-                    <svg class="w-3.5 h-3.5 mr-1.5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
-                    </svg>
-                    Kohteen sijainti
-                </div>
-                <?php if (!empty($auction['location'])): ?>
-                    <p class="text-sm text-gray-800 font-medium mb-1"><?php echo htmlspecialchars($auction['location']); ?></p>
-                <?php endif; ?>
-                <a href="https://maps.google.com/?q=<?php echo urlencode($auction['location'] ?? ''); ?>"
-                   target="_blank" rel="noopener noreferrer"
-                   class="inline-flex items-center text-blue-600 hover:text-blue-800 text-sm font-medium transition-colors">
-                    <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-                    </svg>
-                    Avaa kartta
-                </a>
-            </div>
-
-            <!-- Viewing & Contact -->
-            <div>
-                <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center">
-                    <svg class="w-3.5 h-3.5 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
-                    </svg>
-                    Tiedustelut
-                </div>
-                <p class="text-sm font-semibold text-gray-800 mb-1">Kohteeseen tutustuminen</p>
-                <p class="text-sm text-gray-600">Sopimuksen mukaan</p>
-            </div>
-
-            <!-- Payment method -->
-            <div>
-                <div class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 flex items-center">
-                    <svg class="w-3.5 h-3.5 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
-                    </svg>
-                    Maksutapa
-                </div>
-                <p class="text-sm text-gray-600">Verkkopankkimaksu, maksuaika 24 tuntia tarjouksen hyväksymisestä.</p>
-            </div>
-        </div>
-
-        <!-- Last updated + Share + Report -->
-        <div class="mt-5 pt-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
-            <p class="text-xs text-gray-400 flex items-center">
-                <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                Päivitetty viimeksi
-                <?php echo !empty($auction['updated_at']) ? date('j.n.Y \k\l\o G.i', strtotime($auction['updated_at'])) : date('j.n.Y'); ?>
-            </p>
-            <div class="flex items-center gap-4">
-                <button onclick="navigator.share ? navigator.share({title: <?php echo json_encode($auction['title']); ?>, url: window.location.href}) : navigator.clipboard.writeText(window.location.href).then(() => alert('Linkki kopioitu!'))"
-                        class="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
-                    </svg>
-                    Jaa kohde kaverillesi
-                </button>
-                <button onclick="if(confirm('Haluatko ilmiantaa tämän ilmoituksen?')) alert('Ilmoitus lähetetty. Kiitos!')"
-                        class="inline-flex items-center text-sm text-gray-400 hover:text-red-500 transition-colors">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/>
-                    </svg>
-                    Ilmianna ilmoitus
-                </button>
-            </div>
-        </div>
+<?php if (!empty($images)): ?>
+<div class="lightbox" id="galleryLightbox" aria-hidden="true">
+    <div class="lightbox-top">
+        <button type="button" class="lightbox-close" onclick="closeLightbox()" aria-label="Sulje kuva">✕</button>
     </div>
-
-    <!-- ── Bid History ── -->
-    <div class="border-t border-gray-100 p-6" id="bidHistorySection">
-        <div class="flex items-center justify-between mb-5">
-            <h2 class="text-xl font-bold text-gray-900 flex items-center">
-                <svg class="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                </svg>
-                Tarjoushistoria
-            </h2>
-            <div class="flex gap-4 text-sm text-gray-500">
-                <span><strong class="text-gray-900" id="bidHistTotalCount"><?php echo $totalBidCount; ?></strong> tarjousta</span>
-                <span><strong class="text-gray-900"><?php echo $uniqueBidderCount; ?></strong> tarjoajaa</span>
-            </div>
+    <div class="lightbox-main">
+        <button type="button" class="lightbox-arrow" onclick="showPrevImage()" aria-label="Edellinen kuva">←</button>
+        <div class="lightbox-image-wrap">
+            <img src="" alt="Suurennettu kuva" class="lightbox-image" id="lightboxImage">
         </div>
-
-        <?php if (empty($bids)): ?>
-            <div class="text-center py-10 text-gray-400">
-                <svg class="mx-auto h-10 w-10 mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
-                </svg>
-                <p class="text-sm">Ei tarjouksia vielä. Ole ensimmäinen!</p>
-            </div>
-        <?php else: ?>
-            <?php
-            // Find the highest amount bid for the top-of-list highlight
-            $maxAmount = 0;
-            foreach ($bids as $b) { if ($b['amount'] > $maxAmount) $maxAmount = $b['amount']; }
-            ?>
-            <div class="bg-blue-600 text-white rounded-xl px-5 py-4 mb-4 flex items-center justify-between">
-                <div>
-                    <div class="text-xs font-semibold uppercase tracking-wide opacity-80 mb-1">Korkein tarjous</div>
-                    <div class="text-3xl font-extrabold"><?php echo number_format($maxAmount, 0, ',', ' '); ?> €</div>
-                </div>
-                <?php if ($isActive): ?>
-                    <button onclick="<?php echo $isLoggedIn ? 'openBidModal()' : "window.location='/auth/login.php'"; ?>"
-                            class="bg-white text-blue-700 font-bold px-5 py-2.5 rounded-lg hover:bg-blue-50 transition-colors text-sm">
-                        🔨 Tee tarjous
-                    </button>
-                <?php endif; ?>
-            </div>
-
-            <!-- Bid rows (newest first) -->
-            <div class="divide-y divide-gray-100" id="bidList">
-                <?php foreach ($bids as $index => $bid):
-                    $bidderNum   = $bidderMap[$bid['user_id']] ?? '?';
-                    $bidderLabel = 'Tarjoaja ' . $bidderNum;
-                    if (!empty($bid['is_auto_bid'])) {
-                        $bidderLabel .= ', korotusautomaatti';
-                    }
-                    $isHighest   = (float)$bid['amount'] === $maxAmount;
-                    $bidTs       = strtotime($bid['bid_time']);
-                    $dateStr     = date('j.n.', $bidTs);
-                    $timeStr     = 'klo ' . date('G.i.s', $bidTs);
-                ?>
-                    <div class="flex items-center py-3 <?php echo $isHighest ? 'bg-blue-50 -mx-6 px-6 font-semibold' : ''; ?>">
-                        <div class="flex-1">
-                            <div class="text-<?php echo $isHighest ? 'blue-700 text-lg' : 'gray-900'; ?> font-bold">
-                                <?php if ($isHighest): ?><span class="text-base mr-1">🏆</span><?php endif; ?>
-                                <?php echo number_format($bid['amount'], 0, ',', ' '); ?> €
-                            </div>
-                            <div class="text-xs text-gray-500 mt-0.5">
-                                <?php echo htmlspecialchars($bidderLabel); ?>
-                            </div>
-                        </div>
-                        <div class="text-right text-xs text-gray-400 ml-4">
-                            <div class="font-medium text-gray-600"><?php echo $dateStr; ?></div>
-                            <div><?php echo $timeStr; ?></div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-        <?php endif; ?>
-    </div><!-- /bid history -->
-</div><!-- /main card -->
-
-<?php if ($isActive && $isLoggedIn && !$isSeller): ?>
-<!-- ── Bid Modal ── -->
-<div id="bidModal" class="fixed inset-0 z-50 hidden" aria-modal="true" role="dialog">
-    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeBidModal()"></div>
-    <div class="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md pointer-events-auto" onclick="event.stopPropagation()">
-            <div class="flex items-center justify-between p-6 border-b border-gray-100">
-                <h3 class="text-xl font-bold text-gray-900">🔨 Tee tarjous</h3>
-                <button onclick="closeBidModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
-            <div class="p-6">
-                <div class="bg-blue-50 rounded-xl p-4 mb-5 border border-blue-100">
-                    <div class="flex justify-between text-sm text-gray-600 mb-1">
-                        <span>Nykyinen hinta</span>
-                        <strong class="text-gray-900"><?php echo number_format($auction['current_price'], 0, ',', ' '); ?> €</strong>
-                    </div>
-                    <div class="flex justify-between text-sm text-gray-600">
-                        <span>Vähimmäistarjous</span>
-                        <strong class="text-blue-700"><?php echo number_format($minNextBid, 0, ',', ' '); ?> €</strong>
-                    </div>
-                </div>
-
-                <div id="bidError"   class="bg-red-50   text-red-700   px-4 py-3 rounded-xl mb-4 text-sm hidden"></div>
-                <div id="bidSuccess" class="bg-green-50 text-green-800 px-4 py-3 rounded-xl mb-4 text-sm hidden"></div>
-
-                <label class="block text-sm font-semibold text-gray-700 mb-2">Tarjousmäärä (€)</label>
-                <input type="number" id="bidAmount"
-                       min="<?php echo $minNextBid; ?>"
-                       step="<?php echo $auction['bid_increment']; ?>"
-                       value="<?php echo $minNextBid; ?>"
-                       class="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-2xl font-bold text-center focus:border-blue-500 focus:outline-none mb-5"
-                       oninput="validateBidAmount(this)">
-
-                <input type="hidden" id="bidCsrf" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
-
-                <button id="btnSubmitBid" onclick="submitBid()"
-                        class="w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold hover:bg-blue-700 transition-colors text-lg disabled:opacity-50 disabled:cursor-not-allowed">
-                    Vahvista tarjous
-                </button>
-                <p class="text-center text-xs text-gray-400 mt-3">
-                    Tarjoukset ovat sitovia
-                </p>
-            </div>
-        </div>
+        <button type="button" class="lightbox-arrow" onclick="showNextImage()" aria-label="Seuraava kuva">→</button>
+    </div>
+    <div class="lightbox-meta">
+        <p class="lightbox-caption" id="lightboxCaption"></p>
+        <div class="lightbox-index" id="lightboxIndex"></div>
     </div>
 </div>
 <?php endif; ?>
 
 <script>
-const BID_MIN  = <?php echo (float)$minNextBid; ?>;
-const BID_STEP = <?php echo (float)$auction['bid_increment']; ?>;
-const AUCTION_ID = <?php echo (int)$id; ?>;
+const galleryImages = <?php
+echo json_encode(array_map(static function ($image): array {
+    return [
+        'src' => (string)($image['image_path'] ?? ''),
+        'caption' => (string)($image['caption'] ?? ''),
+    ];
+}, $images), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+?>;
 
-function openBidModal() {
-    const modal = document.getElementById('bidModal');
-    if (!modal) return;
-    document.getElementById('bidError').classList.add('hidden');
-    document.getElementById('bidSuccess').classList.add('hidden');
-    modal.classList.remove('hidden');
-    document.getElementById('bidAmount').focus();
+let currentImageIndex = 0;
+
+function updateGalleryCounter() {
+    const node = document.getElementById('galleryImageCount');
+    if (node && galleryImages.length > 0) {
+        node.textContent = `${currentImageIndex + 1} / ${galleryImages.length}`;
+    }
 }
 
-function closeBidModal() {
-    const modal = document.getElementById('bidModal');
-    if (modal) modal.classList.add('hidden');
+function setMainImage(thumbnail, imagePath, caption, index) {
+    document.getElementById('mainImage').src = imagePath;
+    const captionNode = document.getElementById('mainImageCaption');
+    if (captionNode) {
+        captionNode.textContent = caption || '';
+    }
+    
+    // Update active thumbnail
+    document.querySelectorAll('.thumbnail').forEach(thumb => thumb.classList.remove('active'));
+    thumbnail.classList.add('active');
+
+    if (Number.isInteger(index) && index >= 0) {
+        currentImageIndex = index;
+        updateGalleryCounter();
+    }
 }
 
-function validateBidAmount(input) {
-    const val = parseFloat(input.value);
-    const btn = document.getElementById('btnSubmitBid');
-    if (btn) btn.disabled = isNaN(val) || val < BID_MIN;
+function openLightbox(index = 0) {
+    if (!galleryImages.length) {
+        return;
+    }
+    currentImageIndex = Math.max(0, Math.min(index, galleryImages.length - 1));
+    const lightbox = document.getElementById('galleryLightbox');
+    lightbox.classList.add('open');
+    lightbox.setAttribute('aria-hidden', 'false');
+    renderLightboxImage();
+    document.body.style.overflow = 'hidden';
 }
 
-async function submitBid() {
-    const amountInput = document.getElementById('bidAmount');
-    const csrf        = document.getElementById('bidCsrf').value;
-    const errorEl     = document.getElementById('bidError');
-    const successEl   = document.getElementById('bidSuccess');
-    const btn         = document.getElementById('btnSubmitBid');
-    const amount      = parseFloat(amountInput.value);
+function closeLightbox() {
+    const lightbox = document.getElementById('galleryLightbox');
+    if (!lightbox) {
+        return;
+    }
+    lightbox.classList.remove('open');
+    lightbox.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+}
 
-    errorEl.classList.add('hidden');
-    successEl.classList.add('hidden');
+function renderLightboxImage() {
+    const data = galleryImages[currentImageIndex];
+    if (!data) {
+        return;
+    }
+    const img = document.getElementById('lightboxImage');
+    const caption = document.getElementById('lightboxCaption');
+    const indexNode = document.getElementById('lightboxIndex');
+    img.src = data.src;
+    caption.textContent = data.caption || '';
+    indexNode.textContent = `${currentImageIndex + 1} / ${galleryImages.length}`;
+}
 
-    if (isNaN(amount) || amount < BID_MIN) {
-        errorEl.textContent = '❌ Tarjous on liian pieni. Vähimmäistarjous: ' + BID_MIN.toLocaleString('fi-FI', {maximumFractionDigits: 0}) + ' €';
-        errorEl.classList.remove('hidden');
+function showPrevImage() {
+    if (!galleryImages.length) {
+        return;
+    }
+    currentImageIndex = (currentImageIndex - 1 + galleryImages.length) % galleryImages.length;
+    renderLightboxImage();
+}
+
+function showNextImage() {
+    if (!galleryImages.length) {
+        return;
+    }
+    currentImageIndex = (currentImageIndex + 1) % galleryImages.length;
+    renderLightboxImage();
+}
+
+function updateCountdown() {
+    const countdownElements = document.querySelectorAll('.auction-deadline-time[data-endtime]');
+    
+    countdownElements.forEach(element => {
+        const endTimeUnix = Number(element.getAttribute('data-endtime'));
+        if (!Number.isFinite(endTimeUnix) || endTimeUnix <= 0) {
+            element.textContent = 'Aika puuttuu';
+            element.style.color = '#6b7280';
+            return;
+        }
+
+        const endTimeMs = endTimeUnix * 1000;
+        const nowMs = Date.now();
+        const timeDiff = endTimeMs - nowMs;
+        
+        if (timeDiff <= 0) {
+            element.textContent = 'Päättynyt';
+            element.style.color = '#6b7280';
+            return;
+        }
+        
+        const days = Math.floor(timeDiff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((timeDiff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+        
+        if (days > 0) {
+            element.textContent = `${days} päivää ${hours} tuntia`;
+        } else if (hours > 0) {
+            element.textContent = `${hours} tuntia ${minutes} minuuttia`;
+        } else if (minutes > 0) {
+            element.textContent = `${minutes} minuuttia ${seconds} sekuntia`;
+        } else {
+            element.textContent = `${seconds} sekuntia`;
+        }
+    });
+}
+
+// Update countdown every second
+updateCountdown();
+setInterval(updateCountdown, 1000);
+
+document.addEventListener('keydown', function (event) {
+    const lightbox = document.getElementById('galleryLightbox');
+    if (!lightbox || !lightbox.classList.contains('open')) {
         return;
     }
 
-    btn.disabled = true;
-    btn.textContent = '⏳ Lähetetään...';
-
-    const formData = new FormData();
-    formData.append('auction_id', AUCTION_ID);
-    formData.append('amount', amount);
-    formData.append('csrf_token', csrf);
-
-    try {
-        const response = await fetch('api_place_bid.php', { method: 'POST', body: formData });
-        const data = await response.json();
-
-        if (data.success) {
-            successEl.textContent = '✅ ' + data.message;
-            successEl.classList.remove('hidden');
-            // Reload after short delay to show updated bid history
-            setTimeout(() => location.reload(), 1200);
-        } else {
-            errorEl.textContent = '❌ ' + (data.error || 'Tarjouksen teko epäonnistui');
-            errorEl.classList.remove('hidden');
-            btn.disabled = false;
-            btn.textContent = 'Vahvista tarjous';
-        }
-    } catch (e) {
-        errorEl.textContent = '❌ Verkkovirhe. Yritä uudelleen.';
-        errorEl.classList.remove('hidden');
-        btn.disabled = false;
-        btn.textContent = 'Vahvista tarjous';
+    if (event.key === 'Escape') {
+        closeLightbox();
+    } else if (event.key === 'ArrowLeft') {
+        showPrevImage();
+    } else if (event.key === 'ArrowRight') {
+        showNextImage();
     }
+});
+
+const lightbox = document.getElementById('galleryLightbox');
+if (lightbox) {
+    lightbox.addEventListener('click', function (event) {
+        if (event.target === lightbox) {
+            closeLightbox();
+        }
+    });
 }
 
-// Close modal on Escape key
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') closeBidModal();
-});
+updateGalleryCounter();
 </script>
 
 <?php include SRC_PATH . '/views/footer.php'; ?>
