@@ -144,11 +144,12 @@
 
 <div id="cookiePopup" class="cookie-banner hidden" role="dialog" aria-live="polite" aria-label="Evästeilmoitus">
   <div>
-    <strong>Hyväksy evästeet</strong>
-    <p class="small" style="margin-top:6px">Käytämme välttämättömiä evästeitä toiminnallisuuksiin ja analytiikkaa palvelun kehittämiseen.</p>
+    <strong>Evästeasetukset</strong>
+    <p class="small" style="margin-top:6px">Käytämme välttämättömiä evästeitä toiminnallisuuksiin ja analytiikkaa palvelun kehittämiseen. <a href="privacy.html" class="link">Tietosuoja</a>.</p>
   </div>
   <div class="actions">
-    <button type="button" class="btn primary" id="cookieAccept">Hyväksy evästeet</button>
+    <button type="button" class="btn primary" id="cookieAccept">Hyväksy kaikki</button>
+    <button type="button" class="btn" id="cookieDecline">Hylkää analytiikka</button>
   </div>
 </div>
 
@@ -158,7 +159,8 @@
     readSafeStorage,
     writeSafeStorage,
     shouldShowCampaignPopup,
-    isCookieConsentAccepted
+    isCookieConsentAccepted,
+    hasCookieConsentChoice
   } from './popup-state.js';
 
   // Less noise. More signal. AnomFIN.
@@ -180,6 +182,7 @@
 
   const cookiePopup = document.getElementById('cookiePopup');
   const cookieAccept = document.getElementById('cookieAccept');
+  const cookieDecline = document.getElementById('cookieDecline');
   const cookieMessage = cookiePopup?.querySelector('.small');
 
   async function loadAdminSettings() {
@@ -228,6 +231,12 @@
     console.info(JSON.stringify({event:'cookie_consent_accepted'}));
   });
 
+  cookieDecline?.addEventListener('click', () => {
+    writeSafeStorage(storage, settings.storageKeys.cookieConsent, 'declined');
+    cookiePopup?.classList.add('hidden');
+    console.info(JSON.stringify({event:'cookie_consent_declined'}));
+  });
+
   const adminSettings = await loadAdminSettings();
   applyDynamicContent(adminSettings);
 
@@ -254,7 +263,7 @@
   }
 
   const consent = readSafeStorage(storage, settings.storageKeys.cookieConsent);
-  if (cookiePopup && adminSettings?.cookies?.bannerEnabled !== false && !isCookieConsentAccepted(consent)) {
+  if (cookiePopup && adminSettings?.cookies?.bannerEnabled !== false && !hasCookieConsentChoice(consent)) {
     cookiePopup.classList.remove('hidden');
   }
 </script>
