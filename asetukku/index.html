@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <title>Asetukku — Ase & tarvikekauppa</title>
+  <meta name="description" content="Camo-henkinen ja tyylikäs ase- ja tarvikekauppa. Selkeä navigointi, nopea haku ja sujuva ostokokemus.">
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noarchive">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/main.css">
+<link rel="stylesheet" href="assets/css/components.css">
+<link rel="stylesheet" href="assets/css/pages.css">
+<link rel="icon" href="assets/img/ui/favicon.svg" type="image/svg+xml">
+
+</head>
+<body class="theme-light" data-page="home">
+  <div id="siteHeader"></div>
+  <main id="main" class="container" style="padding-top: 18px">
+    
+<section class="hero">
+  <div class="hero-card">
+    <div class="hero-bg" id="heroBg"></div>
+    <div class="hero-tex" id="heroTex"></div>
+
+    <div class="hero-content">
+      <div>
+        <span class="pill"><strong>Uutta</strong> • camo‑henkinen premium‑ilme</span>
+        <h1 class="h1">Aseet & tarvikkeet – tyylillä, vastuullisesti</h1>
+        <p class="lead">Asetukku yhdistää kivijalkakaupan selkeyden ja huutokauppatalon tehokkuuden: reilut hinnat, nopeat listaukset ja sujuva asiointi.</p>
+
+        <div class="cta">
+          <a class="btn primary" href="category.html?c=Aseet">Selaa aseita</a>
+          <a class="btn" href="campaigns.html">Katso kampanjat</a>
+          <a class="btn ghost" href="sell.html">Myy aseesi meille</a>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="ad">
+          <div>
+            <strong>Myy aseesi meille! Maksamme hyvän hinnan.</strong>
+            <p class="small">Arvio yleensä 24h sisällä. Tuo myymälään tai lähetä tiedot lomakkeella.</p>
+          </div>
+          <div class="actions">
+            <a class="btn primary" href="sell.html">Pyydä arvio</a>
+            <a class="btn" href="list.html">Ilmoita aseesi myyntiin</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="trust">
+        <div class="tile">
+          <div class="ico">✓</div>
+          <div><strong>Nopea toimitus</strong><span>1–3 arkipäivää, seuranta & ilmoitukset.</span></div>
+        </div>
+        <div class="tile">
+          <div class="ico">★</div>
+          <div><strong>Valikoima</strong><span>Aseet, optiikka, varusteet, lataus & huolto.</span></div>
+        </div>
+        <div class="tile">
+          <div class="ico">🛡</div>
+          <div><strong>Vastuullisuus</strong><span>Luvat ja käytännöt huomioiden.</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-head">
+    <div>
+      <h2 class="h2">Kategoriat</h2>
+      <p class="p">Kaikki tärkeimmät osastot, selkeä navigointi, nopea haku.</p>
+    </div>
+    <a class="btn small" href="campaigns.html">Näytä tarjoukset</a>
+  </div>
+
+  <div class="grid cols-3 cat-grid" id="catGrid"></div>
+</section>
+
+<section class="section">
+  <div class="section-head">
+    <div>
+      <h2 class="h2">Suositut tuotteet</h2>
+      <p class="p">Dynaaminen listaus tuotteista (data/products.json).</p>
+    </div>
+    <a class="btn small" href="search.html?q=uutuus">Hae “uutuus”</a>
+  </div>
+
+  <div class="grid cols-4" id="featuredGrid"></div>
+</section>
+
+<section class="section">
+  <div class="section-head">
+    <div>
+      <h2 class="h2">Kampanjat & nostoja</h2>
+      <p class="p">Nostoja, ajankohtaista ja yhteistyötä – kuten hyvässä kaupassa.</p>
+    </div>
+  </div>
+
+  <div class="grid cols-2">
+    <div class="card">
+      <div class="pad">
+        <span class="pill"><strong>Ilmoitus</strong> • Consignment</span>
+        <h3 class="h3" style="margin-top:10px">Ilmoita aseesi myyntiin!</h3>
+        <p class="p" style="margin-top:6px">Me hoidamme näkyvyyden, kyselyt ja välityksen — sinä päätät minimihinnan.</p>
+        <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+          <a class="btn primary" href="list.html">Jätä ilmoitus</a>
+          <a class="btn" href="faq.html">Miten toimii?</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="pad">
+        <span class="pill"><strong>Turva</strong> • Reilu peli</span>
+        <h3 class="h3" style="margin-top:10px">Tarkistettu käytetty – “Käytetty, mutta kunnossa”</h3>
+        <p class="p" style="margin-top:6px">Esimerkkiprosessi: kuntotarkastus, kuvaus, varastonhallinta ja toimitus.</p>
+        <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+          <a class="btn" href="category.html?c=Aseet&badge=Käytetty">Selaa käytettyjä</a>
+          <a class="btn primary" href="campaigns.html">Katso paketit</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+  </main>
+  <div id="siteFooter"></div>
+  <script type="module" src="assets/js/main.js"></script>
+</body>
+</html>
