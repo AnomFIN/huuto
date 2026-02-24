@@ -4,7 +4,7 @@ AseKauppa.net is a static frontend demo (no backend DB). Interactive flows and p
 
 ## Why this design
 - Admin auth reads password from `.env` (`ADMIN_PANEL_PASSWORD`) and never hardcodes secrets.
-- Settings are persisted into one JSON file for predictable backups, simple diffs and fast recovery.
+- Popup state helpers provide safe wrappers (`readSafeStorage`, `writeSafeStorage`) for `localStorage` to reduce runtime breaks in restricted browser modes.
 - Validation + normalization is done server-side in `admin.php` before any write.
 - CSRF token + session guard protect the settings save flow.
 - Popup logic stays in a separate module (`popup-state.js`) to keep UI shell clean.
