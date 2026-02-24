@@ -1,33 +1,36 @@
-# Asetukku — FINAL frontend (staattinen konseptiversio)
+# Asetukku — static frontend package
 
-Tämä paketti on **pelkkä frontend** (ei backendia, ei tietokantaa). Kaikki “toiminnot” (ostoskori, haku, kassa, lomakkeet, kirjautuminen) toimivat selaimessa **localStorage**n avulla.
+Asetukku is a static frontend demo (no backend, no database). Interactive flows use browser `localStorage` for local-first behavior.
 
-## Käyttö
+## Why this design
+- Campaign and cookie popups are implemented with **pure popup state logic** in `popup-state.js` and a small imperative shell in `index.html`.
+- Local storage access is wrapped with safe guards (`readSafeStorage`, `writeSafeStorage`) to avoid runtime breaks in restricted browser modes.
+- Campaign popup has a controlled cooldown and deadline so UX stays effective, not spammy.
+- Cookie acceptance persists deterministically (`accepted`) for clean compliance UX.
 
-### 1) Suositus: aja pienenä staattisena palvelimena
-Selaimen turvallisuus rajoittaa `fetch()`-kutsuja jos avaat sivun suoraan `file://`-polusta.
-
-**Linux / macOS**
+## Run
 ```bash
-cd asetukku_final
+cd asetukku
 python3 -m http.server 8080
 ```
-Avaa selaimessa: `http://localhost:8080`
+Open `http://localhost:8080`.
 
-**Windows**
-```bat
-cd asetukku_final
-py -m http.server 8080
+## Test
+```bash
+node --test tests/popup-state.test.mjs
 ```
 
-### 2) Julkaisu webhotellille
-Voit uploadata sisällön sellaisenaan (esim. `public_html/`).
+## Verify manually
+1. Open homepage in private window: campaign popup should appear (before deadline) and cookie banner should appear.
+2. Click **Muistuta myöhemmin** in campaign popup; refresh page: popup stays hidden during cooldown period.
+3. Click **Hyväksy evästeet**; refresh page: cookie banner stays hidden.
+4. Clear localStorage and verify both popups appear again.
 
-## Sisältö
-- Kirjautuminen: esittelyssä nopeutettu (onnistuu aina)
-- Ostoskori + kassaputki: luo konseptiversio-tilauksen localStorageen
-- “Myy aseesi meille” ja “Ilmoita aseesi myyntiin”: tallentuu localStorageen ja näkyy tilillä
-- Teema: vaalea/tumma
+## Troubleshooting
+- If data does not load, do not use `file://` path; run through a local HTTP server.
+- If popup state seems stale, clear `localStorage` keys prefixed with `asetukku:`.
 
-## Kuvitus
-Kuvat ladataan verkosta (Wikimedia Commons / vapaalisenssit). Lähteet: `credits.html`.
+## TODO (next iterations)
+- Add explicit **Reject analytics** option and policy link in cookie banner.
+- Move popup styling from inline block into shared CSS pipeline.
+- Add Playwright smoke test for popup visibility states.
