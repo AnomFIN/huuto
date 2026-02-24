@@ -174,7 +174,12 @@
 
   // Less noise. More signal. AnomFIN.
   const settings = getPopupSettings();
-  const storage = window.localStorage;
+  let storage = null;
+  try {
+    storage = window.localStorage;
+  } catch (e) {
+    storage = null;
+  }
   const now = new Date();
 
   const campaignPopup = document.getElementById('campaignPopup');
