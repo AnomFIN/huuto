@@ -10,7 +10,7 @@
     "enabled": true,
     "title": "Lähetä aseesi arvioitavaksi – +100 € extrahyvitys",
     "description": "Kampanja voimassa 31.3. asti. Arvio yleensä 24h sisällä.",
-    "deadlineIso": "2026-03-31T23:59:59+02:00",
+    "deadlineIso": "2026-03-31T20:59:59Z",
     "cooldownDays": 2
   },
   "cookies": {

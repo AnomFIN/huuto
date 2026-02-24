@@ -145,10 +145,11 @@
 <div id="cookiePopup" class="cookie-banner hidden" role="dialog" aria-live="polite" aria-label="Evästeilmoitus">
   <div>
     <strong>Hyväksy evästeet</strong>
-    <p class="small" style="margin-top:6px">Käytämme välttämättömiä evästeitä toiminnallisuuksiin ja analytiikkaa palvelun kehittämiseen.</p>
+    <p class="small" style="margin-top:6px"><span id="cookieMessageText">Käytämme välttämättömiä evästeitä toiminnallisuuksiin ja analytiikkaa palvelun kehittämiseen.</span> <a id="cookiePolicyLink" href="privacy.html" style="color:inherit;text-decoration:underline">Tietosuoja</a></p>
   </div>
   <div class="actions">
-    <button type="button" class="btn primary" id="cookieAccept">Hyväksy evästeet</button>
+    <button type="button" class="btn primary" id="cookieAccept">Hyväksy</button>
+    <button type="button" class="btn" id="cookieReject">Hylkää</button>
   </div>
 </div>
 
@@ -180,7 +181,9 @@
 
   const cookiePopup = document.getElementById('cookiePopup');
   const cookieAccept = document.getElementById('cookieAccept');
-  const cookieMessage = cookiePopup?.querySelector('.small');
+  const cookieReject = document.getElementById('cookieReject');
+  const cookiePolicyLink = document.getElementById('cookiePolicyLink');
+  const cookieMessageText = document.getElementById('cookieMessageText');
 
   async function loadAdminSettings() {
     try {
@@ -206,15 +209,28 @@
     if (campaignDescription && typeof adminSettings.campaign?.description === 'string') {
       campaignDescription.textContent = adminSettings.campaign.description;
     }
-    if (cookieMessage && typeof adminSettings.cookies?.message === 'string') {
-      cookieMessage.textContent = adminSettings.cookies.message;
+    if (cookieMessageText && typeof adminSettings.cookies?.message === 'string') {
+      cookieMessageText.textContent = adminSettings.cookies.message;
     }
+    if (cookiePolicyLink && typeof adminSettings.cookies?.policyUrl === 'string') {
+      cookiePolicyLink.href = adminSettings.cookies.policyUrl;
+    }
+  }
+
+  let _campaignOpener = null;
+
+  function openCampaign() {
+    if (!campaignPopup) return;
+    _campaignOpener = document.activeElement;
+    campaignPopup.classList.remove('hidden');
+    campaignClose?.focus();
   }
 
   function closeCampaign() {
     if (!campaignPopup) return;
     writeSafeStorage(storage, settings.storageKeys.campaignDismissedAt, new Date().toISOString());
     campaignPopup.classList.add('hidden');
+    _campaignOpener?.focus();
     console.info(JSON.stringify({event:'campaign_popup_dismissed'}));
   }
 
@@ -222,10 +238,25 @@
   campaignLater?.addEventListener('click', closeCampaign);
   campaignBackdrop?.addEventListener('click', closeCampaign);
 
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && campaignPopup && !campaignPopup.classList.contains('hidden')) {
+      closeCampaign();
+    }
+  });
+
+  function dismissCookieBanner() {
+    cookiePopup?.classList.add('hidden');
+  }
+
   cookieAccept?.addEventListener('click', () => {
     writeSafeStorage(storage, settings.storageKeys.cookieConsent, 'accepted');
-    cookiePopup?.classList.add('hidden');
+    dismissCookieBanner();
     console.info(JSON.stringify({event:'cookie_consent_accepted'}));
+  });
+
+  cookieReject?.addEventListener('click', () => {
+    dismissCookieBanner();
+    console.info(JSON.stringify({event:'cookie_consent_rejected'}));
   });
 
   const adminSettings = await loadAdminSettings();
@@ -250,7 +281,7 @@
       cooldownDays: campaignCooldownDays
     })
   ) {
-    campaignPopup.classList.remove('hidden');
+    openCampaign();
   }
 
   const consent = readSafeStorage(storage, settings.storageKeys.cookieConsent);
