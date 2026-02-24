@@ -1,0 +1,106 @@
+<div class="topbar">
+  <div class="container">
+    <div class="left">
+      <a href="campaigns.html">Kampanjat</a>
+      <span class="dot"></span>
+      <a href="sell.html">Myy aseesi meille</a>
+      <span class="dot"></span>
+      <a href="list.html">Ilmoita aseesi myyntiin</a>
+    </div>
+    <div class="right">
+      <span>Toimitus 1–3 arkipäivää</span>
+      <span class="dot"></span>
+      <span>Asiakaspalvelu: ma–pe 10–17</span>
+    </div>
+  </div>
+</div>
+
+<header class="header">
+  <div class="container">
+    <div class="header-row">
+      <a class="brand" href="index.html" aria-label="Asetukku etusivu">
+        <div class="mark" aria-hidden="true">
+          <img src="assets/img/ui/mark.svg" alt="" width="22" height="22">
+        </div>
+        <div class="name">
+          <strong>Asetukku</strong>
+          <span>Ase- & tarvikekauppa • Huutokaupan varmuudella</span>
+        </div>
+      </a>
+
+      <form class="search" id="siteSearchForm" role="search" aria-label="Haku">
+        <input id="siteSearchInput" type="search" placeholder="Etsi tuotteita (esim. Peltor, Glock, Optiikka)" autocomplete="off">
+        <span class="kbd">Enter</span>
+        <div class="suggest" id="siteSuggest"></div>
+      </form>
+
+      <div class="header-actions">
+        <button class="iconbtn mobile-toggle" id="mobileToggle" type="button" aria-label="Avaa valikko">☰</button>
+
+        
+        <button class="iconbtn" id="themeBtn" type="button" title="Vaihda teema">
+          <span class="icon">🌓</span>
+          Teema
+        </button>
+
+        <a class="iconbtn" href="account.html" id="accountBtn" title="Oma tili">
+          <span class="icon">👤</span>
+          <span id="accountLabel">Kirjaudu</span>
+        </a>
+
+        <button class="iconbtn" id="cartBtn" type="button" aria-haspopup="dialog" aria-controls="cartDrawer" title="Ostoskori">
+          <span class="icon">🛒</span>
+          Ostoskori
+          <span class="badge" id="cartBadge">0</span>
+        </button>
+      </div>
+    </div>
+
+    <nav class="nav" aria-label="Päänavigaatio">
+      <a href="category.html?c=Aseet">Aseet</a>
+      <a href="category.html?c=Patruunat">Patruunat</a>
+      <a href="category.html?c=Optiikka">Optiikka</a>
+      <a href="category.html?c=Varusteet">Varusteet</a>
+      <a href="category.html?c=Lataustarvikkeet">Lataustarvikkeet</a>
+      <a href="category.html?c=Pukeutuminen">Pukeutuminen</a>
+      <a href="category.html?c=Muut">Muut</a>
+      <a href="campaigns.html">Kampanjat</a>
+      <a href="about.html">Yritys</a>
+      <a href="contact.html">Yhteys</a>
+    </nav>
+
+    <div class="card" id="mobileMenu" style="display:none;margin-top:12px">
+      <div class="pad" style="display:flex;gap:10px;flex-wrap:wrap">
+        <a class="chip" href="category.html?c=Aseet">Aseet</a>
+        <a class="chip" href="category.html?c=Patruunat">Patruunat</a>
+        <a class="chip" href="category.html?c=Optiikka">Optiikka</a>
+        <a class="chip" href="category.html?c=Varusteet">Varusteet</a>
+        <a class="chip" href="category.html?c=Lataustarvikkeet">Lataustarvikkeet</a>
+        <a class="chip" href="category.html?c=Pukeutuminen">Pukeutuminen</a>
+        <a class="chip" href="category.html?c=Muut">Muut</a>
+        <a class="chip" href="campaigns.html">Kampanjat</a>
+        <a class="chip" href="sell.html">Myy aseesi meille</a>
+        <a class="chip" href="list.html">Ilmoita aseesi myyntiin</a>
+        <a class="chip" href="login.html">Kirjaudu</a>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="drawer" id="cartDrawer" role="dialog" aria-modal="true" aria-label="Ostoskori">
+  <div class="panel">
+    <div class="head">
+      <strong>Ostoskori</strong>
+      <button class="btn small" id="cartClose" type="button">Sulje</button>
+    </div>
+    <div class="body" id="cartBody"></div>
+    <div class="foot">
+      <div class="total"><span>Yhteensä</span><span id="cartTotal">0,00 €</span></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+        <a class="btn primary" href="checkout.html">Kassalle</a>
+        <a class="btn" href="cart.html">Näytä kori</a>
+      </div>
+      <div class="small" style="margin-top:10px">Esittelyversiossa vahvistus luo tilausnumeron ja tallentaa tilauksen omaan selaimeen.</div>
+    </div>
+  </div>
+</div>
