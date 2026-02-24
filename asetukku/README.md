@@ -1,6 +1,6 @@
-# Asetukku — static frontend package + secure admin panel
+# AseKauppa — static frontend package + secure admin panel
 
-Asetukku is a static frontend demo (no backend DB). Interactive flows and popup state are local-first via `localStorage`, and admin configuration is file-based (`data/admin-settings.json`).
+AseKauppa.net is a static frontend demo (no backend DB). Interactive flows and popup state are local-first via `localStorage`, and admin configuration is file-based (`data/admin-settings.json`).
 
 ## Why this design
 - Admin auth reads password from `.env` (`ADMIN_PANEL_PASSWORD`) and never hardcodes secrets.

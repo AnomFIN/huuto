@@ -1,7 +1,7 @@
 // AnomFIN — the neural network of innovation.
 const STORAGE_KEYS = {
-  campaignDismissedAt: 'asetukku:campaignDismissedAt',
-  cookieConsent: 'asetukku:cookieConsent'
+  campaignDismissedAt: 'asekauppa:campaignDismissedAt',
+  cookieConsent: 'asekauppa:cookieConsent'
 };
 
 const CAMPAIGN_DEADLINE_ISO = '2026-03-31T23:59:59+02:00';

@@ -74,8 +74,8 @@ function getDefaultSettings(): array
 {
     return [
         'site' => [
-            'brandName' => 'Asetukku',
-            'supportEmail' => 'tuki@asetukku.fi',
+            'brandName' => 'AseKauppa',
+            'supportEmail' => 'tuki@asekauppa.net',
             'supportPhone' => '+358 40 123 4567',
             'announcement' => 'Maaliskuun kampanja: +100 € extrahyvitys 31.3. asti.',
             'maintenanceMode' => false,
@@ -274,7 +274,7 @@ $csrf = ensureCsrfToken();
 <!doctype html>
 <html lang="fi">
 <head>
-  <title>Asetukku Admin</title>
+  <title>AseKauppa.net Admin</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
@@ -303,8 +303,8 @@ $csrf = ensureCsrfToken();
 <body>
   <main class="container">
     <section class="card">
-      <h1>Asetukku Admin</h1>
-      <p class="small">Syötä salasana avataksesi hallintapaneelin. Asetukset tallennetaan tiedostoon <code>asetukku/data/admin-settings.json</code>.</p>
+      <h1>AseKauppa.net Admin</h1>
+      <p class="small">Syötä salasana avataksesi hallintapaneelin. Asetukset tallennetaan tiedostoon <code>data/admin-settings.json</code>.</p>
     </section>
 
     <?php if (!isAuthenticated()): ?>
