@@ -1,0 +1,26 @@
+{
+  "site": {
+    "brandName": "Asetukku",
+    "supportEmail": "tuki@asetukku.fi",
+    "supportPhone": "+358 40 123 4567",
+    "announcement": "Maaliskuun kampanja: +100 € extrahyvitys 31.3. asti.",
+    "maintenanceMode": false
+  },
+  "campaign": {
+    "enabled": true,
+    "title": "Lähetä aseesi arvioitavaksi – +100 € extrahyvitys",
+    "description": "Kampanja voimassa 31.3. asti. Arvio yleensä 24h sisällä.",
+    "deadlineIso": "2026-03-31T23:59:59+02:00",
+    "cooldownDays": 2
+  },
+  "cookies": {
+    "bannerEnabled": true,
+    "message": "Käytämme välttämättömiä evästeitä toiminnallisuuksiin ja analytiikkaa palvelun kehittämiseen.",
+    "policyUrl": "privacy.html"
+  },
+  "ui": {
+    "defaultTheme": "dark",
+    "heroCtaPrimaryText": "Lähetä arvioon",
+    "heroCtaPrimaryUrl": "sell.html"
+  }
+}

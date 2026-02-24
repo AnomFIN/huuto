@@ -1,36 +1,48 @@
-# Asetukku — static frontend package
+# Asetukku — static frontend package + secure admin panel
 
-Asetukku is a static frontend demo (no backend, no database). Interactive flows use browser `localStorage` for local-first behavior.
+Asetukku is a static frontend demo (no backend DB). Interactive flows and popup state are local-first via `localStorage`, and admin configuration is file-based (`data/admin-settings.json`).
 
 ## Why this design
-- Campaign and cookie popups are implemented with **pure popup state logic** in `popup-state.js` and a small imperative shell in `index.html`.
-- Local storage access is wrapped with safe guards (`readSafeStorage`, `writeSafeStorage`) to avoid runtime breaks in restricted browser modes.
-- Campaign popup has a controlled cooldown and deadline so UX stays effective, not spammy.
-- Cookie acceptance persists deterministically (`accepted`) for clean compliance UX.
+- Admin auth reads password from `.env` (`ADMIN_PANEL_PASSWORD`) and never hardcodes secrets.
+- Settings are persisted into one JSON file for predictable backups, simple diffs and fast recovery.
+- Validation + normalization is done server-side in `admin.php` before any write.
+- CSRF token + session guard protect the settings save flow.
+- Popup logic stays in a separate module (`popup-state.js`) to keep UI shell clean.
 
-## Run
+## Setup
 ```bash
 cd asetukku
-python3 -m http.server 8080
+cp .env.example .env
+# edit .env and set ADMIN_PANEL_PASSWORD
 ```
-Open `http://localhost:8080`.
+
+## Run (PHP + static pages)
+```bash
+cd asetukku
+php -S 127.0.0.1:8080
+```
+Open:
+- Front page: `http://127.0.0.1:8080/index.html`
+- Admin panel: `http://127.0.0.1:8080/admin.php`
 
 ## Test
 ```bash
+cd asetukku
 node --test tests/popup-state.test.mjs
+php -l admin.php
 ```
 
 ## Verify manually
-1. Open homepage in private window: campaign popup should appear (before deadline) and cookie banner should appear.
-2. Click **Muistuta myöhemmin** in campaign popup; refresh page: popup stays hidden during cooldown period.
-3. Click **Hyväksy evästeet**; refresh page: cookie banner stays hidden.
-4. Clear localStorage and verify both popups appear again.
+1. Open `/admin.php`, enter password prompt **“Syötä salasana”**.
+2. Change campaign title and cookie message, save, verify `data/admin-settings.json` changed.
+3. Logout and verify panel is closed.
+4. Open homepage and verify campaign/cookie popups still work normally.
 
 ## Troubleshooting
-- If data does not load, do not use `file://` path; run through a local HTTP server.
-- If popup state seems stale, clear `localStorage` keys prefixed with `asetukku:`.
+- If admin says password missing, ensure `.env` exists and has `ADMIN_PANEL_PASSWORD`.
+- If saving fails, verify write permissions for `asetukku/data/admin-settings.json`.
 
 ## TODO (next iterations)
-- Add explicit **Reject analytics** option and policy link in cookie banner.
-- Move popup styling from inline block into shared CSS pipeline.
-- Add Playwright smoke test for popup visibility states.
+- Wire `admin-settings.json` dynamically to all public pages (site-wide config loader).
+- Add role-based admin accounts + password hash storage.
+- Add audit trail file for settings version history.

@@ -181,41 +181,88 @@
   const campaignClose = document.getElementById('campaignClose');
   const campaignLater = document.getElementById('campaignLater');
   const campaignBackdrop = campaignPopup?.querySelector('[data-close="campaign"]');
+  const campaignTitle = document.getElementById('campaignTitle');
+  const campaignDescription = campaignPopup?.querySelector('.p');
 
   const cookiePopup = document.getElementById('cookiePopup');
   const cookieAccept = document.getElementById('cookieAccept');
+  const cookieMessage = cookiePopup?.querySelector('.small');
 
-  const dismissedAt = readSafeStorage(storage, settings.storageKeys.campaignDismissedAt);
-  if (campaignPopup && shouldShowCampaignPopup({
-    now,
-    dismissedAtIso: dismissedAt,
-    deadlineIso: settings.campaignDeadlineIso,
-    cooldownDays: settings.campaignCooldownDays
-  })) {
-    campaignPopup.classList.remove('hidden');
+  async function loadAdminSettings() {
+    try {
+      const response = await fetch('./data/admin-settings.json', { cache: 'no-store' });
+      if (!response.ok) {
+        return null;
+      }
+      const data = await response.json();
+      return data && typeof data === 'object' ? data : null;
+    } catch {
+      return null;
+    }
   }
 
-  const closeCampaign = () => {
+  function applyDynamicContent(adminSettings) {
+    if (!adminSettings || typeof adminSettings !== 'object') {
+      return;
+    }
+
+    if (campaignTitle && typeof adminSettings.campaign?.title === 'string') {
+      campaignTitle.textContent = adminSettings.campaign.title;
+    }
+    if (campaignDescription && typeof adminSettings.campaign?.description === 'string') {
+      campaignDescription.textContent = adminSettings.campaign.description;
+    }
+    if (cookieMessage && typeof adminSettings.cookies?.message === 'string') {
+      cookieMessage.textContent = adminSettings.cookies.message;
+    }
+  }
+
+  function closeCampaign() {
     if (!campaignPopup) return;
     writeSafeStorage(storage, settings.storageKeys.campaignDismissedAt, new Date().toISOString());
     campaignPopup.classList.add('hidden');
     console.info(JSON.stringify({event:'campaign_popup_dismissed'}));
-  };
+  }
 
   campaignClose?.addEventListener('click', closeCampaign);
   campaignLater?.addEventListener('click', closeCampaign);
   campaignBackdrop?.addEventListener('click', closeCampaign);
-
-  const consent = readSafeStorage(storage, settings.storageKeys.cookieConsent);
-  if (cookiePopup && !isCookieConsentAccepted(consent)) {
-    cookiePopup.classList.remove('hidden');
-  }
 
   cookieAccept?.addEventListener('click', () => {
     writeSafeStorage(storage, settings.storageKeys.cookieConsent, 'accepted');
     cookiePopup?.classList.add('hidden');
     console.info(JSON.stringify({event:'cookie_consent_accepted'}));
   });
+
+  const adminSettings = await loadAdminSettings();
+  applyDynamicContent(adminSettings);
+
+  const campaignEnabled = adminSettings?.campaign?.enabled !== false;
+  const campaignDeadlineIso = typeof adminSettings?.campaign?.deadlineIso === 'string'
+    ? adminSettings.campaign.deadlineIso
+    : settings.campaignDeadlineIso;
+  const campaignCooldownDays = Number.isInteger(adminSettings?.campaign?.cooldownDays)
+    ? adminSettings.campaign.cooldownDays
+    : settings.campaignCooldownDays;
+
+  const dismissedAt = readSafeStorage(storage, settings.storageKeys.campaignDismissedAt);
+  if (
+    campaignPopup
+    && campaignEnabled
+    && shouldShowCampaignPopup({
+      now,
+      dismissedAtIso: dismissedAt,
+      deadlineIso: campaignDeadlineIso,
+      cooldownDays: campaignCooldownDays
+    })
+  ) {
+    campaignPopup.classList.remove('hidden');
+  }
+
+  const consent = readSafeStorage(storage, settings.storageKeys.cookieConsent);
+  if (cookiePopup && adminSettings?.cookies?.bannerEnabled !== false && !isCookieConsentAccepted(consent)) {
+    cookiePopup.classList.remove('hidden');
+  }
 </script>
 
   <div id="siteFooter"></div>
