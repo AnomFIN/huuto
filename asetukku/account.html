@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <title>AseKauppa — Oma tili</title>
+  <meta name="description" content="Tilinäkymä tilauksille ja ilmoituksille.">
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noarchive">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/main.css">
+<link rel="stylesheet" href="assets/css/components.css">
+<link rel="stylesheet" href="assets/css/pages.css">
+<link rel="icon" href="assets/img/ui/favicon.svg" type="image/svg+xml">
+
+</head>
+<body class="theme-light" data-page="account">
+  <div id="siteHeader"></div>
+  <main id="main" class="container" style="padding-top: 18px">
+    
+<div class="section-head">
+  <div>
+    <h1 class="h2">Oma tili</h1>
+    <p class="p" id="accHello">—</p>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <a class="btn small" href="campaigns.html">Kampanjat</a>
+    <button class="btn danger small" id="logoutBtn" type="button">Kirjaudu ulos</button>
+  </div>
+</div>
+
+<div class="hr"></div>
+
+<div class="grid cols-2">
+  <div class="card">
+    <div class="pad">
+      <h3 class="h3">Viimeisimmät tilaukset</h3>
+      <div id="ordersBox" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="pad">
+      <h3 class="h3">Omat ilmoitukset</h3>
+      <p class="small" style="margin-top:6px">Selaimeen tallennetut arviopyynnöt ja myynti-ilmoitukset.</p>
+      <div class="hr"></div>
+      <div id="formsBox"></div>
+    </div>
+  </div>
+</div>
+
+<div class="hr"></div>
+
+<div class="ad">
+  <div>
+    <strong>Myy aseesi meille! Maksamme hyvän hinnan.</strong>
+    <p class="small">Saat arvion nopeasti ja reilusti.</p>
+  </div>
+  <div class="actions">
+    <a class="btn primary" href="sell.html">Pyydä arvio</a>
+    <a class="btn" href="list.html">Ilmoita myyntiin</a>
+  </div>
+</div>
+
+  </main>
+  <div id="siteFooter"></div>
+  <script type="module" src="assets/js/main.js"></script>
+</body>
+</html>

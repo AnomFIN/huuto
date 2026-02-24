@@ -1,0 +1,44 @@
+{
+  "brand": "AseKauppa",
+  "categories": [
+    {
+      "name": "Aseet",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Hunting_rifle-IMG_0539.jpg?width=2000",
+      "desc": "Kiväärit, haulikot, pistoolit ja käytetyt aseet."
+    },
+    {
+      "name": "Linssit",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Binocular_with_8x_magnification_and_42_mm_lens_diameter.jpg?width=2000",
+      "desc": "Kiikari- ja objektiivilinssit metsästykseen ja rata-ammuntaan."
+    },
+    {
+      "name": "Tähtäimet",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Scope.jpg?width=2000",
+      "desc": "Kiikaritähtäimet, punapisteet ja lämpötähtäimet."
+    },
+    {
+      "name": "Varusteet",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Rucksack_Schweizer_Armee_1960er_a.jpg?width=2000",
+      "desc": "Reput, laukut, valaisimet ja kuulosuojaimet."
+    },
+    {
+      "name": "Tarvikkeet",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Gun_cleaning_kit.jpg?width=2000",
+      "desc": "Puhdistus, osat, hihnat ja suojakotelot."
+    },
+    {
+      "name": "Patruunat",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/00_and_000.JPG?width=2000",
+      "desc": "Kivääri-, haulikko-, pistooli- ja revolveripatruunat."
+    },
+    {
+      "name": "Pukeutuminen",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Kentt%C3%A4puku_M91.jpg?width=2000",
+      "desc": "Metsästys- ja rata-asu kaikkiin vuodenaikoihin."
+    }
+  ],
+  "hero": {
+    "bg": "https://commons.wikimedia.org/wiki/Special:FilePath/Pine_forest_Haukipudas_Oulu_20130908_01.JPG?width=2400",
+    "tex": "https://commons.wikimedia.org/wiki/Special:FilePath/DPNU_camo_fabric_closeup.jpg?width=2400"
+  }
+}
