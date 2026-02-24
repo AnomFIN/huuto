@@ -4,7 +4,7 @@ const STORAGE_KEYS = {
   cookieConsent: 'asekauppa:cookieConsent'
 };
 
-const CAMPAIGN_DEADLINE_ISO = '2026-03-31T23:59:59+02:00';
+const CAMPAIGN_DEADLINE_ISO = '2026-03-31T20:59:59Z';
 const CAMPAIGN_COOLDOWN_DAYS = 2;
 
 function parseIsoDate(value) {
