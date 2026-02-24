@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="fi">
 <head>
-  <title>Asetukku — Ase & tarvikekauppa</title>
+  <title>AseKauppa — Ase & tarvikekauppa</title>
   <meta name="description" content="Camo-henkinen ja tyylikäs ase- ja tarvikekauppa. Selkeä navigointi, nopea haku ja sujuva ostokokemus.">
   <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -28,7 +28,7 @@
       <div>
         <span class="pill"><strong>Uutta</strong> • camo‑henkinen premium‑ilme</span>
         <h1 class="h1">Aseet & tarvikkeet – tyylillä, vastuullisesti</h1>
-        <p class="lead">Asetukku yhdistää kivijalkakaupan selkeyden ja huutokauppatalon tehokkuuden: reilut hinnat, nopeat listaukset ja sujuva asiointi.</p>
+        <p class="lead">AseKauppa yhdistää kivijalkakaupan selkeyden ja huutokauppatalon tehokkuuden: reilut hinnat, nopeat listaukset ja sujuva asiointi.</p>
 
         <div class="cta">
           <a class="btn primary" href="category.html?c=Aseet">Selaa aseita</a>
@@ -40,8 +40,8 @@
 
         <div class="ad">
           <div>
-            <strong>Myy aseesi meille! Maksamme hyvän hinnan.</strong>
-            <p class="small">Arvio yleensä 24h sisällä. Tuo myymälään tai lähetä tiedot lomakkeella.</p>
+            <strong>Maaliskuun jättikampanja: lähetä aseesi arvioon ja saat +100 € extrahyvityksen.</strong>
+            <p class="small">Voimassa 31.3. asti. Läpinäkyvä arvio 24h sisällä, turvallinen prosessi ja nopeat jatkotoimet.</p>
           </div>
           <div class="actions">
             <a class="btn primary" href="sell.html">Pyydä arvio</a>
@@ -128,6 +128,137 @@
 </section>
 
   </main>
+<div id="campaignPopup" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="campaignTitle">
+  <div class="modal-backdrop" data-close="campaign"></div>
+  <div class="modal-panel">
+    <button type="button" class="modal-close" id="campaignClose" aria-label="Sulje kampanja">×</button>
+    <span class="pill"><strong>Maaliskuun kampanja</strong> • +100 € extrahyvitys</span>
+    <h2 class="h2" id="campaignTitle" style="margin-top:12px">Lähetä aseesi arvioitavaksi nyt</h2>
+    <p class="p" style="margin-top:8px">Hyväksytyssä kaupassa +100 € extrahyvitys 31.3. asti. Arvio yleensä 24h sisällä. Luvat ja luovutukset aina lain mukaan.</p>
+    <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+      <a class="btn primary" href="sell.html">Lähetä arvioon</a>
+      <button type="button" class="btn" id="campaignLater">Muistuta myöhemmin</button>
+    </div>
+  </div>
+</div>
+
+<div id="cookiePopup" class="cookie-banner hidden" role="dialog" aria-live="polite" aria-label="Evästeilmoitus">
+  <div>
+    <strong>Hyväksy evästeet</strong>
+    <p class="small" style="margin-top:6px">Käytämme välttämättömiä evästeitä toiminnallisuuksiin ja analytiikkaa palvelun kehittämiseen.</p>
+  </div>
+  <div class="actions">
+    <button type="button" class="btn primary" id="cookieAccept">Hyväksy evästeet</button>
+  </div>
+</div>
+
+<script type="module">
+  import {
+    getPopupSettings,
+    readSafeStorage,
+    writeSafeStorage,
+    shouldShowCampaignPopup,
+    isCookieConsentAccepted
+  } from './popup-state.js';
+
+  // Less noise. More signal. AnomFIN.
+  const settings = getPopupSettings();
+  let storage = null;
+  try {
+    storage = window.localStorage;
+  } catch (e) {
+    storage = null;
+  }
+  const now = new Date();
+
+  const campaignPopup = document.getElementById('campaignPopup');
+  const campaignClose = document.getElementById('campaignClose');
+  const campaignLater = document.getElementById('campaignLater');
+  const campaignBackdrop = campaignPopup?.querySelector('[data-close="campaign"]');
+  const campaignTitle = document.getElementById('campaignTitle');
+  const campaignDescription = campaignPopup?.querySelector('.p');
+
+  const cookiePopup = document.getElementById('cookiePopup');
+  const cookieAccept = document.getElementById('cookieAccept');
+  const cookieMessage = cookiePopup?.querySelector('.small');
+
+  async function loadAdminSettings() {
+    try {
+      const response = await fetch('./data/admin-settings.json', { cache: 'no-store' });
+      if (!response.ok) {
+        return null;
+      }
+      const data = await response.json();
+      return data && typeof data === 'object' ? data : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function applyDynamicContent(adminSettings) {
+    if (!adminSettings || typeof adminSettings !== 'object') {
+      return;
+    }
+
+    if (campaignTitle && typeof adminSettings.campaign?.title === 'string') {
+      campaignTitle.textContent = adminSettings.campaign.title;
+    }
+    if (campaignDescription && typeof adminSettings.campaign?.description === 'string') {
+      campaignDescription.textContent = adminSettings.campaign.description;
+    }
+    if (cookieMessage && typeof adminSettings.cookies?.message === 'string') {
+      cookieMessage.textContent = adminSettings.cookies.message;
+    }
+  }
+
+  function closeCampaign() {
+    if (!campaignPopup) return;
+    writeSafeStorage(storage, settings.storageKeys.campaignDismissedAt, new Date().toISOString());
+    campaignPopup.classList.add('hidden');
+    console.info(JSON.stringify({event:'campaign_popup_dismissed'}));
+  }
+
+  campaignClose?.addEventListener('click', closeCampaign);
+  campaignLater?.addEventListener('click', closeCampaign);
+  campaignBackdrop?.addEventListener('click', closeCampaign);
+
+  cookieAccept?.addEventListener('click', () => {
+    writeSafeStorage(storage, settings.storageKeys.cookieConsent, 'accepted');
+    cookiePopup?.classList.add('hidden');
+    console.info(JSON.stringify({event:'cookie_consent_accepted'}));
+  });
+
+  const adminSettings = await loadAdminSettings();
+  applyDynamicContent(adminSettings);
+
+  const campaignEnabled = adminSettings?.campaign?.enabled !== false;
+  const campaignDeadlineIso = typeof adminSettings?.campaign?.deadlineIso === 'string'
+    ? adminSettings.campaign.deadlineIso
+    : settings.campaignDeadlineIso;
+  const campaignCooldownDays = Number.isInteger(adminSettings?.campaign?.cooldownDays)
+    ? adminSettings.campaign.cooldownDays
+    : settings.campaignCooldownDays;
+
+  const dismissedAt = readSafeStorage(storage, settings.storageKeys.campaignDismissedAt);
+  if (
+    campaignPopup
+    && campaignEnabled
+    && shouldShowCampaignPopup({
+      now,
+      dismissedAtIso: dismissedAt,
+      deadlineIso: campaignDeadlineIso,
+      cooldownDays: campaignCooldownDays
+    })
+  ) {
+    campaignPopup.classList.remove('hidden');
+  }
+
+  const consent = readSafeStorage(storage, settings.storageKeys.cookieConsent);
+  if (cookiePopup && adminSettings?.cookies?.bannerEnabled !== false && !isCookieConsentAccepted(consent)) {
+    cookiePopup.classList.remove('hidden');
+  }
+</script>
+
   <div id="siteFooter"></div>
   <script type="module" src="assets/js/main.js"></script>
 </body>

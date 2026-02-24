@@ -1,33 +1,48 @@
-# Asetukku — FINAL frontend (staattinen konseptiversio)
+# AseKauppa — static frontend package + secure admin panel
 
-Tämä paketti on **pelkkä frontend** (ei backendia, ei tietokantaa). Kaikki “toiminnot” (ostoskori, haku, kassa, lomakkeet, kirjautuminen) toimivat selaimessa **localStorage**n avulla.
+AseKauppa.net is a static frontend demo (no backend DB). Interactive flows and popup state are local-first via `localStorage`, and admin configuration is file-based (`data/admin-settings.json`).
 
-## Käyttö
+## Why this design
+- Admin auth reads password from `.env` (`ADMIN_PANEL_PASSWORD`) and never hardcodes secrets.
+- Popup state helpers provide safe wrappers (`readSafeStorage`, `writeSafeStorage`) for `localStorage` to reduce runtime breaks in restricted browser modes.
+- Validation + normalization is done server-side in `admin.php` before any write.
+- CSRF token + session guard protect the settings save flow.
+- Popup logic stays in a separate module (`popup-state.js`) to keep UI shell clean.
 
-### 1) Suositus: aja pienenä staattisena palvelimena
-Selaimen turvallisuus rajoittaa `fetch()`-kutsuja jos avaat sivun suoraan `file://`-polusta.
-
-**Linux / macOS**
+## Setup
 ```bash
-cd asetukku_final
-python3 -m http.server 8080
-```
-Avaa selaimessa: `http://localhost:8080`
-
-**Windows**
-```bat
-cd asetukku_final
-py -m http.server 8080
+cd asetukku
+cp .env.example .env
+# edit .env and set ADMIN_PANEL_PASSWORD
 ```
 
-### 2) Julkaisu webhotellille
-Voit uploadata sisällön sellaisenaan (esim. `public_html/`).
+## Run (PHP + static pages)
+```bash
+cd asetukku
+php -S 127.0.0.1:8080
+```
+Open:
+- Front page: `http://127.0.0.1:8080/index.html`
+- Admin panel: `http://127.0.0.1:8080/admin.php`
 
-## Sisältö
-- Kirjautuminen: esittelyssä nopeutettu (onnistuu aina)
-- Ostoskori + kassaputki: luo konseptiversio-tilauksen localStorageen
-- “Myy aseesi meille” ja “Ilmoita aseesi myyntiin”: tallentuu localStorageen ja näkyy tilillä
-- Teema: vaalea/tumma
+## Test
+```bash
+cd asetukku
+node --test tests/popup-state.test.mjs
+php -l admin.php
+```
 
-## Kuvitus
-Kuvat ladataan verkosta (Wikimedia Commons / vapaalisenssit). Lähteet: `credits.html`.
+## Verify manually
+1. Open `/admin.php`, enter password prompt **“Syötä salasana”**.
+2. Change campaign title and cookie message, save, verify `data/admin-settings.json` changed.
+3. Logout and verify panel is closed.
+4. Open homepage and verify campaign/cookie popups still work normally.
+
+## Troubleshooting
+- If admin says password missing, ensure `.env` exists and has `ADMIN_PANEL_PASSWORD`.
+- If saving fails, verify write permissions for `asetukku/data/admin-settings.json`.
+
+## TODO (next iterations)
+- Wire `admin-settings.json` dynamically to all public pages (site-wide config loader).
+- Add role-based admin accounts + password hash storage.
+- Add audit trail file for settings version history.

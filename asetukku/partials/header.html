@@ -1,3 +1,16 @@
+<style>
+  /* Engineered for autonomy, designed for humans. */
+  .brand-logo-stack { position: relative; line-height: 1; display: inline-block; }
+  .brand-logo-stack .ase { display:block; font-size: 36px; font-weight: 900; letter-spacing: .02em; color:#e9f3ff; text-transform: uppercase; }
+  .brand-logo-stack .kauppa { position:absolute; left:12px; top:22px; font-size: 19px; font-weight: 800; letter-spacing: .18em; color:#67e8f9; text-transform: lowercase; text-shadow:0 0 14px rgba(103,232,249,.35); }
+  .brand-logo-stack .dotnet { display:inline-block; margin-left: 110px; margin-top: 6px; font-size: 14px; font-weight: 800; letter-spacing: .09em; color:#f59e0b; }
+  @media (max-width: 760px) {
+    .brand-logo-stack .ase { font-size: 28px; }
+    .brand-logo-stack .kauppa { top:17px; font-size: 15px; left:8px; }
+    .brand-logo-stack .dotnet { margin-left: 82px; }
+  }
+</style>
+
 <div class="topbar">
   <div class="container">
     <div class="left">
@@ -18,18 +31,22 @@
 <header class="header">
   <div class="container">
     <div class="header-row">
-      <a class="brand" href="index.html" aria-label="Asetukku etusivu">
+      <a class="brand" href="index.html" aria-label="AseKauppa etusivu">
         <div class="mark" aria-hidden="true">
           <img src="assets/img/ui/mark.svg" alt="" width="22" height="22">
         </div>
         <div class="name">
-          <strong>Asetukku</strong>
-          <span>Ase- & tarvikekauppa • Huutokaupan varmuudella</span>
+          <div class="brand-logo-stack" aria-label="AseKauppa logo">
+            <span class="ase">Ase</span>
+            <span class="kauppa">kauppa</span>
+            <span class="dotnet">.net</span>
+          </div>
+          <span>Ase- & tarvikekauppa • https://www.asekauppa.net/</span>
         </div>
       </a>
 
       <form class="search" id="siteSearchForm" role="search" aria-label="Haku">
-        <input id="siteSearchInput" type="search" placeholder="Etsi tuotteita (esim. Peltor, Glock, Optiikka)" autocomplete="off">
+        <input id="siteSearchInput" type="search" placeholder="Etsi tuotteita (esim. Peltor, Glock, Tähtäimet)" autocomplete="off">
         <span class="kbd">Enter</span>
         <div class="suggest" id="siteSuggest"></div>
       </form>
@@ -37,7 +54,6 @@
       <div class="header-actions">
         <button class="iconbtn mobile-toggle" id="mobileToggle" type="button" aria-label="Avaa valikko">☰</button>
 
-        
         <button class="iconbtn" id="themeBtn" type="button" title="Vaihda teema">
           <span class="icon">🌓</span>
           Teema
@@ -59,11 +75,11 @@
     <nav class="nav" aria-label="Päänavigaatio">
       <a href="category.html?c=Aseet">Aseet</a>
       <a href="category.html?c=Patruunat">Patruunat</a>
-      <a href="category.html?c=Optiikka">Optiikka</a>
+      <a href="category.html?c=Tähtäimet">Tähtäimet</a>
+      <a href="category.html?c=Linssit">Linssit</a>
       <a href="category.html?c=Varusteet">Varusteet</a>
-      <a href="category.html?c=Lataustarvikkeet">Lataustarvikkeet</a>
+      <a href="category.html?c=Tarvikkeet">Tarvikkeet</a>
       <a href="category.html?c=Pukeutuminen">Pukeutuminen</a>
-      <a href="category.html?c=Muut">Muut</a>
       <a href="campaigns.html">Kampanjat</a>
       <a href="about.html">Yritys</a>
       <a href="contact.html">Yhteys</a>
@@ -73,11 +89,11 @@
       <div class="pad" style="display:flex;gap:10px;flex-wrap:wrap">
         <a class="chip" href="category.html?c=Aseet">Aseet</a>
         <a class="chip" href="category.html?c=Patruunat">Patruunat</a>
-        <a class="chip" href="category.html?c=Optiikka">Optiikka</a>
+        <a class="chip" href="category.html?c=Tähtäimet">Tähtäimet</a>
+        <a class="chip" href="category.html?c=Linssit">Linssit</a>
         <a class="chip" href="category.html?c=Varusteet">Varusteet</a>
-        <a class="chip" href="category.html?c=Lataustarvikkeet">Lataustarvikkeet</a>
+        <a class="chip" href="category.html?c=Tarvikkeet">Tarvikkeet</a>
         <a class="chip" href="category.html?c=Pukeutuminen">Pukeutuminen</a>
-        <a class="chip" href="category.html?c=Muut">Muut</a>
         <a class="chip" href="campaigns.html">Kampanjat</a>
         <a class="chip" href="sell.html">Myy aseesi meille</a>
         <a class="chip" href="list.html">Ilmoita aseesi myyntiin</a>

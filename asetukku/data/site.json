@@ -1,40 +1,40 @@
 {
-  "brand": "Asetukku",
+  "brand": "AseKauppa",
   "categories": [
     {
       "name": "Aseet",
       "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Hunting_rifle-IMG_0539.jpg?width=2000",
-      "desc": "Kiväärit, haulikot, pistoolit, käytetyt ja tarvikkeet."
+      "desc": "Kiväärit, haulikot, pistoolit ja käytetyt aseet."
     },
     {
-      "name": "Patruunat",
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/00_and_000.JPG?width=2000",
-      "desc": "Haulikko, kivääri, pistooli & revolveri."
-    },
-    {
-      "name": "Optiikka",
+      "name": "Linssit",
       "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Binocular_with_8x_magnification_and_42_mm_lens_diameter.jpg?width=2000",
-      "desc": "Kiikaritähtäimet, punapisteet, katselukiikarit."
+      "desc": "Kiikari- ja objektiivilinssit metsästykseen ja rata-ammuntaan."
+    },
+    {
+      "name": "Tähtäimet",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Scope.jpg?width=2000",
+      "desc": "Kiikaritähtäimet, punapisteet ja lämpötähtäimet."
     },
     {
       "name": "Varusteet",
       "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Rucksack_Schweizer_Armee_1960er_a.jpg?width=2000",
-      "desc": "Kuulosuojaimet, valaisimet, reput, laukut, vyöt."
+      "desc": "Reput, laukut, valaisimet ja kuulosuojaimet."
     },
     {
-      "name": "Lataustarvikkeet",
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Reload_Cartridge_Example.jpg?width=2000",
-      "desc": "Puristimet, hylsyt, luodit, nallit, työkalut."
+      "name": "Tarvikkeet",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Gun_cleaning_kit.jpg?width=2000",
+      "desc": "Puhdistus, osat, hihnat ja suojakotelot."
+    },
+    {
+      "name": "Patruunat",
+      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/00_and_000.JPG?width=2000",
+      "desc": "Kivääri-, haulikko-, pistooli- ja revolveripatruunat."
     },
     {
       "name": "Pukeutuminen",
       "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Kentt%C3%A4puku_M91.jpg?width=2000",
-      "desc": "Maastopuku, kengät, takit, käsineet."
-    },
-    {
-      "name": "Muut",
-      "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Rk_tools.JPG?width=2000",
-      "desc": "Puhdistus, varaosat, kirjat ja pienet yllättäjät."
+      "desc": "Metsästys- ja rata-asu kaikkiin vuodenaikoihin."
     }
   ],
   "hero": {
