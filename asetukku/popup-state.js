@@ -61,7 +61,8 @@ export function shouldShowCampaignPopup({ now, dismissedAtIso, deadlineIso, cool
     return true;
   }
 
-  const cooldownMs = cooldownDays * 24 * 60 * 60 * 1000;
+  const safeCooldownDays = Number.isFinite(cooldownDays) ? cooldownDays : CAMPAIGN_COOLDOWN_DAYS;
+  const cooldownMs = safeCooldownDays * 24 * 60 * 60 * 1000;
   return now.getTime() - dismissedAt.getTime() >= cooldownMs;
 }
 
