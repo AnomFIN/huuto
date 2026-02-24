@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <title>Asetukku — Kirjaudu</title>
+  <meta name="description" content="Kirjautuminen ja oma tili.">
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noarchive">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/main.css">
+<link rel="stylesheet" href="assets/css/components.css">
+<link rel="stylesheet" href="assets/css/pages.css">
+<link rel="icon" href="assets/img/ui/favicon.svg" type="image/svg+xml">
+
+</head>
+<body class="theme-light" data-page="login">
+  <div id="siteHeader"></div>
+  <main id="main" class="container" style="padding-top: 18px">
+    
+<div class="split">
+  <section class="card">
+    <div class="pad">
+      <h1 class="h2">Kirjaudu</h1>
+      <p class="p" style="margin-top:8px">Oletko jo rekisteröitynyt? Rekisteröityneenä voit viestiä myyjän kanssa sujuvammin, seurata tilauksia ja hallita omia ilmoituksia.</p>
+
+      <div class="hr"></div>
+
+      <div class="grid cols-2">
+        <div>
+          <label class="small">Sähköposti</label>
+          <input class="input" id="lEmail" placeholder="etunimi.sukunimi@esimerkki.fi">
+        </div>
+        <div>
+          <label class="small">Salasana</label>
+          <input class="input" id="lPass" type="password" placeholder="••••••••">
+        </div>
+      </div>
+
+      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn primary" id="loginBtn" type="button">Kirjaudu</button>
+        <a class="btn" href="index.html">Takaisin</a>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="notice">
+        <strong>Miksi kannattaa kirjautua?</strong>
+        <div class="small" style="margin-top:6px">Kirjautuneena näet omat ilmoituksesi, tilauksesi ja saat nopeammin vastaukset kyselyihin.</div>
+      </div>
+    </div>
+  </section>
+
+  <aside class="sidebar">
+    <h3>Uutta tilillä</h3>
+    <div class="notice good">
+      <strong>Omat ilmoitukset</strong>
+      <div class="small" style="margin-top:6px">“Myy meille” ja “Ilmoita myyntiin” tallentuvat selaimeen ja näkyvät tilillä.</div>
+    </div>
+
+    <div class="hr"></div>
+
+    <div class="ad">
+      <div>
+        <strong>Myy aseesi meille!</strong>
+        <p class="small">Arvio yleensä 24h sisällä.</p>
+      </div>
+      <div class="actions">
+        <a class="btn primary" href="sell.html">Pyydä arvio</a>
+      </div>
+    </div>
+  </aside>
+</div>
+
+  </main>
+  <div id="siteFooter"></div>
+  <script type="module" src="assets/js/main.js"></script>
+</body>
+</html>

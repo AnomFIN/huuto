@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <title>Asetukku — Ilmoita aseesi myyntiin</title>
+  <meta name="description" content="Komissio-/välitysmyynti-ilmoitus.">
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noarchive">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/main.css">
+<link rel="stylesheet" href="assets/css/components.css">
+<link rel="stylesheet" href="assets/css/pages.css">
+<link rel="icon" href="assets/img/ui/favicon.svg" type="image/svg+xml">
+
+</head>
+<body class="theme-light" data-page="list">
+  <div id="siteHeader"></div>
+  <main id="main" class="container" style="padding-top: 18px">
+    
+<div class="section-head">
+  <div>
+    <h1 class="h2">Ilmoita aseesi myyntiin</h1>
+    <p class="p">Jätä komissio-/välitysmyynti-ilmoitus. Ilmoitus tallentuu esittelyversiossa omaan selaimeesi.</p>
+  </div>
+  <a class="btn small" href="sell.html">Myy suoraan meille</a>
+</div>
+<div class="hr"></div>
+
+<div class="split">
+  <section class="card">
+    <div class="pad">
+      <h3 class="h3">Myynti-ilmoitus</h3>
+      <p class="small" style="margin-top:6px">Turvallisuus: älä syötä henkilötunnuksia tai muuta arkaluonteista tietoa.</p>
+
+      <div class="hr"></div>
+
+      <div class="grid cols-2">
+        <div>
+          <label class="small">Kategoria</label>
+          <select class="input" id="lCat">
+            <option>Aseet</option>
+            <option>Optiikka</option>
+            <option>Varusteet</option>
+            <option>Muut</option>
+          </select>
+        </div>
+        <div>
+          <label class="small">Merkki</label>
+          <input class="input" id="lBrand" placeholder="esim. Sako, Tikka, Aimpoint...">
+        </div>
+        <div>
+          <label class="small">Malli</label>
+          <input class="input" id="lModel" placeholder="esim. TRG, T3x, Micro H-2...">
+        </div>
+        <div>
+          <label class="small">Hintatoive (€)</label>
+          <input class="input" id="lPrice" type="number" min="0" step="10" placeholder="0">
+        </div>
+        <div class="grid" style="grid-column:1/-1">
+          <label class="small">Kuvaus</label>
+          <textarea class="input" id="lDesc" rows="4" placeholder="Kunto, lisävarusteet, historia..."></textarea>
+        </div>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="grid cols-2">
+        <div>
+          <label class="small">Yhteyshenkilö</label>
+          <input class="input" id="lName" placeholder="Nimi">
+        </div>
+        <div>
+          <label class="small">Sähköposti</label>
+          <input class="input" id="lEmail" placeholder="etunimi.sukunimi@esimerkki.fi">
+        </div>
+      </div>
+
+      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn primary" id="listSend" type="button">Jätä ilmoitus</button>
+        <a class="btn" href="campaigns.html">Kampanjat</a>
+      </div>
+
+      <div id="listResult" class="hidden" style="margin-top:14px"></div>
+    </div>
+  </section>
+
+  <aside class="sidebar">
+    <h3>Mitä me hoidamme?</h3>
+    <div class="notice">
+      <strong>Palvelu</strong>
+      <div class="small" style="margin-top:6px">Kuvaus, tuotetiedot, julkaisu, kyselyt, luovutus- ja toimitusjärjestelyt (lain mukaan).</div>
+    </div>
+    <div class="hr"></div>
+
+    <div class="ad">
+      <div>
+        <strong>Tarjoukset & paketit</strong>
+        <p class="small">Optiikka + varusteet – hyvät bundle‑hinnat.</p>
+      </div>
+      <div class="actions">
+        <a class="btn primary" href="campaigns.html">Katso</a>
+      </div>
+    </div>
+  </aside>
+</div>
+
+  </main>
+  <div id="siteFooter"></div>
+  <script type="module" src="assets/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <title>Asetukku — Osasto</title>
+  <meta name="description" content="Tuotekategoria, suodattimet ja listaus.">
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noarchive">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/main.css">
+<link rel="stylesheet" href="assets/css/components.css">
+<link rel="stylesheet" href="assets/css/pages.css">
+<link rel="icon" href="assets/img/ui/favicon.svg" type="image/svg+xml">
+
+</head>
+<body class="theme-light" data-page="category">
+  <div id="siteHeader"></div>
+  <main id="main" class="container" style="padding-top: 18px">
+    
+<div id="catHeader"></div>
+
+<section class="split" style="margin-top:14px">
+  <aside class="sidebar">
+    <h3>Suodattimet</h3>
+    <div class="filter">
+      <div>
+        <label>Haku tämän osaston sisällä</label>
+        <input class="input" id="fQ" placeholder="esim. 9mm, Peltor, kiikari...">
+      </div>
+      <div class="row">
+        <div style="flex:1">
+          <label>Min €</label>
+          <input class="input" id="fMin" type="number" min="0" step="10" placeholder="0">
+        </div>
+        <div style="flex:1">
+          <label>Max €</label>
+          <input class="input" id="fMax" type="number" min="0" step="10" placeholder="9999">
+        </div>
+      </div>
+      <div>
+        <label>Järjestys</label>
+        <select class="input" id="fSort">
+          <option value="popular">Suosituin</option>
+          <option value="new">Uutuus</option>
+          <option value="rating">Arvio</option>
+          <option value="price_asc">Hinta ↑</option>
+          <option value="price_desc">Hinta ↓</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Brändi</label>
+        <div class="checks" id="brandChecks"></div>
+      </div>
+
+      <div>
+        <label>Tunniste</label>
+        <div class="checks" id="badgeChecks">
+          <label class="chk"><input type="checkbox" value="Uutuus"> Uutuus</label>
+          <label class="chk"><input type="checkbox" value="Tarjous"> Tarjous</label>
+          <label class="chk"><input type="checkbox" value="Käytetty"> Käytetty</label>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+        <button class="btn primary" id="applyFilters" type="button">Käytä</button>
+        <button class="btn" id="clearFilters" type="button">Tyhjennä</button>
+      </div>
+
+      <div class="hr"></div>
+
+      <div class="notice warn">
+        <strong>Muistutus</strong>
+        <div class="small" style="margin-top:6px">Luvanvaraisissa tuotteissa luovutus ja toimitus aina lupien mukaisesti.</div>
+      </div>
+    </div>
+  </aside>
+
+  <section>
+    <div class="section-head">
+      <div>
+        <h2 class="h2" id="catTitle">Osasto</h2>
+        <p class="p" id="catDesc"></p>
+      <div id="subChips" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px"></div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <span class="pill"><strong id="resultCount">0</strong> tuotetta</span>
+        <a class="btn small" href="sell.html">Myy aseesi meille</a>
+      </div>
+    </div>
+
+    <div class="ad" style="margin:10px 0 14px">
+      <div>
+        <strong>Ilmoita aseesi myyntiin!</strong>
+        <p class="small">Me teemme näkyvyyden – sinä päätät hinnan.</p>
+      </div>
+      <div class="actions">
+        <a class="btn primary" href="list.html">Jätä ilmoitus</a>
+        <a class="btn" href="campaigns.html">Katso kampanjat</a>
+      </div>
+    </div>
+
+    <div class="grid cols-4" id="productGrid"></div>
+
+    <div class="hr"></div>
+
+    <div class="notice" id="pagingNotice">
+      <strong>Vinkki:</strong>
+      <div class="small" style="margin-top:6px">Voit tehdä omat “kampanjat” ja tuotejoukot suoraan data/products.json‑tiedostolla.</div>
+    </div>
+  </section>
+</section>
+
+  </main>
+  <div id="siteFooter"></div>
+  <script type="module" src="assets/js/main.js"></script>
+</body>
+</html>
