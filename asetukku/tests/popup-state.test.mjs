@@ -9,7 +9,7 @@ test('campaign popup shown before deadline when not dismissed', () => {
   const result = shouldShowCampaignPopup({
     now: new Date('2026-03-20T10:00:00+02:00'),
     dismissedAtIso: null,
-    deadlineIso: '2026-03-31T23:59:59+02:00',
+    deadlineIso: '2026-03-31T23:59:59+03:00',
     cooldownDays: 2
   });
 
@@ -20,7 +20,7 @@ test('campaign popup hidden during cooldown window', () => {
   const result = shouldShowCampaignPopup({
     now: new Date('2026-03-21T10:00:00+02:00'),
     dismissedAtIso: '2026-03-20T12:00:00+02:00',
-    deadlineIso: '2026-03-31T23:59:59+02:00',
+    deadlineIso: '2026-03-31T23:59:59+03:00',
     cooldownDays: 2
   });
 
@@ -29,9 +29,9 @@ test('campaign popup hidden during cooldown window', () => {
 
 test('campaign popup hidden after deadline', () => {
   const result = shouldShowCampaignPopup({
-    now: new Date('2026-04-01T00:00:00+02:00'),
+    now: new Date('2026-04-01T00:00:00+03:00'),
     dismissedAtIso: null,
-    deadlineIso: '2026-03-31T23:59:59+02:00',
+    deadlineIso: '2026-03-31T23:59:59+03:00',
     cooldownDays: 2
   });
 
