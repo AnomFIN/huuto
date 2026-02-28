@@ -69,3 +69,7 @@ export function shouldShowCampaignPopup({ now, dismissedAtIso, deadlineIso, cool
 export function isCookieConsentAccepted(value) {
   return value === 'accepted';
 }
+
+export function hasCookieConsentChoice(value) {
+  return value === 'accepted' || value === 'declined';
+}
