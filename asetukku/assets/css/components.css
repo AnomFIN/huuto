@@ -1,0 +1,562 @@
+/* ============================================================
+   AseKauppa — components.css
+   Reusable UI components: cards, buttons, forms, modals, etc.
+   ============================================================ */
+
+/* ── Card ── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 18px;
+  font-weight: 700;
+  font-size: 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: border-color .18s, background .18s, color .18s, opacity .18s;
+  line-height: 1.3;
+}
+
+.btn:hover {
+  border-color: var(--link);
+  color: var(--link);
+  text-decoration: none;
+}
+
+.btn.primary {
+  background: var(--primary-bg);
+  border-color: var(--primary-border);
+  color: var(--primary-text);
+}
+
+.btn.primary:hover {
+  background: #166534;
+  border-color: var(--primary-border);
+  color: var(--primary-text);
+  text-decoration: none;
+}
+
+.btn.ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--muted);
+}
+
+.btn.ghost:hover {
+  border-color: var(--muted);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.btn.small {
+  padding: 5px 12px;
+  font-size: 13px;
+  border-radius: 6px;
+}
+
+.btn.danger {
+  background: transparent;
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.btn.danger:hover {
+  background: rgba(248,113,113,.12);
+  text-decoration: none;
+}
+
+.btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+/* ── Pill / badge ── */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(103,232,249,.12);
+  border: 1px solid rgba(103,232,249,.25);
+  color: var(--link);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+body.theme-light .pill {
+  background: rgba(8,145,178,.09);
+  border-color: rgba(8,145,178,.22);
+}
+
+/* ── Input / select / textarea ── */
+.input {
+  display: block;
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 12px;
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+  transition: border-color .18s;
+  appearance: auto;
+}
+
+.input:focus { border-color: var(--link); }
+.input::placeholder { color: var(--muted); }
+
+/* ── Notice / alert ── */
+.notice {
+  background: rgba(100,116,139,.12);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.notice.good {
+  background: rgba(34,197,94,.10);
+  border-color: rgba(34,197,94,.35);
+  color: var(--primary-text);
+}
+
+body.theme-light .notice.good {
+  color: #14532d;
+}
+
+.notice.warn {
+  background: rgba(245,158,11,.10);
+  border-color: rgba(245,158,11,.35);
+  color: var(--amber);
+}
+
+body.theme-light .notice.warn {
+  color: #92400e;
+}
+
+/* ── Ad / promo box ── */
+.ad {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  flex-wrap: wrap;
+}
+
+/* ── Actions row ── */
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ── Trust tiles ── */
+.trust {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.tile {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 160px;
+  flex: 1;
+}
+
+.tile .ico {
+  font-size: 20px;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.tile div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tile strong {
+  font-size: 14px;
+  color: var(--heading);
+}
+
+.tile span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ── Modal ── */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal.hidden { display: none; }
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.65);
+}
+
+.modal-panel {
+  position: relative;
+  z-index: 1;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px 28px 24px;
+  max-width: 480px;
+  width: 100%;
+  box-shadow: 0 8px 40px rgba(0,0,0,.55);
+}
+
+.modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+
+.modal-close:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* ── Cookie banner ── */
+.cookie-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 550;
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  box-shadow: 0 -4px 20px rgba(0,0,0,.3);
+}
+
+.cookie-banner.hidden { display: none; }
+
+/* ── Utility ── */
+.hidden { display: none !important; }
+
+/* ── Breadcrumb ── */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--muted);
+  padding-bottom: 8px;
+}
+
+.breadcrumb a { color: var(--muted); }
+.breadcrumb a:hover { color: var(--link); }
+
+.breadcrumb-sep {
+  color: var(--border);
+  user-select: none;
+}
+
+/* ── Qty selector ── */
+.qty {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.qty button {
+  background: var(--bg);
+  border: none;
+  width: 34px;
+  height: 34px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+  cursor: pointer;
+  transition: background .15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qty button:hover { background: var(--border); }
+
+.qty span {
+  min-width: 36px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--heading);
+  border-inline: 1px solid var(--border);
+  padding-block: 6px;
+}
+
+/* ── Tabs ── */
+.tabs { margin-top: 18px; }
+
+.tabbar {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+.tabbar button {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color .15s, border-color .15s;
+  margin-bottom: -1px;
+}
+
+.tabbar button:hover { color: var(--text); }
+.tabbar button.active { color: var(--link); border-bottom-color: var(--link); }
+
+.tabcontent {
+  display: none;
+  padding: 18px 0;
+  font-size: 14px;
+  color: var(--text);
+  line-height: 1.7;
+}
+
+.tabcontent.active { display: block; }
+
+/* ── Filter panel ── */
+.filter {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.filter label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  margin-bottom: 6px;
+}
+
+/* ── Checkbox / radio group ── */
+.checks {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.chk {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.chk input { cursor: pointer; accent-color: var(--primary-border); }
+
+/* ── Product card ── */
+.product-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: border-color .2s, box-shadow .2s;
+}
+
+.product-card:hover {
+  border-color: var(--link);
+  box-shadow: 0 4px 18px rgba(0,0,0,.2);
+}
+
+.product-card .pc-img {
+  width: 100%;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  background: var(--bg);
+}
+
+.product-card .pc-body {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.product-card .pc-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--heading);
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.product-card .pc-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+
+.product-card .pc-price {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--heading);
+}
+
+.product-card .pc-old {
+  font-size: 12px;
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.product-card .pc-badge { margin-top: 2px; }
+
+.product-card .pc-foot {
+  padding: 0 14px 14px;
+}
+
+.product-card .pc-foot .btn {
+  width: 100%;
+}
+
+/* ── Cart item ── */
+.cart-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding-block: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cart-item:last-child { border-bottom: none; }
+
+.cart-item img {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+  background: var(--bg);
+}
+
+.cart-item .ci-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.cart-item .ci-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--heading);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cart-item .ci-price {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+.cart-item .ci-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+/* ── Toast notification ── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 700;
+  background: var(--card);
+  border: 1px solid var(--primary-border);
+  border-radius: 8px;
+  padding: 12px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary-text);
+  box-shadow: var(--shadow);
+  transform: translateY(0);
+  transition: opacity .3s, transform .3s;
+  pointer-events: none;
+}
+
+.toast.fade-out {
+  opacity: 0;
+  transform: translateY(12px);
+}

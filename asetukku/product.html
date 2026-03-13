@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <title>AseKauppa — Tuote</title>
+  <meta name="description" content="Tuotesivu gallerialla, tiedoilla ja ostotoiminnoilla.">
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noarchive">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/main.css">
+<link rel="stylesheet" href="assets/css/components.css">
+<link rel="stylesheet" href="assets/css/pages.css">
+<link rel="icon" href="assets/img/ui/favicon.svg" type="image/svg+xml">
+
+</head>
+<body class="theme-light" data-page="product">
+  <div id="siteHeader"></div>
+  <main id="main" class="container" style="padding-top: 18px">
+    
+<div id="pBreadcrumb" class="breadcrumb"></div>
+
+<section class="product-layout" style="margin-top:14px">
+  <div>
+    <div class="gallery" id="gallery">
+      <div class="main"><img id="mainImg" alt=""></div>
+      <div class="thumbs" id="thumbs"></div>
+    </div>
+
+    <div class="tabs">
+      <div class="tabbar" id="tabbar">
+        <button type="button" data-tab="desc" class="active">Kuvaus</button>
+        <button type="button" data-tab="specs">Tekniset tiedot</button>
+        <button type="button" data-tab="delivery">Toimitus</button>
+        <button type="button" data-tab="reviews">Arviot</button>
+      </div>
+      <div class="tabcontent active" id="tab-desc"></div>
+      <div class="tabcontent" id="tab-specs"></div>
+      <div class="tabcontent" id="tab-delivery"></div>
+      <div class="tabcontent" id="tab-reviews"></div>
+    </div>
+  </div>
+
+  <aside class="card">
+    <div class="pad">
+      <span class="pill"><strong id="pBadge"></strong> <span id="pMeta"></span></span>
+      <h2 class="h2" style="margin-top:10px" id="pName">Tuote</h2>
+      <p class="p" style="margin-top:6px" id="pSub"></p>
+
+      <div class="hr"></div>
+
+      <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+        <div style="font-weight:1300;font-size:26px" id="pPrice"></div>
+        <div class="small" id="pOld" style="text-decoration:line-through"></div>
+      </div>
+
+      <div class="small" style="margin-top:8px">
+        Varasto: <strong id="pStock"></strong> • SKU: <span id="pSku"></span>
+      </div>
+
+      <div class="hr"></div>
+
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <div>
+          <div class="small">Määrä</div>
+          <div class="qty" style="margin-top:6px">
+            <button type="button" id="qtyMinus">−</button>
+            <span id="qtyVal">1</span>
+            <button type="button" id="qtyPlus">+</button>
+          </div>
+        </div>
+        <div style="flex:1;min-width:200px">
+          <button class="btn primary" id="addBtn" type="button" style="width:100%;margin-top:22px">Lisää ostoskoriin</button>
+        </div>
+      </div>
+
+      <div style="margin-top:14px" class="notice good">
+        <strong>Kassa toimii</strong>
+        <div class="small" style="margin-top:6px">Siirry kassalle ja käy läpi toimitus/maksu (ei oikeita veloituksia).</div>
+        <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+          <a class="btn small" href="checkout.html">Kassalle</a>
+          <a class="btn small" href="sell.html">Myy aseesi meille</a>
+        </div>
+      </div>
+    </div>
+  </aside>
+</section>
+
+<section class="section">
+  <div class="section-head">
+    <div>
+      <h2 class="h2">Samankaltaisia</h2>
+      <p class="p">Dynaaminen “related” samaan kategoriaan.</p>
+    </div>
+  </div>
+  <div class="grid cols-4" id="relatedGrid"></div>
+</section>
+
+  </main>
+  <div id="siteFooter"></div>
+  <script type="module" src="assets/js/main.js"></script>
+</body>
+</html>

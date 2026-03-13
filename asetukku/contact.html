@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <title>AseKauppa — Yhteys</title>
+  <meta name="description" content="Yhteydenotto.">
+  <meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noarchive">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/main.css">
+<link rel="stylesheet" href="assets/css/components.css">
+<link rel="stylesheet" href="assets/css/pages.css">
+<link rel="icon" href="assets/img/ui/favicon.svg" type="image/svg+xml">
+
+</head>
+<body class="theme-light" data-page="contact">
+  <div id="siteHeader"></div>
+  <main id="main" class="container" style="padding-top: 18px">
+    
+<div class="section-head">
+  <div>
+    <h1 class="h2">Yhteys</h1>
+    <p class="p">Lähetä viesti. Viestit tallentuvat esittelyversiossa omaan selaimeesi.</p>
+  </div>
+  <a class="btn small" href="sell.html">Myy aseesi meille</a>
+</div>
+<div class="hr"></div>
+
+<div class="split">
+  <section class="card">
+    <div class="pad">
+      <h3 class="h3">Lomake</h3>
+      <div class="hr"></div>
+
+      <div class="grid cols-2">
+        <div>
+          <label class="small">Nimi</label>
+          <input class="input" id="cName2" placeholder="Nimi">
+        </div>
+        <div>
+          <label class="small">Sähköposti</label>
+          <input class="input" id="cEmail2" placeholder="etunimi.sukunimi@esimerkki.fi">
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        <label class="small">Aihe</label>
+        <select class="input" id="cTopic">
+          <option>Tuotetiedustelu</option>
+          <option>Toimitus & palautus</option>
+          <option>Myy aseesi meille</option>
+          <option>Ilmoita myyntiin</option>
+          <option>Muu</option>
+        </select>
+      </div>
+
+      <div style="margin-top:12px">
+        <label class="small">Viesti</label>
+        <textarea class="input" id="cMsg" rows="5" placeholder="Kirjoita asiasi..."></textarea>
+      </div>
+
+      <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn primary" id="sendMsg" type="button">Lähetä</button>
+        <a class="btn" href="faq.html">UKK</a>
+      </div>
+
+      <div id="msgResult" class="hidden" style="margin-top:14px"></div>
+    </div>
+  </section>
+
+  <aside class="sidebar">
+    <h3>Myymälä</h3>
+    <div class="notice">
+      <strong>Osoite</strong>
+      <div class="small" style="margin-top:6px">Keskustie 7, 34800 Virrat (esimerkki)</div>
+      <div class="small" style="margin-top:6px">ma–pe 10–17 • la 10–13 • su suljettu</div>
+    </div>
+    <div class="hr"></div>
+
+    <div class="ad">
+      <div>
+        <strong>Ilmoita aseesi myyntiin!</strong>
+        <p class="small">Nopea julkaisu ja paljon näkyvyyttä.</p>
+      </div>
+      <div class="actions">
+        <a class="btn primary" href="list.html">Jätä ilmoitus</a>
+      </div>
+    </div>
+  </aside>
+</div>
+
+  </main>
+  <div id="siteFooter"></div>
+  <script type="module" src="assets/js/main.js"></script>
+</body>
+</html>
