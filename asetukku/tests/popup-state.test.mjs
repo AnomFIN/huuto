@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   shouldShowCampaignPopup,
-  isCookieConsentAccepted
+  isCookieConsentAccepted,
+  hasCookieConsentChoice
 } from '../popup-state.js';
 
 test('campaign popup shown before deadline when not dismissed', () => {
@@ -42,4 +43,11 @@ test('cookie consent accepted only for strict accepted value', () => {
   assert.equal(isCookieConsentAccepted('accepted'), true);
   assert.equal(isCookieConsentAccepted('yes'), false);
   assert.equal(isCookieConsentAccepted(null), false);
+});
+
+test('hasCookieConsentChoice returns true for accepted or declined', () => {
+  assert.equal(hasCookieConsentChoice('accepted'), true);
+  assert.equal(hasCookieConsentChoice('declined'), true);
+  assert.equal(hasCookieConsentChoice(null), false);
+  assert.equal(hasCookieConsentChoice('yes'), false);
 });
