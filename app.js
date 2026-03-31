@@ -1,8 +1,8 @@
-// Commit to intelligence. Push innovation. Pull results.
+// Premium Huuto247 - Beyond algorithms. Into outcomes.
 (() => {
   'use strict';
 
-  const CAROUSEL_INTERVAL_MS = 7000;
+  const CAROUSEL_INTERVAL_MS = 6000;
   const INITIAL_COUNT = 20;
   const LOAD_MORE_COUNT = 10;
   const LOAD_DELAY_MS = 550;
@@ -34,10 +34,10 @@
     { label: 'Saavutettavuusseloste', page: 'saavutettavuus' },
   ];
   const SLOGANS = [
-    'Huuda fiksusti, voita oikeat kohteet.',
     'Luottamusta herättävä markkinapaikka jokaiselle huutajalle.',
     'Kun sekunnit ratkaisevat, näkymäsi pysyy edellä.',
     'Premium-kokemus ilman backend-kompleksisuutta.',
+    'Huuda fiksusti, voita oikeat kohteet.',
   ];
 
   const storedFavorites = readJson('huuto247-favorites', []);
@@ -53,17 +53,19 @@
     items: [],
     popularItems: [],
     closingItems: [],
+    featuredItems: [],
     popularShown: INITIAL_COUNT,
     endingShown: INITIAL_COUNT,
     popularFilter: null,
     endingFilter: null,
     searchQuery: '',
     searchCategory: null,
-    carouselIndex: 0,
-    carouselPaused: false,
-    carouselTickStartMs: performance.now(),
+    heroCarouselIndex: 0,
+    heroCarouselPaused: false,
+    heroCarouselTickStartMs: performance.now(),
     sloganIndex: 0,
     touchStartX: 0,
+    cookiesAccepted: readJson('huuto247-cookies', null),
   };
 
   const refs = {
@@ -77,12 +79,14 @@
     loginLink: byId('loginLink'),
     registerLink: byId('registerLink'),
     rotatingSlogan: byId('rotatingSlogan'),
+    heroCarousel: byId('heroCarousel'),
     carouselTrack: byId('carouselTrack'),
     carouselDots: byId('carouselDots'),
     carouselPrev: byId('carouselPrev'),
     carouselNext: byId('carouselNext'),
-    carouselProgress: byId('carouselProgress'),
-    categoryList: byId('categoryList'),
+    liveAuctionCount: byId('liveAuctionCount'),
+    featuredGrid: byId('featuredGrid'),
+    categoryGrid: byId('categoryGrid'),
     popularPills: byId('popularPills'),
     endingPills: byId('endingPills'),
     popularGrid: byId('popularGrid'),
@@ -97,6 +101,15 @@
     simulateLogin: byId('simulateLogin'),
     itemModal: byId('itemModal'),
     itemModalContent: byId('itemModalContent'),
+    cookieConsent: byId('cookieConsent'),
+    cookieSettingsModal: byId('cookieSettingsModal'),
+    acceptAllCookies: byId('acceptAllCookies'),
+    acceptNecessary: byId('acceptNecessary'),
+    cookieSettings: byId('cookieSettings'),
+    saveCookieSettings: byId('saveCookieSettings'),
+    closeCookieSettings: byId('closeCookieSettings'),
+    analyticsToggle: byId('analyticsToggle'),
+    marketingToggle: byId('marketingToggle'),
   };
 
   boot();
@@ -107,8 +120,19 @@
       const popularItems = window.__HOME_DATA__.popular || [];
       const closingItems = window.__HOME_DATA__.closing || [];
       state.popularItems = normalizeServerItems(popularItems);
+
+  boot();
+
+  function boot() {
+    // Only use data from server-side (PHP -> JavaScript), never mock data
+    if (window.__HOME_DATA__) {
+      const popularItems = window.__HOME_DATA__.popular || [];
+      const closingItems = window.__HOME_DATA__.closing || [];
+      const featuredItems = window.__HOME_DATA__.featured || [];
+      state.popularItems = normalizeServerItems(popularItems);
       state.closingItems = normalizeServerItems(closingItems);
-      state.items = normalizeServerItems([...popularItems, ...closingItems]);
+      state.featuredItems = normalizeServerItems(featuredItems);
+      state.items = normalizeServerItems([...popularItems, ...closingItems, ...featuredItems]);
       state.user.loggedIn = window.__HOME_DATA__.isLoggedIn || false;
       if (Array.isArray(window.__HOME_DATA__.favoriteIds)) {
         window.__HOME_DATA__.favoriteIds.forEach((id) => {
@@ -127,16 +151,183 @@
     renderStaticBlocks();
     renderAll();
     bindEvents();
+    initializeCookieConsent();
 
     setInterval(updateVisibleCountdowns, 1000);
     setInterval(syncEndedAuctions, 15000);
     setInterval(() => {
-      if (!state.carouselPaused) moveCarousel(1);
+      if (!state.heroCarouselPaused) moveHeroCarousel(1);
     }, CAROUSEL_INTERVAL_MS);
     setInterval(rotateSlogan, 5000);
-    requestAnimationFrame(updateCarouselProgress);
+
+    // Update live auction count
+    if (refs.liveAuctionCount) {
+      refs.liveAuctionCount.textContent = state.items.filter(item => item.endTime > Date.now()).length;
+    }
 
     logInfo('boot_complete', { totalItems: state.items.length, favorites: state.favorites.size });
+  }
+
+  /* ----- UTILITY FUNCTIONS ----- */
+  function byId(id) {
+    return document.getElementById(id);
+  }
+
+  function create(tag, className, content) {
+    const el = document.createElement(tag);
+    if (className) el.className = className;
+    if (content) el.textContent = content;
+    return el;
+  }
+
+  function randomChoice(array) {
+    return array[Math.floor(Math.random() * array.length)];
+  }
+
+  function randomRange(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function formatPrice(price) {
+    return new Intl.NumberFormat('fi-FI', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 0,
+    }).format(price);
+  }
+
+  function formatTimeRemaining(endTime) {
+    const now = new Date().getTime();
+    const difference = endTime - now;
+
+    if (difference <= 0) return 'Päättynyt';
+
+    const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+
+    if (days > 0) return `${days}pv ${hours}h`;
+    if (hours > 0) return `${hours}h ${minutes}min`;
+    return `${minutes}min`;
+  }
+
+  function formatCountdown(endTime) {
+    return formatTimeRemaining(endTime);
+  }
+
+  function readJson(key, fallback) {
+    try {
+      const item = localStorage.getItem(key);
+      return item ? JSON.parse(item) : fallback;
+    } catch {
+      return fallback;
+    }
+  }
+
+  function writeJson(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch {
+      // ignore storage errors
+    }
+  }
+
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function cleanDisplayText(text, maxLength) {
+    if (typeof text !== 'string') text = String(text || '');
+    text = text.replace(/[\x00-\x1F\x7F-\x9F]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (text.length > maxLength) text = text.substring(0, maxLength - 3) + '...';
+    return text;
+  }
+
+  function sanitizeQuery(query) {
+    if (typeof query !== 'string') return '';
+    return query.replace(/[^\w\säöåÄÖÅ-]/g, ' ').replace(/\s+/g, ' ').trim().substring(0, 160);
+  }
+
+  function sanitizeCategory(category) {
+    if (typeof category !== 'string') return '';
+    return CATEGORIES.includes(category) ? category : '';
+  }
+
+  function logInfo(event, data) {
+    console.log(`[Huuto247] ${event}:`, data);
+  /* ----- COOKIE CONSENT SYSTEM ----- */
+  function initializeCookieConsent() {
+    // Show consent popup if not previously decided
+    if (state.cookiesAccepted === null) {
+      if (refs.cookieConsent) {
+        refs.cookieConsent.classList.remove('hidden');
+      }
+    }
+  }
+
+  function acceptAllCookies() {
+    state.cookiesAccepted = {
+      necessary: true,
+      analytics: true,
+      marketing: true,
+      timestamp: new Date().toISOString(),
+    };
+    writeJson('huuto247-cookies', state.cookiesAccepted);
+    hideCookieConsent();
+  }
+
+  function acceptNecessaryCookies() {
+    state.cookiesAccepted = {
+      necessary: true,
+      analytics: false,
+      marketing: false,
+      timestamp: new Date().toISOString(),
+    };
+    writeJson('huuto247-cookies', state.cookiesAccepted);
+    hideCookieConsent();
+  }
+
+  function showCookieSettings() {
+    if (refs.cookieSettingsModal) {
+      refs.cookieSettingsModal.classList.remove('hidden');
+      
+      // Pre-populate settings if previously set
+      if (state.cookiesAccepted && refs.analyticsToggle) {
+        refs.analyticsToggle.checked = state.cookiesAccepted.analytics || false;
+      }
+      if (state.cookiesAccepted && refs.marketingToggle) {
+        refs.marketingToggle.checked = state.cookiesAccepted.marketing || false;
+      }
+    }
+  }
+
+  function hideCookieConsent() {
+    if (refs.cookieConsent) {
+      refs.cookieConsent.classList.add('hidden');
+    }
+  }
+
+  function closeCookieSettings() {
+    if (refs.cookieSettingsModal) {
+      refs.cookieSettingsModal.classList.add('hidden');
+    }
+  }
+
+  function saveCookieSettings() {
+    const analytics = refs.analyticsToggle ? refs.analyticsToggle.checked : false;
+    const marketing = refs.marketingToggle ? refs.marketingToggle.checked : false;
+    
+    state.cookiesAccepted = {
+      necessary: true,
+      analytics,
+      marketing,
+      timestamp: new Date().toISOString(),
+    };
+    writeJson('huuto247-cookies', state.cookiesAccepted);
+    closeCookieSettings();
+    hideCookieConsent();
   }
 
   function normalizeServerItems(items) {
@@ -179,7 +370,7 @@
     refs.footerLinks.innerHTML = FOOTER_LINKS.map((item) => `<a href="/info.php?page=${encodeURIComponent(item.page)}">${escapeHtml(item.label)}</a>`).join('');
     refs.popularPills.innerHTML = renderPills('popular');
     refs.endingPills.innerHTML = renderPills('ending');
-    refs.categoryList.innerHTML = CATEGORIES.map((category) => `<li><button data-category="${escapeHtml(category)}">${escapeHtml(category)} ›</button></li>`).join('');
+    // Categories are now rendered by PHP as premium category cards
     refs.rotatingSlogan.textContent = SLOGANS[state.sloganIndex];
   }
 
@@ -212,16 +403,41 @@
       byId('popularSection').scrollIntoView({ behavior: 'smooth' });
     });
 
-    refs.carouselPrev.addEventListener('click', () => moveCarousel(-1));
-    refs.carouselNext.addEventListener('click', () => moveCarousel(1));
+    // Premium carousel event handlers
+    if (refs.carouselPrev) refs.carouselPrev.addEventListener('click', () => moveHeroCarousel(-1));
+    if (refs.carouselNext) refs.carouselNext.addEventListener('click', () => moveHeroCarousel(1));
 
-    refs.carouselTrack.addEventListener('mouseenter', () => { state.carouselPaused = true; });
-    refs.carouselTrack.addEventListener('mouseleave', () => { state.carouselPaused = false; state.carouselTickStartMs = performance.now(); });
-    refs.carouselTrack.addEventListener('touchstart', (event) => { state.touchStartX = event.changedTouches[0]?.clientX ?? 0; });
-    refs.carouselTrack.addEventListener('touchend', (event) => {
-      const delta = (event.changedTouches[0]?.clientX ?? 0) - state.touchStartX;
-      if (Math.abs(delta) > 40) moveCarousel(delta > 0 ? -1 : 1);
-    });
+    if (refs.heroCarousel) {
+      refs.heroCarousel.addEventListener('mouseenter', () => { state.heroCarouselPaused = true; });
+      refs.heroCarousel.addEventListener('mouseleave', () => { 
+        state.heroCarouselPaused = false; 
+        state.heroCarouselTickStartMs = performance.now(); 
+      });
+      refs.heroCarousel.addEventListener('touchstart', (event) => { 
+        state.touchStartX = event.changedTouches[0]?.clientX ?? 0; 
+      });
+      refs.heroCarousel.addEventListener('touchend', (event) => {
+        const delta = (event.changedTouches[0]?.clientX ?? 0) - state.touchStartX;
+        if (Math.abs(delta) > 40) moveHeroCarousel(delta > 0 ? -1 : 1);
+      });
+    }
+
+    // Cookie consent handlers
+    if (refs.acceptAllCookies) {
+      refs.acceptAllCookies.addEventListener('click', acceptAllCookies);
+    }
+    if (refs.acceptNecessary) {
+      refs.acceptNecessary.addEventListener('click', acceptNecessaryCookies);
+    }
+    if (refs.cookieSettings) {
+      refs.cookieSettings.addEventListener('click', showCookieSettings);
+    }
+    if (refs.saveCookieSettings) {
+      refs.saveCookieSettings.addEventListener('click', saveCookieSettings);
+    }
+    if (refs.closeCookieSettings) {
+      refs.closeCookieSettings.addEventListener('click', closeCookieSettings);
+    }
 
     refs.loadMorePopular.addEventListener('click', () => loadMore('popular'));
     refs.loadMoreEnding.addEventListener('click', () => loadMore('ending'));
@@ -253,9 +469,12 @@
       });
     }
 
-    [refs.loginModal, refs.benefitModal, refs.itemModal].forEach(bindDialogOutsideClose);
+    [refs.loginModal, refs.benefitModal, refs.itemModal, refs.cookieSettingsModal].forEach(bindDialogOutsideClose);
     window.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') refs.langMenu.classList.remove('open');
+      if (event.key === 'Escape') {
+        refs.langMenu.classList.remove('open');
+        closeCookieSettings();
+      }
     });
 
     document.addEventListener('click', (event) => {
@@ -277,9 +496,9 @@
 
       const dot = event.target.closest('[data-dot]');
       if (dot) {
-        state.carouselIndex = Number(dot.dataset.dot);
-        state.carouselTickStartMs = performance.now();
-        renderCarousel();
+        state.heroCarouselIndex = Number(dot.dataset.dot);
+        state.heroCarouselTickStartMs = performance.now();
+        renderHeroCarousel();
       }
 
       const pill = event.target.closest('[data-pill]');
@@ -323,7 +542,8 @@
     refs.popularPills.innerHTML = renderPills('popular');
     refs.endingPills.innerHTML = renderPills('ending');
     highlightActiveCategory();
-    renderCarousel();
+    renderHeroCarousel();
+    renderFeatured();
     renderPopular();
     renderEnding();
   }
@@ -338,57 +558,116 @@
   }
 
   function highlightActiveCategory() {
-    refs.categoryList.querySelectorAll('button').forEach((button) => {
-      const isActive = button.dataset.category === state.popularFilter;
-      button.classList.toggle('active', isActive);
+    refs.categoryGrid.querySelectorAll('.category-card-premium').forEach((card) => {
+      const isActive = card.dataset.category === state.popularFilter;
+      card.classList.toggle('active', isActive);
     });
   }
 
-  function renderCarousel() {
+  /* ----- PREMIUM HERO CAROUSEL ----- */
+  function renderHeroCarousel() {
+    if (!refs.carouselTrack) return;
+    
     const carouselItems = getEndingItems().slice(0, 5);
+    if (carouselItems.length === 0) {
+      refs.carouselTrack.innerHTML = '<div class="carousel-placeholder">Ei päättyviä kohteita</div>';
+      refs.carouselDots.innerHTML = '';
+      return;
+    }
+
     refs.carouselTrack.innerHTML = carouselItems.map((item, index) => {
-      const pos = classifyCarouselPosition(index, state.carouselIndex, carouselItems.length);
+      const pos = classifyCarouselPosition(index, state.heroCarouselIndex, carouselItems.length);
       return `
-        <article class="carousel-item ${pos}">
+        <article class="carousel-item ${pos}" data-item-card="${item.id}">
           <div class="carousel-media">
             <img src="${escapeHtml(item.imageUrl || IMAGE_FALLBACK)}" alt="${escapeHtml(item.title)}" />
             <div class="carousel-overlay">
-              <span class="countdown-badge" data-end-time="${item.endTime}">${formatCountdown(item.endTime)}</span>
-              <h3>${escapeHtml(item.title)}</h3>
-              <div class="price">Hinta nyt: ${formatPrice(item.priceNow)}</div>
-              <div class="subline">Tarjouksia ${item.bidsCount}</div>
-              <button class="bid-btn" data-bid="${item.id}">Huutaa nyt: ${formatPrice(item.priceNow)} (+${formatPrice(item.minIncrement)})</button>
+              <div class="carousel-content">
+                <span class="countdown-badge" data-end-time="${item.endTime}">${formatCountdown(item.endTime)}</span>
+                <h3 class="carousel-title">${escapeHtml(item.title)}</h3>
+                <div class="carousel-details">
+                  <div class="price">Hinta nyt: ${formatPrice(item.priceNow)}</div>
+                  <div class="bids">Tarjouksia: ${item.bidsCount}</div>
+                </div>
+                <div class="carousel-actions">
+                  <button class="bid-btn primary" data-bid="${item.id}">
+                    Huuda ${formatPrice(item.priceNow + item.minIncrement)}
+                  </button>
+                  ${item.buyNowPrice ? `<button class="buy-now-btn secondary" data-buy-now="${item.id}">Osta heti ${formatPrice(item.buyNowPrice)}</button>` : ''}
+                </div>
+              </div>
             </div>
           </div>
         </article>
       `;
     }).join('');
 
-    refs.carouselDots.innerHTML = carouselItems.map((_, index) => `<button class="dot ${index === state.carouselIndex ? 'active' : ''}" data-dot="${index}" aria-label="Kohde ${index + 1}"></button>`).join('');
+    refs.carouselDots.innerHTML = carouselItems.map((_, index) => 
+      `<button class="carousel-dot ${index === state.heroCarouselIndex ? 'active' : ''}" 
+               data-dot="${index}" 
+               aria-label="Kohde ${index + 1}">
+       </button>`
+    ).join('');
   }
 
-  function moveCarousel(step) {
-    // Determine current carousel length to avoid hard-coded modulo
+  function moveHeroCarousel(step) {
     const carouselLength = Math.min(5, getEndingItems().length);
 
     if (carouselLength <= 1) {
-      // With 0 or 1 items, always reset index to 0 and just re-render
-      state.carouselIndex = 0;
-      state.carouselTickStartMs = performance.now();
-      renderCarousel();
+      state.heroCarouselIndex = 0;
+      state.heroCarouselTickStartMs = performance.now();
+      renderHeroCarousel();
       return;
     }
 
-    state.carouselIndex = (state.carouselIndex + step + carouselLength) % carouselLength;
-    state.carouselTickStartMs = performance.now();
-    renderCarousel();
+    state.heroCarouselIndex = (state.heroCarouselIndex + step + carouselLength) % carouselLength;
+    state.heroCarouselTickStartMs = performance.now();
+    renderHeroCarousel();
   }
 
-  function updateCarouselProgress() {
-    const elapsed = Math.max(0, performance.now() - state.carouselTickStartMs);
-    const ratio = state.carouselPaused ? Math.min(1, elapsed / CAROUSEL_INTERVAL_MS) : elapsed / CAROUSEL_INTERVAL_MS;
-    refs.carouselProgress.style.transform = `scaleX(${Math.max(0, 1 - ratio)})`;
-    requestAnimationFrame(updateCarouselProgress);
+  /* ----- FEATURED CONTENT RENDERING ----- */
+  function renderFeatured() {
+    if (!refs.featuredGrid) return;
+    
+    const featuredItems = state.featuredItems.slice(0, 6);
+    if (featuredItems.length === 0) {
+      // Hide featured section if no featured items
+      const featuredSection = refs.featuredGrid.closest('.featured-section');
+      if (featuredSection) featuredSection.style.display = 'none';
+      return;
+    }
+
+    const featuredSection = refs.featuredGrid.closest('.featured-section');
+    if (featuredSection) featuredSection.style.display = 'block';
+
+    refs.featuredGrid.innerHTML = featuredItems.map((item) => `
+      <article class="featured-card" data-item-card="${item.id}">
+        <div class="featured-image">
+          <img src="${escapeHtml(item.imageUrl || IMAGE_FALLBACK)}" alt="${escapeHtml(item.title)}" />
+          <button class="favorite-btn ${state.favorites.has(item.id) ? 'active' : ''}" 
+                  data-favorite="${item.id}" 
+                  aria-label="Lisää suosikkeihin">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          </button>
+          <span class="featured-badge">Suosittu</span>
+        </div>
+        <div class="featured-content">
+          <h3 class="featured-title">${escapeHtml(item.title)}</h3>
+          <div class="featured-meta">
+            <span class="category">${escapeHtml(item.category)}</span>
+            <span class="location">${escapeHtml(item.location)}</span>
+          </div>
+          <div class="featured-pricing">
+            <div class="current-price">${formatPrice(item.priceNow)}</div>
+            <div class="time-remaining" data-end-time="${item.endTime}">${formatTimeRemaining(item.endTime)}</div>
+          </div>
+          <div class="featured-actions">
+            <button class="bid-btn" data-bid="${item.id}">Huuda nyt</button>
+            ${item.buyNowPrice ? `<button class="buy-now-btn" data-buy-now="${item.id}">Osta heti</button>` : ''}
+          </div>
+        </div>
+      </article>
+    `).join('');
   }
 
   function rotateSlogan() {

@@ -656,6 +656,4 @@ include SRC_PATH . '/views/header.php';
 })();
 </script>
 
-<script src="premium-ux.js" defer></script>
-
 <?php include SRC_PATH . '/views/footer.php'; ?>

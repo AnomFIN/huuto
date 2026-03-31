@@ -4,75 +4,87 @@
  */
 class Auction {
     private $db;
-    private static $captionColumnEnsured = false;
-    private static $sellerCommitmentColumnEnsured = false;
-    private static $metadataTableEnsured = false;
 
     public function __construct() {
         $this->db = Database::getInstance()->getConnection();
-        $this->ensureImageCaptionColumn();
-        $this->ensureSellerCommitmentColumn();
-        $this->ensureAuctionMetadataTable();
-    }
-
-    private function ensureImageCaptionColumn(): void
-    {
-        if (self::$captionColumnEnsured) {
-            return;
-        }
-
-        try {
-            $this->db->exec("ALTER TABLE auction_images ADD COLUMN IF NOT EXISTS caption VARCHAR(255) NULL AFTER image_path");
-        } catch (Throwable $exception) {
-            // Non-fatal in case DB user has limited ALTER permissions.
-        }
-
-        self::$captionColumnEnsured = true;
-    }
-
-    private function ensureSellerCommitmentColumn(): void
-    {
-        if (self::$sellerCommitmentColumnEnsured) {
-            return;
-        }
-
-        try {
-            $this->db->exec("ALTER TABLE auctions ADD COLUMN IF NOT EXISTS seller_commitment BOOLEAN DEFAULT FALSE");
-        } catch (Throwable $exception) {
-            // Non-fatal in case DB user has limited ALTER permissions or legacy server limitations.
-        }
-
-        self::$sellerCommitmentColumnEnsured = true;
-    }
-
-    private function ensureAuctionMetadataTable(): void
-    {
-        if (self::$metadataTableEnsured) {
-            return;
-        }
-
-        try {
-            $this->db->exec("CREATE TABLE IF NOT EXISTS auction_metadata (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                auction_id INT NOT NULL,
-                field_name VARCHAR(100) NOT NULL,
-                field_value TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                UNIQUE KEY unique_auction_field (auction_id, field_name),
-                INDEX idx_auction (auction_id),
-                INDEX idx_field (field_name)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-        } catch (Throwable $exception) {
-            // Non-fatal; metadata writes are guarded in createAuction.
-        }
-
-        self::$metadataTableEnsured = true;
     }
 
     /**
-     * Get popular auctions (most bids/views)
+     * Get featured auctions for homepage showcase
      */
+    public function getFeaturedAuctions($limit = 8) {
+        $sql = "SELECT a.*, 
+                       COALESCE(c.name, 'Luokittelematon') as category_name, 
+                       COALESCE(c.slug, 'other') as category_slug,
+                       COALESCE(u.username, 'Tuntematon myyjä') as seller_username,
+                       (SELECT image_path
+                        FROM auction_images
+                        WHERE auction_id = a.id
+                        ORDER BY is_primary DESC, sort_order ASC, id ASC
+                        LIMIT 1) as primary_image,
+                       (SELECT COUNT(*) FROM bids WHERE auction_id = a.id) as bid_count,
+                       (SELECT MAX(amount) FROM bids WHERE auction_id = a.id) as highest_bid
+                FROM auctions a
+                LEFT JOIN categories c ON a.category_id = c.id
+                LEFT JOIN users u ON a.user_id = u.id
+                WHERE a.status = 'active' AND a.end_time > NOW() AND a.featured = 1
+                ORDER BY a.end_time ASC
+                LIMIT :limit";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        $results = $stmt->fetchAll();
+        foreach ($results as &$auction) {
+            // Use highest bid as current price, fallback to starting price
+            $auction['current_price'] = $auction['highest_bid'] ?: $auction['starting_price'];
+        }
+        
+        // If no featured auctions, fallback to popular ones
+        if (empty($results)) {
+            return $this->getPopularAuctions($limit);
+        }
+        
+        return $results;
+    }
+    
+    /**
+     * Get related auctions based on category
+     */
+    public function getRelatedAuctions($categoryId, $excludeAuctionId, $limit = 6) {
+        $sql = "SELECT a.*, 
+                       COALESCE(c.name, 'Luokittelematon') as category_name, 
+                       COALESCE(c.slug, 'other') as category_slug,
+                       COALESCE(u.username, 'Tuntematon myyjä') as seller_username,
+                       (SELECT image_path
+                        FROM auction_images
+                        WHERE auction_id = a.id
+                        ORDER BY is_primary DESC, sort_order ASC, id ASC
+                        LIMIT 1) as primary_image,
+                       (SELECT COUNT(*) FROM bids WHERE auction_id = a.id) as bid_count,
+                       (SELECT MAX(amount) FROM bids WHERE auction_id = a.id) as highest_bid
+                FROM auctions a
+                LEFT JOIN categories c ON a.category_id = c.id
+                LEFT JOIN users u ON a.user_id = u.id
+                WHERE a.status = 'active' AND a.end_time > NOW() 
+                  AND a.category_id = :category_id AND a.id != :exclude_id
+                ORDER BY a.end_time ASC
+                LIMIT :limit";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':category_id', (int)$categoryId, PDO::PARAM_INT);
+        $stmt->bindValue(':exclude_id', (int)$excludeAuctionId, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        $results = $stmt->fetchAll();
+        foreach ($results as &$auction) {
+            $auction['current_price'] = $auction['highest_bid'] ?: $auction['starting_price'];
+        }
+        
+        return $results;
+    }
     public function getPopularAuctions($limit = 20) {
         $sql = "SELECT a.*, 
                        COALESCE(c.name, 'Luokittelematon') as category_name, 
@@ -204,7 +216,7 @@ class Auction {
         $sql = "SELECT a.*, c.name as category_name, c.slug as category_slug,
                        u.username as seller_username, u.full_name as seller_name,
                        (SELECT COUNT(*) FROM bids WHERE auction_id = a.id) as bid_count,
-                       0 as watch_count
+                       (SELECT COUNT(*) FROM watchlist WHERE auction_id = a.id) as watch_count
                 FROM auctions a
                 JOIN categories c ON a.category_id = c.id
                 JOIN users u ON a.user_id = u.id
@@ -214,6 +226,56 @@ class Auction {
         $stmt->bindValue(':id', (int)$id, PDO::PARAM_INT);
         $stmt->execute();
         return $stmt->fetch();
+    }
+
+    /**
+     * Get auction metadata as key-value array
+     */
+    public function getAuctionMetadata($auctionId) {
+        $sql = "SELECT field_name, field_value FROM auction_metadata WHERE auction_id = :auction_id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':auction_id', (int)$auctionId, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        $metadata = [];
+        while ($row = $stmt->fetch()) {
+            $metadata[$row['field_name']] = $row['field_value'];
+        }
+        
+        return $metadata;
+    }
+
+    /**
+     * Add or update auction metadata
+     */
+    public function addAuctionMetadata($auctionId, $fieldName, $fieldValue) {
+        $sql = "INSERT INTO auction_metadata (auction_id, field_name, field_value) 
+                VALUES (:auction_id, :field_name, :field_value)
+                ON DUPLICATE KEY UPDATE field_value = VALUES(field_value), updated_at = CURRENT_TIMESTAMP";
+        
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([
+            ':auction_id' => (int)$auctionId,
+            ':field_name' => $fieldName,
+            ':field_value' => $fieldValue
+        ]);
+    }
+
+    /**
+     * Add auction image with caption support
+     */
+    public function addAuctionImage($auctionId, $imagePath, $isPrimary = false, $sortOrder = 0, $caption = null) {
+        $sql = "INSERT INTO auction_images (auction_id, image_path, is_primary, sort_order, caption) 
+                VALUES (:auction_id, :image_path, :is_primary, :sort_order, :caption)";
+        
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([
+            ':auction_id' => (int)$auctionId,
+            ':image_path' => $imagePath,
+            ':is_primary' => $isPrimary ? 1 : 0,
+            ':sort_order' => (int)$sortOrder,
+            ':caption' => $caption
+        ]);
     }
 
     /**
@@ -342,15 +404,21 @@ class Auction {
             $this->db->beginTransaction();
 
             $sql = "INSERT INTO auctions (
-                        user_id, category_id, title, description, 
+                        user_id, category_id, title, description, short_summary,
                         starting_price, current_price, reserve_price, buy_now_price, 
-                        bid_increment, end_time, status, location, condition_description,
-                        seller_commitment
+                        bid_increment, end_time, status, featured, location, condition_description,
+                        condition_grade, seller_notes, pickup_info, shipping_info, payment_info,
+                        inspection_info, included_items, defects, warranty_info, 
+                        model_reference, serial_number, delivery_available, pickup_available,
+                        payment_deadline_days, storage_fee_info, seller_commitment
                     ) VALUES (
-                        :user_id, :category_id, :title, :description,
+                        :user_id, :category_id, :title, :description, :short_summary,
                         :starting_price, :current_price, :reserve_price, :buy_now_price,
-                        :bid_increment, :end_time, :status, :location, :condition_description,
-                        :seller_commitment
+                        :bid_increment, :end_time, :status, :featured, :location, :condition_description,
+                        :condition_grade, :seller_notes, :pickup_info, :shipping_info, :payment_info,
+                        :inspection_info, :included_items, :defects, :warranty_info,
+                        :model_reference, :serial_number, :delivery_available, :pickup_available,
+                        :payment_deadline_days, :storage_fee_info, :seller_commitment
                     )";
             
             $stmt = $this->db->prepare($sql);
@@ -359,6 +427,7 @@ class Auction {
                 ':category_id' => $data['category_id'],
                 ':title' => $data['title'],
                 ':description' => $data['description'],
+                ':short_summary' => $data['short_summary'] ?? null,
                 ':starting_price' => $data['starting_price'],
                 ':current_price' => $data['starting_price'], // Initial current price = starting price
                 ':reserve_price' => $data['reserve_price'] ?? null,
@@ -366,8 +435,24 @@ class Auction {
                 ':bid_increment' => $data['bid_increment'] ?? 1.00,
                 ':end_time' => $data['end_time'],
                 ':status' => $data['status'] ?? 'active',
+                ':featured' => $data['featured'] ?? 0,
                 ':location' => $data['location'] ?? null,
                 ':condition_description' => $data['condition_description'] ?? null,
+                ':condition_grade' => $data['condition_grade'] ?? null,
+                ':seller_notes' => $data['seller_notes'] ?? null,
+                ':pickup_info' => $data['pickup_info'] ?? null,
+                ':shipping_info' => $data['shipping_info'] ?? null,
+                ':payment_info' => $data['payment_info'] ?? null,
+                ':inspection_info' => $data['inspection_info'] ?? null,
+                ':included_items' => $data['included_items'] ?? null,
+                ':defects' => $data['defects'] ?? null,
+                ':warranty_info' => $data['warranty_info'] ?? null,
+                ':model_reference' => $data['model_reference'] ?? null,
+                ':serial_number' => $data['serial_number'] ?? null,
+                ':delivery_available' => $data['delivery_available'] ?? 0,
+                ':pickup_available' => $data['pickup_available'] ?? 1,
+                ':payment_deadline_days' => $data['payment_deadline_days'] ?? 1,
+                ':storage_fee_info' => $data['storage_fee_info'] ?? null,
                 ':seller_commitment' => $data['seller_commitment'] ?? false
             ]);
 
@@ -398,6 +483,20 @@ class Auction {
                     if ($fieldValue !== '' && $fieldValue !== null) {
                         try {
                             $this->addAuctionMetadata($auctionId, $fieldName, $fieldValue);
+                        } catch (Throwable $exception) {
+                            // Non-fatal; continue with auction creation
+                        }
+                    }
+                }
+            }
+
+            $this->db->commit();
+            return $auctionId;
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
+    }
                         } catch (Throwable $exception) {
                             // Metadata is optional; ignore failures to keep auction creation working.
                         }
