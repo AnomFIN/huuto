@@ -180,7 +180,7 @@ try {
     foreach ($indexes as $tableName => $tableIndexes) {
         foreach ($tableIndexes as $indexName => $indexColumns) {
             try {
-                // Check if index already exists
+                // Check if index already exists  
                 $checkQuery = "SHOW INDEX FROM $tableName WHERE Key_name = ?";
                 $stmt = $db->prepare($checkQuery);
                 $stmt->execute([$indexName]);
@@ -319,10 +319,12 @@ try {
 
 } catch (Exception $e) {
     echo "\n[FATAL ERROR] Migration failed: " . $e->getMessage() . "\n";
-    echo "Please check your database connection and permissions.\n";
-    exit(1);
+    echo "Stack trace:\n";
+    echo $e->getTraceAsString() . "\n";
+    echo "Please check your database connection and configuration.\n";
 }
 
 echo "</pre>\n";
 echo "<p><strong>Migration process completed.</strong></p>\n";
-echo "<p><a href='index.php'>← Back to homepage</a> | <a href='admin.php'>Go to admin</a></p>\n";
+echo "<p><a href='index.php'>← Back to homepage</a></p>\n";
+?>
