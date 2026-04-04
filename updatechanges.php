@@ -72,14 +72,14 @@ try {
     
     foreach ($auctionColumns as $columnName => $definition) {
         try {
-            // Check if column already exists
-            $checkQuery = "SHOW COLUMNS FROM auctions LIKE ?";
+            // Check if column already exists - use INFORMATION_SCHEMA instead of SHOW COLUMNS
+            $checkQuery = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'auctions' AND COLUMN_NAME = ?";
             $stmt = $db->prepare($checkQuery);
-            $stmt->execute([$columnName]);
+            $stmt->execute([$config['dbname'], $columnName]);
             $columnExists = $stmt->fetch();
             
             if (!$columnExists) {
-                $alterQuery = "ALTER TABLE auctions ADD COLUMN $columnName $definition";
+                $alterQuery = "ALTER TABLE auctions ADD COLUMN `$columnName` $definition";
                 $db->exec($alterQuery);
                 echo "[✓] Added column 'auctions.$columnName'\n";
                 $changes[] = "Added auctions.$columnName column";
@@ -100,9 +100,9 @@ try {
     echo "\n=== STEP 2: Ensuring auction_images.caption column ===\n";
     
     try {
-        $checkQuery = "SHOW COLUMNS FROM auction_images LIKE 'caption'";
+        $checkQuery = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'auction_images' AND COLUMN_NAME = 'caption'";
         $stmt = $db->prepare($checkQuery);
-        $stmt->execute();
+        $stmt->execute([$config['dbname']]);
         $captionExists = $stmt->fetch();
         
         if (!$captionExists) {
@@ -126,9 +126,9 @@ try {
     echo "\n=== STEP 3: Ensuring auction_metadata table ===\n";
     
     try {
-        $checkQuery = "SHOW TABLES LIKE 'auction_metadata'";
+        $checkQuery = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'auction_metadata'";
         $stmt = $db->prepare($checkQuery);
-        $stmt->execute();
+        $stmt->execute([$config['dbname']]);
         $tableExists = $stmt->fetch();
         
         if (!$tableExists) {
@@ -180,14 +180,13 @@ try {
     foreach ($indexes as $tableName => $tableIndexes) {
         foreach ($tableIndexes as $indexName => $indexColumns) {
             try {
-                // Check if index already exists
-                $checkQuery = "SHOW INDEX FROM $tableName WHERE Key_name = ?";
+                // Check if index already exists using INFORMATION_SCHEMA
+                $checkQuery = "SELECT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND INDEX_NAME = ?";
                 $stmt = $db->prepare($checkQuery);
-                $stmt->execute([$indexName]);
-                $indexExists = $stmt->fetch();
+                $stmt->execute([$config['dbname'], $tableName, $indexName]);
                 
                 if (!$indexExists) {
-                    $createIndexQuery = "CREATE INDEX $indexName ON $tableName $indexColumns";
+                    $createIndexQuery = "CREATE INDEX `$indexName` ON `$tableName` $indexColumns";
                     $db->exec($createIndexQuery);
                     echo "[✓] Added index '$tableName.$indexName'\n";
                     $changes[] = "Added index $tableName.$indexName";
@@ -209,9 +208,9 @@ try {
     echo "\n=== STEP 5: Creating seller_profiles support table ===\n";
     
     try {
-        $checkQuery = "SHOW TABLES LIKE 'seller_profiles'";
+        $checkQuery = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'seller_profiles'";
         $stmt = $db->prepare($checkQuery);
-        $stmt->execute();
+        $stmt->execute([$config['dbname']]);
         $tableExists = $stmt->fetch();
         
         if (!$tableExists) {
