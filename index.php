@@ -13,6 +13,7 @@ $categories = array_map(function($cat) {
 
 $popularAuctions = [];
 $closingSoonAuctions = [];
+$featuredAuctions = [];
 $dataLoadError = null;
 $favoriteIds = [];
 $displayFirstName = '';
