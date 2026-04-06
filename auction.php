@@ -25,7 +25,7 @@ $auction['views'] = (isset($auction['views']) ? (int)$auction['views'] : 0) + 1;
 $images = $auctionModel->getAuctionImages($id);
 $bids = $auctionModel->getAuctionBids($id);
 $metadata = $auctionModel->getAuctionMetadata($id);
-$relatedAuctions = $auctionModel->getRelatedAuctions($id, 4);
+$relatedAuctions = $auctionModel->getRelatedAuctions($auction['category_id'], $id, 4);
 
 if (!is_array($metadata)) {
     $metadata = [];

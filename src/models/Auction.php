@@ -497,41 +497,6 @@ class Auction {
             throw $e;
         }
     }
-                        } catch (Throwable $exception) {
-                            // Metadata is optional; ignore failures to keep auction creation working.
-                        }
-                    }
-                }
-            }
-
-            $this->db->commit();
-            return $auctionId;
-        } catch (Throwable $e) {
-            if ($this->db->inTransaction()) {
-                $this->db->rollBack();
-            }
-            throw $e;
-        }
-    }
-
-    /**
-     * Add an image to an auction
-     */
-    public function addAuctionImage($auctionId, $imagePath, $isPrimary = false, $sortOrder = 0, $caption = null) {
-        $this->ensureImageCaptionColumn();
-
-        $sql = "INSERT INTO auction_images (auction_id, image_path, caption, is_primary, sort_order) 
-                VALUES (:auction_id, :image_path, :caption, :is_primary, :sort_order)";
-        
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([
-            ':auction_id' => $auctionId,
-            ':image_path' => $imagePath,
-            ':caption' => $caption !== null ? mb_substr(trim((string)$caption), 0, 255) : null,
-            ':is_primary' => $isPrimary ? 1 : 0,
-            ':sort_order' => $sortOrder
-        ]);
-    }
 
     /**
      * Get a default test user (for testing without login)
@@ -686,35 +651,5 @@ class Auction {
             $this->db->rollBack();
             throw $e;
         }
-    }    
-    /**
-     * Add metadata field for auction
-     */
-    public function addAuctionMetadata($auctionId, $fieldName, $fieldValue) {
-        $sql = "INSERT INTO auction_metadata (auction_id, field_name, field_value) 
-                VALUES (:auction_id, :field_name, :field_value)
-                ON DUPLICATE KEY UPDATE field_value = VALUES(field_value), updated_at = CURRENT_TIMESTAMP";
-        
-        $stmt = $this->db->prepare($sql);
-        return $stmt->execute([
-            ':auction_id' => $auctionId,
-            ':field_name' => $fieldName,
-            ':field_value' => $fieldValue
-        ]);
     }
-    
-    /**
-     * Get metadata for auction
-     */
-    public function getAuctionMetadata($auctionId) {
-        $sql = "SELECT field_name, field_value FROM auction_metadata WHERE auction_id = :auction_id";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([':auction_id' => $auctionId]);
-        
-        $metadata = [];
-        while ($row = $stmt->fetch()) {
-            $metadata[$row['field_name']] = $row['field_value'];
-        }
-        
-        return $metadata;
-    }}
+}
