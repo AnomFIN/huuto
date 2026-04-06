@@ -14,7 +14,7 @@ echo "<p>Starting database migration to premium marketplace structure...</p>\n";
 echo "<pre>\n";
 
 try {
-    // Load database configuration directly
+    // Load database configuration (now reads from .env)
     $config = require __DIR__ . '/config/database.php';
     
     echo "[INFO] Database config loaded\n";

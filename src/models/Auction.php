@@ -497,22 +497,6 @@ class Auction {
             throw $e;
         }
     }
-                        } catch (Throwable $exception) {
-                            // Metadata is optional; ignore failures to keep auction creation working.
-                        }
-                    }
-                }
-            }
-
-            $this->db->commit();
-            return $auctionId;
-        } catch (Throwable $e) {
-            if ($this->db->inTransaction()) {
-                $this->db->rollBack();
-            }
-            throw $e;
-        }
-    }
 
     /**
      * Add an image to an auction

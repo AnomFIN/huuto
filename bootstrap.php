@@ -5,6 +5,11 @@
  * This ensures consistent configuration, paths, and error handling across the application
  */
 
+// Start output buffering to prevent headers already sent errors
+if (!ob_get_level()) {
+    ob_start();
+}
+
 // Define base paths - these are the ONLY path definitions in the entire application
 if (!defined('BASE_PATH')) {
     define('BASE_PATH', __DIR__);

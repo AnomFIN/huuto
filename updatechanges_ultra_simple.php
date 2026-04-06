@@ -1,8 +1,7 @@
 <?php
 /**
- * SIMPLIFIED Database Migration Script - updatechanges.php
- * Fixed version for production deployment
- * This script safely upgrades legacy database installations to support the premium marketplace features.
+ * ULTRA-SIMPLE Database Migration Script - updatechanges.php
+ * MariaDB-compatible version without prepared statements for metadata queries
  */
 
 // Enable error reporting
@@ -72,11 +71,11 @@ try {
     
     foreach ($auctionColumns as $columnName => $definition) {
         try {
-            // Check if column already exists - use INFORMATION_SCHEMA instead of SHOW COLUMNS
-            $checkQuery = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'auctions' AND COLUMN_NAME = ?";
-            $stmt = $db->prepare($checkQuery);
-            $stmt->execute([$config['dbname'], $columnName]);
-            $columnExists = $stmt->fetch();
+            // Simple direct query without parameters - MariaDB compatible
+            $dbname = $config['dbname'];
+            $checkQuery = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '$dbname' AND TABLE_NAME = 'auctions' AND COLUMN_NAME = '$columnName'";
+            $result = $db->query($checkQuery);
+            $columnExists = $result->fetch();
             
             if (!$columnExists) {
                 $alterQuery = "ALTER TABLE auctions ADD COLUMN `$columnName` $definition";
@@ -100,13 +99,13 @@ try {
     echo "\n=== STEP 2: Ensuring auction_images.caption column ===\n";
     
     try {
-        $checkQuery = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'auction_images' AND COLUMN_NAME = 'caption'";
-        $stmt = $db->prepare($checkQuery);
-        $stmt->execute([$config['dbname']]);
-        $captionExists = $stmt->fetch();
+        $dbname = $config['dbname'];
+        $checkQuery = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '$dbname' AND TABLE_NAME = 'auction_images' AND COLUMN_NAME = 'caption'";
+        $result = $db->query($checkQuery);
+        $captionExists = $result->fetch();
         
         if (!$captionExists) {
-            $alterQuery = "ALTER TABLE auction_images ADD COLUMN caption VARCHAR(255) NULL AFTER image_path";
+            $alterQuery = "ALTER TABLE auction_images ADD COLUMN `caption` VARCHAR(255) NULL AFTER image_path";
             $db->exec($alterQuery);
             echo "[✓] Added auction_images.caption column\n";
             $changes[] = "Added auction_images.caption column";
@@ -126,10 +125,10 @@ try {
     echo "\n=== STEP 3: Ensuring auction_metadata table ===\n";
     
     try {
-        $checkQuery = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'auction_metadata'";
-        $stmt = $db->prepare($checkQuery);
-        $stmt->execute([$config['dbname']]);
-        $tableExists = $stmt->fetch();
+        $dbname = $config['dbname'];
+        $checkQuery = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '$dbname' AND TABLE_NAME = 'auction_metadata'";
+        $result = $db->query($checkQuery);
+        $tableExists = $result->fetch();
         
         if (!$tableExists) {
             $createQuery = "CREATE TABLE auction_metadata (
@@ -180,10 +179,11 @@ try {
     foreach ($indexes as $tableName => $tableIndexes) {
         foreach ($tableIndexes as $indexName => $indexColumns) {
             try {
-                // Check if index already exists using INFORMATION_SCHEMA
-                $checkQuery = "SELECT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND INDEX_NAME = ?";
-                $stmt = $db->prepare($checkQuery);
-                $stmt->execute([$config['dbname'], $tableName, $indexName]);
+                // Check if index exists using direct query
+                $dbname = $config['dbname'];
+                $checkQuery = "SELECT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = '$dbname' AND TABLE_NAME = '$tableName' AND INDEX_NAME = '$indexName'";
+                $result = $db->query($checkQuery);
+                $indexExists = $result->fetch();
                 
                 if (!$indexExists) {
                     $createIndexQuery = "CREATE INDEX `$indexName` ON `$tableName` $indexColumns";
@@ -208,10 +208,10 @@ try {
     echo "\n=== STEP 5: Creating seller_profiles support table ===\n";
     
     try {
-        $checkQuery = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'seller_profiles'";
-        $stmt = $db->prepare($checkQuery);
-        $stmt->execute([$config['dbname']]);
-        $tableExists = $stmt->fetch();
+        $dbname = $config['dbname'];
+        $checkQuery = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '$dbname' AND TABLE_NAME = 'seller_profiles'";
+        $result = $db->query($checkQuery);
+        $tableExists = $result->fetch();
         
         if (!$tableExists) {
             $createQuery = "CREATE TABLE seller_profiles (
@@ -250,20 +250,34 @@ try {
     echo "\n=== STEP 6: Setting sensible defaults for existing auctions ===\n";
     
     try {
-        // Set pickup_available = 1 for all existing auctions
-        $updateQuery = "UPDATE auctions SET pickup_available = 1 WHERE pickup_available IS NULL OR pickup_available = 0";
-        $affectedRows = $db->exec($updateQuery);
-        if ($affectedRows > 0) {
-            echo "[✓] Updated $affectedRows auctions with pickup_available = 1\n";
-            $changes[] = "Set pickup_available=1 for $affectedRows existing auctions";
+        // First check if the columns exist before trying to update them
+        $dbname = $config['dbname'];
+        $checkPickupQuery = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '$dbname' AND TABLE_NAME = 'auctions' AND COLUMN_NAME = 'pickup_available'";
+        $pickupResult = $db->query($checkPickupQuery);
+        $pickupExists = $pickupResult->fetch();
+        
+        $checkPaymentQuery = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '$dbname' AND TABLE_NAME = 'auctions' AND COLUMN_NAME = 'payment_deadline_days'";  
+        $paymentResult = $db->query($checkPaymentQuery);
+        $paymentExists = $paymentResult->fetch();
+        
+        if ($pickupExists) {
+            // Set pickup_available = 1 for all existing auctions
+            $updateQuery = "UPDATE auctions SET pickup_available = 1 WHERE pickup_available IS NULL OR pickup_available = 0";
+            $affectedRows = $db->exec($updateQuery);
+            if ($affectedRows > 0) {
+                echo "[✓] Updated $affectedRows auctions with pickup_available = 1\n";
+                $changes[] = "Set pickup_available=1 for $affectedRows existing auctions";
+            }
         }
         
-        // Set payment_deadline_days = 1 for auctions with null value
-        $updateQuery = "UPDATE auctions SET payment_deadline_days = 1 WHERE payment_deadline_days IS NULL";
-        $affectedRows = $db->exec($updateQuery);
-        if ($affectedRows > 0) {
-            echo "[✓] Updated $affectedRows auctions with payment_deadline_days = 1\n";
-            $changes[] = "Set payment_deadline_days=1 for $affectedRows existing auctions";
+        if ($paymentExists) {
+            // Set payment_deadline_days = 1 for auctions with null value
+            $updateQuery = "UPDATE auctions SET payment_deadline_days = 1 WHERE payment_deadline_days IS NULL";
+            $affectedRows = $db->exec($updateQuery);
+            if ($affectedRows > 0) {
+                echo "[✓] Updated $affectedRows auctions with payment_deadline_days = 1\n";
+                $changes[] = "Set payment_deadline_days=1 for $affectedRows existing auctions";
+            }
         }
         
     } catch (Exception $e) {
@@ -318,10 +332,12 @@ try {
 
 } catch (Exception $e) {
     echo "\n[FATAL ERROR] Migration failed: " . $e->getMessage() . "\n";
-    echo "Please check your database connection and permissions.\n";
-    exit(1);
+    echo "Stack trace:\n";
+    echo $e->getTraceAsString() . "\n";
+    echo "Please check your database connection and configuration.\n";
 }
 
 echo "</pre>\n";
 echo "<p><strong>Migration process completed.</strong></p>\n";
-echo "<p><a href='index.php'>← Back to homepage</a> | <a href='admin.php'>Go to admin</a></p>\n";
+echo "<p><a href='index.php'>← Back to homepage</a></p>\n";
+?>
