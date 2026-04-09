@@ -88,16 +88,17 @@
     const counters = document.querySelectorAll('[data-count]');
     if (!counters.length) return;
 
-    if (prefersReducedMotion) {
-      counters.forEach((el) => {
-        const target = el.dataset.countTarget || el.dataset.count || '0';
-        const suffix = el.dataset.countSuffix || '';
-        const prefix = el.dataset.countPrefix || '';
-        const decimals = parseInt(el.dataset.countDecimals || '0', 10);
-        el.textContent = prefix + parseFloat(target).toFixed(decimals) + suffix;
-      });
-      return;
-    }
+    // Pre-populate all counters with their final value immediately
+    // so there is no blank flash before the IntersectionObserver fires
+    counters.forEach((el) => {
+      const target = el.dataset.countTarget || el.dataset.count || '0';
+      const suffix = el.dataset.countSuffix || '';
+      const prefix = el.dataset.countPrefix || '';
+      const decimals = parseInt(el.dataset.countDecimals || '0', 10);
+      el.textContent = prefix + parseFloat(target).toFixed(decimals) + suffix;
+    });
+
+    if (prefersReducedMotion) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -176,7 +177,7 @@
     let currentY = 0;
 
     document.addEventListener('mousemove', (e) => {
-      // Normalise to -1 … +1 relative to viewport centre
+      // Normalize to -1 … +1 relative to viewport centre
       targetX = (e.clientX / window.innerWidth - 0.5) * 2;
       targetY = (e.clientY / window.innerHeight - 0.5) * 2;
 

@@ -17,6 +17,7 @@
   --radius-pill: 999px;
   --shadow-1: 0 1px 2px rgba(16, 24, 40, 0.05), 0 8px 20px rgba(16, 24, 40, 0.08);
   --shadow-2: 0 2px 6px rgba(16, 24, 40, 0.07), 0 16px 34px rgba(16, 24, 40, 0.12);
+  --bg-tint-end: #f0f5fb;
 }
 
 * { box-sizing: border-box; }
@@ -2154,7 +2155,7 @@ input:checked + .toggle-slider:before {
   );
 }
 .section-tint {
-  background: linear-gradient(180deg, var(--bg-tint) 0%, #f0f5fb 100%);
+  background: linear-gradient(180deg, var(--bg-tint) 0%, var(--bg-tint-end) 100%);
 }
 
 /* --- Parallax hero background layer --------------- */
