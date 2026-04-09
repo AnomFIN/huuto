@@ -1947,10 +1947,10 @@ input:checked + .toggle-slider:before {
 }
 
 /* --- Hero entrance choreography -------------------- */
-/* Every [data-hero] child starts invisible */
+/* Keep hero content visible by default so it still renders without JavaScript */
 [data-hero] {
-  opacity: 0;
-  transform: translateY(22px);
+  opacity: 1;
+  transform: translateY(0);
   transition:
     opacity var(--dur-base) var(--ease-out-expo),
     transform var(--dur-base) var(--ease-out-expo);
