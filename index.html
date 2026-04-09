@@ -62,23 +62,24 @@
     </header>
 
     <main>
+      <!-- HERO — columns enter with stagger via [data-hero] -->
       <section class="hero container">
         <article class="intro-card">
-          <p class="eyebrow">MODERNI SUOMALAINEN MARKKINAPAIKKA</p>
-          <h1>Tervetuloa Huutokauppaan!</h1>
-          <p id="rotatingSlogan" class="slogan" aria-live="polite"></p>
-          <div class="cta-row">
+          <p class="eyebrow" data-hero>MODERNI SUOMALAINEN MARKKINAPAIKKA</p>
+          <h1 data-hero>Tervetuloa Huutokauppaan!</h1>
+          <p id="rotatingSlogan" class="slogan" aria-live="polite" data-hero></p>
+          <div class="cta-row" data-hero>
             <button class="btn-primary" data-action="scroll-popular">Ilmoita kohde</button>
             <button class="btn-secondary" data-action="open-benefit">Ensihuutajan etu</button>
           </div>
-          <div class="trust-pills">
-            <span>5M+ vierailua/kk</span>
+          <div class="trust-pills" data-hero>
+            <span data-count data-count-target="5" data-count-suffix="M+ vierailua/kk" data-count-duration="1200">5M+ vierailua/kk</span>
             <span>Suomalainen palvelu</span>
             <span>Turvalliset maksut</span>
           </div>
         </article>
 
-        <article class="carousel-card" aria-label="Sulkeutuu pian karuselli">
+        <article class="carousel-card" aria-label="Sulkeutuu pian karuselli" data-hero style="transition-delay:200ms">
           <div class="urgent-badge">SULKEUTUU PIAN, TOIMI NYT!</div>
           <div class="carousel-progress"><span id="carouselProgress"></span></div>
           <div class="carousel-wrap">
@@ -89,52 +90,52 @@
           <div class="dots" id="carouselDots"></div>
         </article>
 
-        <aside class="category-card" id="heroCategories">
+        <aside class="category-card" id="heroCategories" data-hero style="transition-delay:340ms">
           <div class="category-head">Kaikki kategoriat</div>
           <ul id="categoryList"></ul>
         </aside>
       </section>
 
-      <section class="listing-section section-tint" id="popularSection">
+      <section class="listing-section section-tint" id="popularSection" data-section-reveal data-reveal>
         <div class="container">
-          <div class="section-head">
+          <div class="section-head" data-reveal>
             <div>
               <h2>Suositut</h2>
               <div class="filter-pills" id="popularPills"></div>
             </div>
             <a href="#" class="show-all">Näytä kaikki →</a>
           </div>
-          <div class="auction-grid" id="popularGrid"></div>
+          <div class="auction-grid" id="popularGrid" data-card-grid></div>
           <button class="load-more" id="loadMorePopular">Lataa lisää kohteita</button>
           <p class="empty-tip" id="popularTip" hidden>Kokeile hakua tai vaihda kategoriaa.</p>
         </div>
       </section>
 
-      <section class="listing-section" id="endingSoonSection">
+      <section class="listing-section" id="endingSoonSection" data-section-reveal data-reveal>
         <div class="container">
-          <div class="section-head">
+          <div class="section-head" data-reveal>
             <div>
               <h2>Sulkeutuu pian</h2>
               <div class="filter-pills" id="endingPills"></div>
             </div>
             <a href="#" class="show-all">Näytä kaikki →</a>
           </div>
-          <div class="auction-grid" id="endingGrid"></div>
+          <div class="auction-grid" id="endingGrid" data-card-grid></div>
           <button class="load-more" id="loadMoreEnding">Lataa lisää kohteita</button>
           <p class="empty-tip" id="endingTip" hidden>Kokeile hakua tai vaihda kategoriaa.</p>
         </div>
       </section>
     </main>
 
-    <footer class="site-footer">
+    <footer class="site-footer" data-reveal>
       <div class="container footer-grid">
-        <div>
+        <div data-reveal>
           <div class="footer-brand"><span class="logo-mark" aria-hidden="true"></span>Huuto247.fi</div>
           <p>Täysin suomalainen palvelu, jonka tuottaa Lahen Huutokaupat Oy.</p>
           <p>Yli viisi miljoonaa vierailua kuukaudessa.</p>
           <div class="socials"><a href="#">Youtube</a><a href="#">Instagram</a><a href="#">Facebook</a></div>
         </div>
-        <div class="links-col" id="footerLinks"></div>
+        <div class="links-col" id="footerLinks" data-reveal="right"></div>
       </div>
       <div class="container footer-bottom">
         <small>© 2026 Huuto247.fi</small>
@@ -166,5 +167,6 @@
     </dialog>
 
     <script src="app.js" defer></script>
+    <script src="premium-effects.js" defer></script>
   </body>
 </html>
