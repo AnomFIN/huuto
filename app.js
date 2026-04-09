@@ -1053,7 +1053,11 @@
   }
 
   function byId(id) {
-    return document.getElementById(id);
+    const element = document.getElementById(id);
+    if (!element) {
+      throw new Error(`Puuttuva DOM-elementti id:llä "${id}"`);
+    }
+    return element;
   }
 
   function readJson(key, fallback) {
