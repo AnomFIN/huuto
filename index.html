@@ -3,22 +3,32 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Huuto247.fi — Premium Huutokauppa</title>
-    <meta name="description" content="Huuto247.fi premium-huutokaupan etusivu mock-datalla." />
+    <title>Huuto247.fi — Suomen Johtava Huutokauppa</title>
+    <meta name="description" content="Huuto247.fi — Suomen johtava premium-huutokauppa. Yli 14 000 aktiivista kohdetta, 89 000+ käyttäjää, 5M+ kuukausivierailua." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <div class="top-bar" role="note" aria-label="Pikatiedotteet">
       <a href="#">Myy yrityksesi varasto tehokkaasti!</a>
+      <span class="top-bar-sep" aria-hidden="true">·</span>
       <a href="#">Löydä todellisia löytöjä</a>
     </div>
 
     <header class="site-header" id="siteHeader">
       <div class="header-row container">
-        <a class="logo" href="#" aria-label="Huuto247 etusivu">
-          <span class="logo-mark" aria-hidden="true"></span>
-          <span>HUUTO247<span class="logo-dot">.fi</span></span>
-        </a>
+        <div class="header-brand-group">
+          <a class="logo" href="#" aria-label="Huuto247 etusivu">
+            <span class="logo-mark" aria-hidden="true"></span>
+            <span>HUUTO247<span class="logo-dot">.fi</span></span>
+          </a>
+          <div class="header-live-badge" title="Aktiivisia huutoja nyt">
+            <span class="header-live-dot" aria-hidden="true"></span>
+            <span>LIVE</span>
+          </div>
+        </div>
 
         <div class="lang-wrap">
           <button id="langToggle" class="lang-btn" aria-label="Vaihda kieli" aria-expanded="false" aria-controls="langMenu">🌐 FI ▾</button>
@@ -62,18 +72,85 @@
     </header>
 
     <main>
-      <!-- HERO — columns enter with stagger via [data-hero] -->
+      <!-- ============================================================
+           HERO SUPER — full-width immersive hero band
+           ============================================================ -->
+      <section class="hero-super" aria-label="Tervetuloa Huuto247:ään">
+        <!-- Ambient floating orbs (pure CSS animation) -->
+        <div class="hero-orb hero-orb-1" aria-hidden="true"></div>
+        <div class="hero-orb hero-orb-2" aria-hidden="true"></div>
+        <div class="hero-orb hero-orb-3" aria-hidden="true"></div>
+        <div class="hero-orb hero-orb-4" aria-hidden="true"></div>
+
+        <div class="container hero-super-inner">
+          <!-- Live activity strip -->
+          <div class="hero-live-strip" data-hero>
+            <span class="hero-live-ring" aria-hidden="true"></span>
+            <span class="hero-live-dot" aria-hidden="true"></span>
+            <strong>LIVE</strong>&ensp;—&ensp;Tuhansia kohteita huutokaupattavana juuri nyt
+          </div>
+
+          <!-- Main headline -->
+          <h1 class="hero-headline" data-hero>
+            Suomen <span class="headline-accent">johtava</span><br>huutokauppa
+          </h1>
+
+          <!-- Sub-headline -->
+          <p class="hero-sub" data-hero>
+            Löydä ainutlaatuiset löydöt tai myy kohteesi tuhansille ostajille.<br>
+            Luotettu, nopea ja täysin suomalainen palvelu.
+          </p>
+
+          <!-- CTA row -->
+          <div class="hero-cta-row" data-hero>
+            <button class="btn-hero-primary" data-action="scroll-popular">
+              Selaa kohteita
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+            <button class="btn-hero-secondary" data-action="open-benefit">
+              Myy oma kohteesi
+            </button>
+          </div>
+
+          <!-- Trust stats bar -->
+          <div class="hero-stats" data-hero>
+            <div class="hero-stat">
+              <span class="hero-stat-value" data-count data-count-target="14238" data-count-duration="1600">14 238</span>
+              <span class="hero-stat-label">Aktiivista kohdetta</span>
+            </div>
+            <div class="hero-stat-sep" aria-hidden="true"></div>
+            <div class="hero-stat">
+              <span class="hero-stat-value" data-count data-count-target="89200" data-count-duration="1800">89 200</span>
+              <span class="hero-stat-label">Rekisteröitynyttä käyttäjää</span>
+            </div>
+            <div class="hero-stat-sep" aria-hidden="true"></div>
+            <div class="hero-stat">
+              <span class="hero-stat-value" data-count data-count-target="5" data-count-suffix="M+" data-count-duration="1200">5M+</span>
+              <span class="hero-stat-label">Kuukausivierailua</span>
+            </div>
+            <div class="hero-stat-sep" aria-hidden="true"></div>
+            <div class="hero-stat">
+              <span class="hero-stat-value" data-count data-count-target="98" data-count-suffix="%" data-count-duration="1400">98%</span>
+              <span class="hero-stat-label">Tyytyväisiä asiakkaita</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================
+           HERO GRID — carousel + categories (existing app.js bindings)
+           ============================================================ -->
       <section class="hero container">
         <article class="intro-card">
-          <p class="eyebrow" data-hero>MODERNI SUOMALAINEN MARKKINAPAIKKA</p>
-          <h1 data-hero>Tervetuloa Huutokauppaan!</h1>
+          <p class="eyebrow" data-hero>UUSIMMAT ILMOITUKSET</p>
+          <h2 class="intro-card-heading" data-hero>Löydä paras tarjous</h2>
           <p id="rotatingSlogan" class="slogan" aria-live="polite" data-hero></p>
           <div class="cta-row" data-hero>
             <button class="btn-primary" data-action="scroll-popular">Ilmoita kohde</button>
             <button class="btn-secondary" data-action="open-benefit">Ensihuutajan etu</button>
           </div>
           <div class="trust-pills" data-hero>
-            <span data-count data-count-target="5" data-count-suffix="M+ vierailua/kk" data-count-duration="1200">5M+ vierailua/kk</span>
+            <span data-count data-count-target="5" data-count-suffix="M+ vierailua/kk" data-count-duration="1200"></span>
             <span>Suomalainen palvelu</span>
             <span>Turvalliset maksut</span>
           </div>

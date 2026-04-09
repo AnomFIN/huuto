@@ -329,6 +329,46 @@
   /* ------------------------------------------------------------------ */
   /*  INIT                                                                 */
   /* ------------------------------------------------------------------ */
+
+  /* ------------------------------------------------------------------ */
+  /*  10. MAGNETIC BUTTON hover effect on hero CTAs                       */
+  /* ------------------------------------------------------------------ */
+  function initMagneticButtons() {
+    if (prefersReducedMotion) return;
+    if (window.matchMedia('(hover: none)').matches) return;
+
+    document.querySelectorAll('.btn-hero-primary, .btn-hero-secondary').forEach((btn) => {
+      btn.addEventListener('mousemove', (e) => {
+        const rect = btn.getBoundingClientRect();
+        const x = (e.clientX - rect.left - rect.width / 2) * 0.14;
+        const y = (e.clientY - rect.top - rect.height / 2) * 0.20;
+        btn.style.transform = `translate(${x}px, ${y}px)`;
+      });
+      btn.addEventListener('mouseleave', () => {
+        btn.style.transform = '';
+      });
+    });
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  11. RIPPLE effect on button click                                   */
+  /* ------------------------------------------------------------------ */
+  function initRipple() {
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest(
+        '.btn-hero-primary, .btn-primary, .btn-hero-secondary, .search-submit, .load-more'
+      );
+      if (!btn) return;
+      const rect = btn.getBoundingClientRect();
+      const ripple = document.createElement('span');
+      ripple.className = 'btn-ripple';
+      ripple.style.left = (e.clientX - rect.left) + 'px';
+      ripple.style.top  = (e.clientY - rect.top)  + 'px';
+      btn.appendChild(ripple);
+      ripple.addEventListener('animationend', () => ripple.remove(), { once: true });
+    });
+  }
+
   function init() {
     initHeroEntrance();
     initScrollReveal();
@@ -339,6 +379,8 @@
     initSectionReveal();
     initCardReveal();
     initSmoothScroll();
+    initMagneticButtons();
+    initRipple();
   }
 
   if (document.readyState === 'loading') {
