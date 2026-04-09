@@ -305,7 +305,21 @@
     document.addEventListener('click', (e) => {
       const anchor = e.target.closest('a[href^="#"]');
       if (!anchor) return;
-      const target = document.querySelector(anchor.getAttribute('href'));
+
+      const href = anchor.getAttribute('href');
+      if (!href || href === '#') return;
+
+      const targetId = href.slice(1);
+      if (!targetId) return;
+
+      let decodedTargetId;
+      try {
+        decodedTargetId = decodeURIComponent(targetId);
+      } catch (err) {
+        return;
+      }
+
+      const target = document.getElementById(decodedTargetId);
       if (!target) return;
       e.preventDefault();
       target.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth' });
