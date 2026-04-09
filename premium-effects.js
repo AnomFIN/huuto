@@ -38,7 +38,7 @@
     const targets = document.querySelectorAll('[data-reveal]');
     if (!targets.length) return;
 
-    if (prefersReducedMotion) {
+    if (prefersReducedMotion || !('IntersectionObserver' in window)) {
       targets.forEach((el) => el.classList.add('reveal-visible'));
       return;
     }
@@ -99,6 +99,12 @@
     });
 
     if (prefersReducedMotion) return;
+
+    if (!('IntersectionObserver' in window)) {
+      // Fallback: animate all counters immediately without observer
+      counters.forEach((el) => animateCounter(el));
+      return;
+    }
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -243,7 +249,7 @@
     const sections = document.querySelectorAll('[data-section-reveal]');
     if (!sections.length) return;
 
-    if (prefersReducedMotion) {
+    if (prefersReducedMotion || !('IntersectionObserver' in window)) {
       sections.forEach((s) => s.classList.add('reveal-visible'));
       return;
     }
@@ -271,6 +277,16 @@
 
     const grids = document.querySelectorAll('[data-card-grid]');
     if (!grids.length) return;
+
+    if (!('IntersectionObserver' in window)) {
+      // Fallback: reveal all card grids immediately
+      grids.forEach((g) => {
+        g.querySelectorAll('.card, .featured-card, .category-card-premium, .cta-block').forEach((card) => {
+          card.classList.add('reveal-visible');
+        });
+      });
+      return;
+    }
 
     const obs = new IntersectionObserver(
       (entries) => {
