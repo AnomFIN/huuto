@@ -119,15 +119,6 @@
     if (window.__HOME_DATA__) {
       const popularItems = window.__HOME_DATA__.popular || [];
       const closingItems = window.__HOME_DATA__.closing || [];
-      state.popularItems = normalizeServerItems(popularItems);
-
-  boot();
-
-  function boot() {
-    // Only use data from server-side (PHP -> JavaScript), never mock data
-    if (window.__HOME_DATA__) {
-      const popularItems = window.__HOME_DATA__.popular || [];
-      const closingItems = window.__HOME_DATA__.closing || [];
       const featuredItems = window.__HOME_DATA__.featured || [];
       state.popularItems = normalizeServerItems(popularItems);
       state.closingItems = normalizeServerItems(closingItems);
@@ -257,6 +248,8 @@
 
   function logInfo(event, data) {
     console.log(`[Huuto247] ${event}:`, data);
+  }
+
   /* ----- COOKIE CONSENT SYSTEM ----- */
   function initializeCookieConsent() {
     // Show consent popup if not previously decided
@@ -1060,9 +1053,11 @@
   }
 
   function byId(id) {
-    const node = document.getElementById(id);
-    if (!node) throw new Error(`Missing required element: ${id}`);
-    return node;
+    const element = document.getElementById(id);
+    if (!element) {
+      throw new Error(`Puuttuva DOM-elementti id:llä "${id}"`);
+    }
+    return element;
   }
 
   function readJson(key, fallback) {
