@@ -88,14 +88,15 @@
     const counters = document.querySelectorAll('[data-count]');
     if (!counters.length) return;
 
-    // Pre-populate all counters with their final value immediately
-    // so there is no blank flash before the IntersectionObserver fires
+    // Initialize counters to their start value (0) so the animation
+    // always counts up smoothly without snapping from final→0→final.
+    // Elements with static fallback text (no data-count-target) keep
+    // their existing text content if the attribute is missing.
     counters.forEach((el) => {
-      const target = el.dataset.countTarget || el.dataset.count || '0';
       const suffix = el.dataset.countSuffix || '';
       const prefix = el.dataset.countPrefix || '';
       const decimals = parseInt(el.dataset.countDecimals || '0', 10);
-      el.textContent = prefix + parseFloat(target).toFixed(decimals) + suffix;
+      el.textContent = prefix + (0).toFixed(decimals) + suffix;
     });
 
     if (prefersReducedMotion) return;
