@@ -47,51 +47,38 @@ $twitterCard = trim((string)($twitterCardType ?? 'summary_large_image'));
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title><?php echo htmlspecialchars($metaTitle, ENT_QUOTES, 'UTF-8'); ?></title>
     <meta name="description" content="<?php echo htmlspecialchars($metaDescription, ENT_QUOTES, 'UTF-8'); ?>">
-    <meta name="keywords" content="<?php echo htmlspecialchars($metaKeywords, ENT_QUOTES, 'UTF-8'); ?>">
-    <meta name="robots" content="<?php echo htmlspecialchars($metaRobots, ENT_QUOTES, 'UTF-8'); ?>">
-    <meta name="author" content="Lahen Huutokaupat Oy">
-    <meta name="application-name" content="Huuto247">
-    <meta name="generator" content="Huuto247.fi">
-    <meta name="theme-color" content="#2668ff">
-
-    <meta property="og:type" content="<?php echo htmlspecialchars($ogType, ENT_QUOTES, 'UTF-8'); ?>">
-    <meta property="og:locale" content="<?php echo htmlspecialchars($ogLocale, ENT_QUOTES, 'UTF-8'); ?>">
-    <meta property="og:site_name" content="Huuto247">
-    <meta property="og:title" content="<?php echo htmlspecialchars($metaTitle, ENT_QUOTES, 'UTF-8'); ?>">
-    <meta property="og:description" content="<?php echo htmlspecialchars($metaDescription, ENT_QUOTES, 'UTF-8'); ?>">
-    <meta property="og:url" content="<?php echo htmlspecialchars($canonicalUrl, ENT_QUOTES, 'UTF-8'); ?>">
-    <meta property="og:image" content="<?php echo htmlspecialchars($ogImage, ENT_QUOTES, 'UTF-8'); ?>">
-
-    <meta name="twitter:card" content="<?php echo htmlspecialchars($twitterCard, ENT_QUOTES, 'UTF-8'); ?>">
-    <meta name="twitter:title" content="<?php echo htmlspecialchars($metaTitle, ENT_QUOTES, 'UTF-8'); ?>">
-    <meta name="twitter:description" content="<?php echo htmlspecialchars($metaDescription, ENT_QUOTES, 'UTF-8'); ?>">
-    <meta name="twitter:image" content="<?php echo htmlspecialchars($ogImage, ENT_QUOTES, 'UTF-8'); ?>">
-
-    <link rel="canonical" href="<?php echo htmlspecialchars($canonicalUrl, ENT_QUOTES, 'UTF-8'); ?>">
-    <link rel="alternate" hreflang="fi" href="<?php echo htmlspecialchars($canonicalUrl, ENT_QUOTES, 'UTF-8'); ?>">
-
-    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon16x.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon32x.png">
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-    <link rel="shortcut icon" href="/assets/favicon32x.png" type="image/png">
-    <link rel="apple-touch-icon" href="/assets/favicon32x.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
         <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
         <div class="top-bar" role="note" aria-label="Pikatiedotteet">
                 <a href="/info.php?page=myyminen">Myy yrityksesi varasto tehokkaasti!</a>
+        <span class="top-bar-sep" aria-hidden="true">·</span>
                 <a href="/info.php?page=ohjeet">Löydä todellisia löytöjä</a>
         </div>
 
         <header class="site-header" id="siteHeader">
             <div class="header-row container">
+        <div class="header-brand-group">
                 <a class="logo" href="/index.php" aria-label="Huuto247 etusivu">
                     <span class="logo-mark" aria-hidden="true"></span>
                     <span>HUUTO247<span class="logo-dot">.fi</span></span>
                 </a>
+          <div class="header-live-badge" title="Aktiivisia huutoja nyt">
+            <span class="header-live-dot" aria-hidden="true"></span>
+            <span>LIVE</span>
+          </div>
+        </div>
 
                 <div class="lang-wrap">
-                    <button class="lang-btn" type="button" aria-label="Kieli">🌐 FI</button>
+          <button id="langToggle" class="lang-btn" aria-label="Vaihda kieli" aria-expanded="false" aria-controls="langMenu">🌐 FI ▾</button>
+          <ul id="langMenu" class="lang-menu" role="menu" aria-label="Kielivalinta">
+            <li><button role="menuitem">FI</button></li>
+            <li><button role="menuitem">EN</button></li>
+            <li><button role="menuitem">SV</button></li>
+          </ul>
                 </div>
 
                 <form class="search-shell" role="search" action="/category.php" method="GET" aria-label="Kohteiden haku">
@@ -114,32 +101,30 @@ $twitterCard = trim((string)($twitterCardType ?? 'summary_large_image'));
                     <div class="search-field-wrap">
                         <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.5 4a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13Zm0 1.8a4.7 4.7 0 1 0 0 9.4 4.7 4.7 0 0 0 0-9.4Zm5.87 10.6 3.2 3.2-1.28 1.28-3.2-3.2 1.28-1.28Z"/></svg>
                         <input id="headerSearchInput" type="search" name="q" placeholder="Mitä etsit?" autocomplete="off" value="<?php echo htmlspecialchars($headerSearchQuery, ENT_QUOTES, 'UTF-8'); ?>" />
+            <button type="button" id="clearSearch" class="clear-btn" aria-label="Tyhjennä haku">✕</button>
+            <span id="searchHint" class="search-hint">Paina Enter hakeaksesi</span>
                     </div>
                     <button type="submit" class="search-submit">Hae</button>
                 </form>
 
                 <nav class="header-links" aria-label="Pikalinkit">
-                    <a href="/index.php" class="desktop-only">Etusivu</a>
-                    <a href="/category.php?closing_soon=1">Sulkeutuu pian</a>
-                    <a href="/info.php?page=kayttajien-valinen-huutokauppa" class="desktop-only">Kauppatavat</a>
-                    <a class="icon-pill" href="/category.php?tab=favorites" aria-label="Suosikit">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.2 4.65 12.9a4.6 4.6 0 1 1 6.5-6.5L12 7.25l.85-.85a4.6 4.6 0 1 1 6.5 6.5L12 20.2Z"/></svg>
-                    </a>
-                    <a class="icon-pill" href="/category.php?tab=watching" aria-label="Seuranta">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Zm10 3.8a3.8 3.8 0 1 0 0-7.6 3.8 3.8 0 0 0 0 7.6Z"/></svg>
-                    </a>
-                    <a class="icon-pill" href="/category.php?tab=my-bids" aria-label="Omat huudot">
-                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5h16v11H4v-11Zm2 2v7h12v-7H6Zm2.5 10h7v1.8h-7V18.5Z"/></svg>
-                    </a>
+          <a href="#popularSection">Kategoriat</a>
+          <a href="#endingSoonSection">Sulkeutuu pian</a>
+          <button class="icon-pill" aria-label="Suosikit">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.2 4.65 12.9a4.6 4.6 0 1 1 6.5-6.5L12 7.25l.85-.85a4.6 4.6 0 1 1 6.5 6.5L12 20.2Z"/></svg>
+          </button>
+          <button class="icon-pill" aria-label="Seuranta">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Zm10 3.8a3.8 3.8 0 1 0 0-7.6 3.8 3.8 0 0 0 0 7.6Z"/></svg>
+          </button>
+          <button class="icon-pill" aria-label="Omat huudot">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5h16v11H4v-11Zm2 2v7h12v-7H6Zm2.5 10h7v1.8h-7V18.5Z"/></svg>
+          </button>
 
                     <?php if (function_exists('is_logged_in') && is_logged_in()): ?>
                         <span class="user-greeting">Hei, <?php echo htmlspecialchars($headerUserGreeting !== '' ? $headerUserGreeting : 'Käyttäjä', ENT_QUOTES, 'UTF-8'); ?>!</span>
-                        <a href="/admin.php" class="desktop-only">Admin</a>
-                        <a href="/add_product.php" class="register-pill">Lisää tuote</a>
-                        <a href="/auth/logout.php" class="desktop-only">Kirjaudu ulos</a>
                     <?php else: ?>
-                        <a href="/auth/login.php">Kirjaudu sisään</a>
-                        <a href="/auth/register.php" class="register-pill">Rekisteröidy</a>
+            <button id="loginLink">Kirjaudu sisään</button>
+            <button id="registerLink" class="register-pill">Rekisteröidy</button>
                     <?php endif; ?>
                 </nav>
             </div>

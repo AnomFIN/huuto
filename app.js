@@ -249,6 +249,8 @@
 
   function logInfo(event, data) {
     console.log(`[Huuto247] ${event}:`, data);
+  }
+
   /* ----- COOKIE CONSENT SYSTEM ----- */
   function initializeCookieConsent() {
     // Show consent popup if not previously decided
@@ -1061,9 +1063,11 @@
   }
 
   function byId(id) {
-    const node = document.getElementById(id);
-    if (!node) throw new Error(`Missing required element: ${id}`);
-    return node;
+    const element = document.getElementById(id);
+    if (!element) {
+      throw new Error(`Puuttuva DOM-elementti id:llä "${id}"`);
+    }
+    return element;
   }
 
   function readJson(key, fallback) {

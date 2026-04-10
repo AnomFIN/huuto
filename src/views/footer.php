@@ -1,50 +1,60 @@
         </main>
 
-        <footer class="site-footer">
-            <div class="container footer-grid">
-                <div>
-                    <div class="footer-brand"><span class="logo-mark" aria-hidden="true"></span>Huuto247.fi</div>
-                    <p>Täysin suomalainen palvelu, jonka tuottaa Lahen Huutokaupat Oy.</p>
-                    <p>Yli viisi miljoonaa vierailua kuukaudessa.</p>
-                    <div class="socials">
-                        <a href="/info.php?page=some">Youtube</a>
-                        <a href="/info.php?page=some">Instagram</a>
-                        <a href="/info.php?page=some">Facebook</a>
-                    </div>
-                </div>
-                <div class="links-col">
-                    <a href="/info.php?page=tietoa-palvelusta">Tietoa palvelusta</a>
-                    <a href="/info.php?page=tietoa-huutajalle">Tietoa huutajalle</a>
-                    <a href="/info.php?page=kayttoehdot">Palvelun käyttöehdot</a>
-                    <a href="/info.php?page=myyminen">Aloita myyminen</a>
-                    <a href="/info.php?page=myyjana-huuto247">Mitä tarkoittaa myyjänä Huuto247?</a>
-                    <a href="/info.php?page=kayttajien-valinen-huutokauppa">Mitä tarkoittaa käyttäjien välinen huutokauppa?</a>
-                    <a href="/info.php?page=myyntiehdot">Huuto247-myyntiehdot</a>
-                    <a href="/info.php?page=hinnasto">Hinnasto</a>
-                    <a href="/info.php?page=maksutavat">Maksutavat</a>
-                    <a href="/info.php?page=asiakaspalvelu">Asiakaspalvelu</a>
-                    <a href="/info.php?page=ohjeet">Ohjeet ja vinkit</a>
-                    <a href="/info.php?page=uutiskirje">Tilaa uutiskirje</a>
-                    <a href="/info.php?page=blogi">Blogi</a>
-                    <a href="/info.php?page=kampanjat">Kampanjat</a>
-                    <a href="/info.php?page=tietoa-meista">Tietoa meistä</a>
-                    <a href="/info.php?page=lahen-huutokauppa">Lahen huutokauppa</a>
-                    <a href="/info.php?page=meille-toihin">Meille töihin</a>
-                    <a href="/info.php?page=medialle">Medialle</a>
-                    <a href="/info.php?page=tietosuojaseloste">Tietosuojaseloste</a>
-                    <a href="/info.php?page=evasteet">Evästeasetukset</a>
-                    <a href="/info.php?page=lapinakyvyys">Läpinäkyvyysraportointi</a>
-                    <a href="/info.php?page=saavutettavuus">Saavutettavuusseloste</a>
-                </div>
+    <footer class="site-footer">
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-brand">
+            <a href="index.php" class="footer-logo">
+              <span class="logo-mark" aria-hidden="true"></span>
+              <span>HUUTO247<span class="logo-dot">.fi</span></span>
+            </a>
+            <p>Suomen johtava huutokauppapalvelu</p>
+          </div>
+
+          <div class="footer-links">
+            <div class="footer-col">
+              <h4>Huutokaupat</h4>
+              <a href="/category.php">Kaikki kategoriat</a>
+              <a href="/category.php?closing_soon=1">Päättyvät pian</a>
+              <a href="/add_product.php">Myy kohteesi</a>
             </div>
-            <div class="container footer-bottom">
-                <small>© 2026 Huuto247.fi</small>
-                <a class="cookie-pill" href="/info.php?page=evasteet">Evästeasetukset</a>
+            
+            <div class="footer-col">
+              <h4>Tuki</h4>
+              <a href="/info.php?page=ohjeet">Ohjeet</a>
+              <a href="/info.php?page=tuki">Asiakastuki</a>
+              <a href="/info.php?page=maksut">Maksutavat</a>
             </div>
-            <div class="container" style="padding-top:.45rem; padding-bottom:.2rem; color:#d3deea; font-size:.78rem; opacity:.92;">
-                Lahen Huutokaupat Oy · Y-tunnus 3480428-5 · PRH/YTJ rekisteritiedot · Toimitusjohtaja Samu Petteri Kuitunen · puh. 0408179806 · info@huuto247.fi
+            
+            <div class="footer-col">
+              <h4>Yritys</h4>
+              <a href="/info.php?page=meista">Tietoa meistä</a>
+              <a href="/info.php?page=yhteystiedot">Yhteystiedot</a>
+              <a href="/info.php?page=rekry">Työpaikat</a>
             </div>
-        </footer>
+          </div>
+
+          <div class="footer-meta">
+            <div class="footer-trust">
+              <span>Suomalainen palvelu</span>
+              <span>5M+ vierailua/kk</span>
+              <span>Yli 89 000 käyttäjää</span>
+            </div>
+            
+            <div class="footer-legal">
+              <a href="/info.php?page=kayttoehdot">Käyttöehdot</a>
+              <a href="/info.php?page=tietosuoja">Tietosuoja</a>
+              <a href="/info.php?page=evasteet">Evästeet</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <p>&copy; 2026 Huuto247.fi - Kaikki oikeudet pidätetään</p>
+          <p>Lahen Huutokaupat Oy</p>
+        </div>
+      </div>
+    </footer>
 
         <script>
             function updateCountdowns() {
@@ -95,5 +105,6 @@
             setInterval(updateCountdowns, 1000);
             updateCountdowns();
         </script>
+        <script src="/app.js" defer></script>
 </body>
 </html>
