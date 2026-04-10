@@ -1,17 +1,22 @@
 <?php
-// Bootstrap the application
+/**
+ * Huuto247.fi - Täydellinen Admin-paneeli
+ * Kattava hallintajärjestelmä kaikille sivuston toiminnoille
+ */
 require_once __DIR__ . '/bootstrap.php';
 
 $success = '';
 $error = '';
 $adminPassword = 'huutojussi';
 
+// Logout functionality
 if (isset($_GET['logout_admin']) && $_GET['logout_admin'] === '1') {
     unset($_SESSION['panel_admin_authenticated'], $_SESSION['panel_admin_login_at']);
     header('Location: /admin.php');
     exit;
 }
 
+// Login processing
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string)($_POST['action'] ?? '') === 'admin_login') {
     $submittedPassword = (string)($_POST['admin_password'] ?? '');
     if (hash_equals($adminPassword, $submittedPassword)) {
@@ -27,29 +32,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string)($_POST['action'] ?? '') ==
         header('Location: /admin.php');
         exit;
     }
-
     $error = 'Virheellinen salasana.';
 }
 
 $adminPanelAuthenticated = function_exists('is_panel_admin_authenticated') && is_panel_admin_authenticated();
 
+// Show login form if not authenticated
 if (!$adminPanelAuthenticated) {
     $pageTitle = 'Admin kirjautuminen - ' . SITE_NAME;
     include SRC_PATH . '/views/header.php';
     $nextValue = trim((string)($_GET['next'] ?? ''));
     ?>
-    <section style="max-width:420px; margin:2rem auto; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow-1); padding:1.4rem;">
-      <h1 style="margin:0 0 .6rem;">Admin kirjautuminen</h1>
-      <p style="margin:0 0 1rem; color:var(--text-700);">Kirjaudu admin-paneeliin salasanalla.</p>
+    <section style="max-width:420px; margin:4rem auto; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow-2); padding:2rem;">
+      <div style="text-align:center; margin-bottom:1.5rem;">
+        <h1 style="margin:0 0 .5rem; font-size:1.8rem; font-weight:800; color:var(--text-900);">🔐 Admin-paneeli</h1>
+        <p style="margin:0; color:var(--text-600); font-size:.95rem;">Kirjaudu hallintapaneeliin</p>
+      </div>
       <?php if ($error): ?>
-        <div style="background:#fee2e2; border:1px solid #ef4444; color:#991b1b; padding:.7rem .8rem; border-radius:8px; margin-bottom:.8rem;"><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></div>
+        <div style="background:#fee2e2; border:1px solid #ef4444; color:#991b1b; padding:.8rem 1rem; border-radius:8px; margin-bottom:1rem; text-align:center; font-weight:600;"><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></div>
       <?php endif; ?>
       <form method="POST">
         <input type="hidden" name="action" value="admin_login">
         <input type="hidden" name="next" value="<?php echo htmlspecialchars($nextValue, ENT_QUOTES, 'UTF-8'); ?>">
-        <label for="admin_password" style="display:block; margin-bottom:.4rem; font-weight:600;">Salasana</label>
-        <input id="admin_password" name="admin_password" type="password" required style="width:100%; padding:.7rem; border:1px solid var(--line); border-radius:8px; background:var(--surface); margin-bottom:.8rem;">
-        <button type="submit" class="btn-primary">Kirjaudu adminiin</button>
+        <div style="margin-bottom:1rem;">
+          <label for="admin_password" style="display:block; margin-bottom:.5rem; font-weight:600; color:var(--text-800);">Salasana</label>
+          <input id="admin_password" name="admin_password" type="password" required 
+                 style="width:100%; padding:.8rem; border:2px solid var(--line); border-radius:8px; background:var(--surface); font-size:1rem; transition:border-color .2s;" 
+                 onfocus="this.style.borderColor='var(--accent-500)'" 
+                 onblur="this.style.borderColor='var(--line)'">
+        </div>
+        <button type="submit" style="width:100%; padding:.9rem; background:linear-gradient(135deg, #3b82f6, #1d4ed8); color:white; border:0; border-radius:8px; font-weight:700; font-size:1rem; cursor:pointer; transition:transform .2s;" 
+                onmouseover="this.style.transform='translateY(-1px)'" 
+                onmouseout="this.style.transform='translateY(0)'">
+          Kirjaudu sisään
+        </button>
       </form>
     </section>
     <?php
@@ -57,47 +73,273 @@ if (!$adminPanelAuthenticated) {
     exit;
 }
 
-// Handle form submissions  
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save_openai_settings') {
-    $settingsFile = __DIR__ . '/config/ai_settings.php';
-    $settings = [
-        'openai_api_key' => trim($_POST['openai_api_key'] ?? ''),
-        'ai_enabled' => isset($_POST['ai_enabled']),
-        'updated_at' => date('Y-m-d H:i:s')
-    ];
+// Get current page/tab
+$currentTab = $_GET['tab'] ?? 'dashboard';
+$validTabs = ['dashboard', 'auctions', 'users', 'categories', 'analytics', 'settings', 'logs'];
+if (!in_array($currentTab, $validTabs)) {
+    $currentTab = 'dashboard';
+}
+
+// Database connection
+try {
+    $db = Database::getInstance()->getConnection();
+} catch (Exception $e) {
+    $error = 'Tietokantayhteys epäonnistui: ' . $e->getMessage();
+    $db = null;
+}
+
+// Handle form submissions
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $db) {
+    $action = $_POST['action'] ?? '';
     
-    if (file_put_contents($settingsFile, "<?php\nreturn " . var_export($settings, true) . ";\n")) {
-        $success = 'AI-asetukset tallennettu!';
-    } else {
-        $error = 'Tallentaminen epäonnistui';
+    switch ($action) {
+        case 'save_analytics_settings':
+            try {
+                $settingsFile = __DIR__ . '/config/analytics_settings.php';
+                $settings = [
+                    'google_analytics_id' => trim($_POST['google_analytics_id'] ?? ''),
+                    'google_tag_manager_id' => trim($_POST['google_tag_manager_id'] ?? ''),
+                    'facebook_pixel_id' => trim($_POST['facebook_pixel_id'] ?? ''),
+                    'analytics_enabled' => isset($_POST['analytics_enabled']),
+                    'cookie_consent_required' => isset($_POST['cookie_consent_required']),
+                    'updated_at' => date('Y-m-d H:i:s')
+                ];
+                
+                if (file_put_contents($settingsFile, "<?php\nreturn " . var_export($settings, true) . ";\n")) {
+                    $success = 'Analytics-asetukset tallennettu onnistuneesti!';
+                } else {
+                    $error = 'Asetuksien tallentaminen epäonnistui';
+                }
+            } catch (Exception $e) {
+                $error = 'Virhe asetuksien tallentamisessa: ' . $e->getMessage();
+            }
+            break;
+            
+        case 'save_ai_settings':
+            try {
+                $settingsFile = __DIR__ . '/config/ai_settings.php';
+                $settings = [
+                    'openai_api_key' => trim($_POST['openai_api_key'] ?? ''),
+                    'ai_enabled' => isset($_POST['ai_enabled']),
+                    'auto_generate_descriptions' => isset($_POST['auto_generate_descriptions']),
+                    'auto_categorize' => isset($_POST['auto_categorize']),
+                    'updated_at' => date('Y-m-d H:i:s')
+                ];
+                
+                if (file_put_contents($settingsFile, "<?php\nreturn " . var_export($settings, true) . ";\n")) {
+                    $success = 'AI-asetukset tallennettu onnistuneesti!';
+                } else {
+                    $error = 'AI-asetuksien tallentaminen epäonnistui';
+                }
+            } catch (Exception $e) {
+                $error = 'Virhe AI-asetuksien tallentamisessa: ' . $e->getMessage();
+            }
+            break;
+            
+        case 'create_category':
+            try {
+                $db->exec('ALTER TABLE categories ADD COLUMN IF NOT EXISTS description TEXT NULL');
+                $db->exec('ALTER TABLE categories ADD COLUMN IF NOT EXISTS logo VARCHAR(255) NULL');
+                
+                $name = trim((string)($_POST['category_name'] ?? ''));
+                $description = trim((string)($_POST['category_description'] ?? ''));
+                $logo = trim((string)($_POST['category_logo'] ?? ''));
+                
+                if ($name === '') {
+                    throw new RuntimeException('Kategorian nimi on pakollinen.');
+                }
+                
+                $stmt = $db->prepare('INSERT INTO categories (name, description, logo) VALUES (?, ?, ?)');
+                $stmt->execute([$name, $description !== '' ? $description : null, $logo !== '' ? $logo : null]);
+                $success = 'Kategoria "' . htmlspecialchars($name) . '" lisätty onnistuneesti!';
+            } catch (Exception $e) {
+                $error = 'Kategorian lisäys epäonnistui: ' . $e->getMessage();
+            }
+            break;
+            
+        case 'update_category':
+            try {
+                $id = (int)($_POST['category_id'] ?? 0);
+                $name = trim((string)($_POST['category_name'] ?? ''));
+                $description = trim((string)($_POST['category_description'] ?? ''));
+                $logo = trim((string)($_POST['category_logo'] ?? ''));
+                
+                if ($id <= 0 || $name === '') {
+                    throw new RuntimeException('Virheellisiä tietoja.');
+                }
+                
+                $stmt = $db->prepare('UPDATE categories SET name = ?, description = ?, logo = ? WHERE id = ?');
+                $stmt->execute([$name, $description !== '' ? $description : null, $logo !== '' ? $logo : null, $id]);
+                $success = 'Kategoria päivitetty onnistuneesti!';
+            } catch (Exception $e) {
+                $error = 'Kategorian päivitys epäonnistui: ' . $e->getMessage();
+            }
+            break;
+            
+        case 'delete_category':
+            try {
+                $id = (int)($_POST['category_id'] ?? 0);
+                if ($id <= 0) {
+                    throw new RuntimeException('Virheellinen kategoria ID.');
+                }
+                
+                // Check if category has auctions
+                $check = $db->prepare('SELECT COUNT(*) FROM auctions WHERE category_id = ?');
+                $check->execute([$id]);
+                $auctionCount = $check->fetchColumn();
+                
+                if ($auctionCount > 0) {
+                    throw new RuntimeException('Kategoriaa ei voi poistaa, koska sillä on ' . $auctionCount . ' kohdetta.');
+                }
+                
+                $stmt = $db->prepare('DELETE FROM categories WHERE id = ?');
+                $stmt->execute([$id]);
+                $success = 'Kategoria poistettu onnistuneesti!';
+            } catch (Exception $e) {
+                $error = 'Kategorian poisto epäonnistui: ' . $e->getMessage();
+            }
+            break;
+            
+        case 'update_auction_status':
+            try {
+                $id = (int)($_POST['auction_id'] ?? 0);
+                $status = $_POST['new_status'] ?? '';
+                $validStatuses = ['active', 'ended', 'draft', 'cancelled'];
+                
+                if ($id <= 0 || !in_array($status, $validStatuses)) {
+                    throw new RuntimeException('Virheellisiä tietoja.');
+                }
+                
+                $stmt = $db->prepare('UPDATE auctions SET status = ? WHERE id = ?');
+                $stmt->execute([$status, $id]);
+                $success = 'Huutokaupan tila päivitetty onnistuneesti!';
+            } catch (Exception $e) {
+                $error = 'Tilan päivitys epäonnistui: ' . $e->getMessage();
+            }
+            break;
+            
+        case 'delete_auction':
+            try {
+                $id = (int)($_POST['auction_id'] ?? 0);
+                if ($id <= 0) {
+                    throw new RuntimeException('Virheellinen huutokauppa ID.');
+                }
+                
+                // Delete related data first
+                $db->prepare('DELETE FROM bids WHERE auction_id = ?')->execute([$id]);
+                $db->prepare('DELETE FROM auction_images WHERE auction_id = ?')->execute([$id]);
+                $db->prepare('DELETE FROM auctions WHERE id = ?')->execute([$id]);
+                
+                $success = 'Huutokauppa ja kaikki siihen liittyvä data poistettu onnistuneesti!';
+            } catch (Exception $e) {
+                $error = 'Huutokaupan poisto epäonnistui: ' . $e->getMessage();
+            }
+            break;
     }
 }
 
-  if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'create_category') {
-    try {
-      $db = Database::getInstance()->getConnection();
-      $db->exec('ALTER TABLE categories ADD COLUMN IF NOT EXISTS description TEXT NULL');
-      $db->exec('ALTER TABLE categories ADD COLUMN IF NOT EXISTS logo VARCHAR(255) NULL');
-
-      $name = trim((string)($_POST['category_name'] ?? ''));
-      $description = trim((string)($_POST['category_description'] ?? ''));
-      $logo = trim((string)($_POST['category_logo'] ?? ''));
-
-      if ($name === '') {
-        throw new RuntimeException('Kategorian nimi on pakollinen.');
-      }
-
-      $stmt = $db->prepare('INSERT INTO categories (name, description, logo) VALUES (?, ?, ?)');
-      $stmt->execute([$name, $description !== '' ? $description : null, $logo !== '' ? $logo : null]);
-      $success = 'Kategoria lisätty.';
-    } catch (Throwable $exception) {
-      $error = 'Kategorian lisäys epäonnistui: ' . $exception->getMessage();
+// Load settings
+$aiSettings = ['openai_api_key' => '', 'ai_enabled' => false, 'auto_generate_descriptions' => false, 'auto_categorize' => false];
+if (file_exists(__DIR__ . '/config/ai_settings.php')) {
+    $loadedAiSettings = include __DIR__ . '/config/ai_settings.php';
+    if (is_array($loadedAiSettings)) {
+        $aiSettings = array_merge($aiSettings, $loadedAiSettings);
     }
-  }
+}
 
-  if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_category') {
+$analyticsSettings = ['google_analytics_id' => '', 'google_tag_manager_id' => '', 'facebook_pixel_id' => '', 'analytics_enabled' => false, 'cookie_consent_required' => true];
+if (file_exists(__DIR__ . '/config/analytics_settings.php')) {
+    $loadedAnalyticsSettings = include __DIR__ . '/config/analytics_settings.php';
+    if (is_array($loadedAnalyticsSettings)) {
+        $analyticsSettings = array_merge($analyticsSettings, $loadedAnalyticsSettings);
+    }
+}
+
+// Collect data for current tab
+$data = [];
+if ($db) {
     try {
-      $db = Database::getInstance()->getConnection();
+        switch ($currentTab) {
+            case 'dashboard':
+                $data['stats'] = [
+                    'total_auctions' => $db->query('SELECT COUNT(*) FROM auctions')->fetchColumn() ?: 0,
+                    'active_auctions' => $db->query("SELECT COUNT(*) FROM auctions WHERE status = 'active'")->fetchColumn() ?: 0,
+                    'total_users' => $db->query('SELECT COUNT(*) FROM users')->fetchColumn() ?: 0,
+                    'total_bids' => $db->query('SELECT COUNT(*) FROM bids')->fetchColumn() ?: 0,
+                    'categories_count' => $db->query('SELECT COUNT(*) FROM categories')->fetchColumn() ?: 0,
+                ];
+                $data['recent_auctions'] = $db->query('SELECT id, title, status, created_at FROM auctions ORDER BY created_at DESC LIMIT 10')->fetchAll() ?: [];
+                $data['recent_users'] = $db->query('SELECT id, username, email, created_at FROM users ORDER BY created_at DESC LIMIT 10')->fetchAll() ?: [];
+                break;
+                
+            case 'auctions':
+                $search = $_GET['search'] ?? '';
+                $statusFilter = $_GET['status'] ?? 'all';
+                
+                $whereClause = '';
+                $params = [];
+                
+                if ($search !== '') {
+                    $whereClause = 'WHERE (a.title LIKE ? OR a.description LIKE ?)';
+                    $params[] = '%' . $search . '%';
+                    $params[] = '%' . $search . '%';
+                }
+                
+                if ($statusFilter !== 'all' && in_array($statusFilter, ['active', 'ended', 'draft', 'cancelled'])) {
+                    $whereClause .= ($whereClause ? ' AND ' : 'WHERE ') . 'a.status = ?';
+                    $params[] = $statusFilter;
+                }
+                
+                $stmt = $db->prepare('SELECT a.*, c.name as category_name, 
+                                     (SELECT COUNT(*) FROM bids b WHERE b.auction_id = a.id) as bid_count
+                                     FROM auctions a 
+                                     LEFT JOIN categories c ON a.category_id = c.id 
+                                     ' . $whereClause . ' 
+                                     ORDER BY a.id DESC 
+                                     LIMIT 100');
+                $stmt->execute($params);
+                $data['auctions'] = $stmt->fetchAll() ?: [];
+                break;
+                
+            case 'users':
+                $data['users'] = $db->query('SELECT u.*, 
+                                           (SELECT COUNT(*) FROM auctions a WHERE a.user_id = u.id) as auction_count,
+                                           (SELECT COUNT(*) FROM bids b WHERE b.user_id = u.id) as bid_count
+                                           FROM users u 
+                                           ORDER BY u.id DESC 
+                                           LIMIT 100')->fetchAll() ?: [];
+                break;
+                
+            case 'categories':
+                $data['categories'] = $db->query('SELECT c.*, 
+                                                (SELECT COUNT(*) FROM auctions a WHERE a.category_id = c.id) as auction_count
+                                                FROM categories c 
+                                                ORDER BY c.id ASC')->fetchAll() ?: [];
+                break;
+                
+            case 'logs':
+                $logFiles = ['error.log', 'access.log', 'admin.log'];
+                $data['log_files'] = [];
+                foreach ($logFiles as $logFile) {
+                    $logPath = __DIR__ . '/logs/' . $logFile;
+                    if (file_exists($logPath)) {
+                        $data['log_files'][$logFile] = [
+                            'size' => filesize($logPath),
+                            'modified' => filemtime($logPath),
+                            'content' => file_get_contents($logPath)
+                        ];
+                    }
+                }
+                break;
+        }
+    } catch (Exception $e) {
+        $error = 'Tietojen hakeminen epäonnistui: ' . $e->getMessage();
+    }
+}
+
+$pageTitle = 'Admin Panel - ' . SITE_NAME;
+include SRC_PATH . '/views/header.php';
+?>
       $db->exec('ALTER TABLE categories ADD COLUMN IF NOT EXISTS description TEXT NULL');
       $db->exec('ALTER TABLE categories ADD COLUMN IF NOT EXISTS logo VARCHAR(255) NULL');
 

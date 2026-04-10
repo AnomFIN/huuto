@@ -119,16 +119,8 @@
     if (window.__HOME_DATA__) {
       const popularItems = window.__HOME_DATA__.popular || [];
       const closingItems = window.__HOME_DATA__.closing || [];
-      state.popularItems = normalizeServerItems(popularItems);
-
-  boot();
-
-  function boot() {
-    // Only use data from server-side (PHP -> JavaScript), never mock data
-    if (window.__HOME_DATA__) {
-      const popularItems = window.__HOME_DATA__.popular || [];
-      const closingItems = window.__HOME_DATA__.closing || [];
       const featuredItems = window.__HOME_DATA__.featured || [];
+      
       state.popularItems = normalizeServerItems(popularItems);
       state.closingItems = normalizeServerItems(closingItems);
       state.featuredItems = normalizeServerItems(featuredItems);
@@ -627,13 +619,20 @@
 
   /* ----- FEATURED CONTENT RENDERING ----- */
   function renderFeatured() {
-    if (!refs.featuredGrid) return;
+    console.log('⭐ Rendering featured...');
+    if (!refs.featuredGrid) {
+      console.warn('❌ featuredGrid element not found');
+      return;
+    }
     
     const featuredItems = state.featuredItems.slice(0, 6);
+    console.log('⭐ Featured items:', featuredItems.length);
+    
     if (featuredItems.length === 0) {
       // Hide featured section if no featured items
       const featuredSection = refs.featuredGrid.closest('.featured-section');
       if (featuredSection) featuredSection.style.display = 'none';
+      console.log('📦 Featured section hidden (no items)');
       return;
     }
 
@@ -681,6 +680,7 @@
 
   function renderPopular(animated = false) {
     const source = getPopularItems();
+    console.log('📈 Rendering popular:', source.length, 'items');
     const slice = source.slice(0, state.popularShown);
     refs.popularGrid.innerHTML = renderCards(withAdCard(slice), animated);
     updateLoadButton(refs.loadMorePopular, refs.popularTip, state.popularShown, source.length);
@@ -688,6 +688,7 @@
 
   function renderEnding(animated = false) {
     const source = getEndingItems();
+    console.log('⏰ Rendering ending:', source.length, 'items');
     const slice = source.slice(0, state.endingShown);
     refs.endingGrid.innerHTML = renderCards(withAdCard(slice), animated);
     updateLoadButton(refs.loadMoreEnding, refs.endingTip, state.endingShown, source.length);

@@ -137,7 +137,7 @@ class Auction {
                 LEFT JOIN users u ON a.user_id = u.id
                 WHERE a.status = 'active' 
                   AND a.end_time > NOW() 
-                  AND a.end_time <= DATE_ADD(NOW(), INTERVAL 24 HOUR)
+                  AND a.end_time <= DATE_ADD(NOW(), INTERVAL 7 DAY)
                 ORDER BY a.end_time ASC
                 LIMIT :limit";
         
@@ -258,23 +258,6 @@ class Auction {
             ':auction_id' => (int)$auctionId,
             ':field_name' => $fieldName,
             ':field_value' => $fieldValue
-        ]);
-    }
-
-    /**
-     * Add auction image with caption support
-     */
-    public function addAuctionImage($auctionId, $imagePath, $isPrimary = false, $sortOrder = 0, $caption = null) {
-        $sql = "INSERT INTO auction_images (auction_id, image_path, is_primary, sort_order, caption) 
-                VALUES (:auction_id, :image_path, :is_primary, :sort_order, :caption)";
-        
-        $stmt = $this->db->prepare($sql);
-        return $stmt->execute([
-            ':auction_id' => (int)$auctionId,
-            ':image_path' => $imagePath,
-            ':is_primary' => $isPrimary ? 1 : 0,
-            ':sort_order' => (int)$sortOrder,
-            ':caption' => $caption
         ]);
     }
 
@@ -670,35 +653,5 @@ class Auction {
             $this->db->rollBack();
             throw $e;
         }
-    }    
-    /**
-     * Add metadata field for auction
-     */
-    public function addAuctionMetadata($auctionId, $fieldName, $fieldValue) {
-        $sql = "INSERT INTO auction_metadata (auction_id, field_name, field_value) 
-                VALUES (:auction_id, :field_name, :field_value)
-                ON DUPLICATE KEY UPDATE field_value = VALUES(field_value), updated_at = CURRENT_TIMESTAMP";
-        
-        $stmt = $this->db->prepare($sql);
-        return $stmt->execute([
-            ':auction_id' => $auctionId,
-            ':field_name' => $fieldName,
-            ':field_value' => $fieldValue
-        ]);
     }
-    
-    /**
-     * Get metadata for auction
-     */
-    public function getAuctionMetadata($auctionId) {
-        $sql = "SELECT field_name, field_value FROM auction_metadata WHERE auction_id = :auction_id";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([':auction_id' => $auctionId]);
-        
-        $metadata = [];
-        while ($row = $stmt->fetch()) {
-            $metadata[$row['field_name']] = $row['field_value'];
-        }
-        
-        return $metadata;
-    }}
+}

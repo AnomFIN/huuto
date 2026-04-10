@@ -51,9 +51,18 @@ function env($key, $default = null) {
 // ============================================================
 // Core Settings
 // ============================================================
-define('SITE_NAME', env('SITE_NAME', 'Huuto - Suomalainen Huutokauppa'));
-define('BASE_URL', env('BASE_URL', 'http://localhost:8000'));
-define('TIMEZONE', env('TIMEZONE', 'Europe/Helsinki'));
+if (!defined('SITE_NAME')) {
+    define('SITE_NAME', env('SITE_NAME', 'Huuto - Suomalainen Huutokauppa'));
+}
+if (!defined('BASE_URL')) {
+    define('BASE_URL', env('BASE_URL', 'http://localhost:8000'));
+}
+if (!defined('TIMEZONE')) {
+    define('TIMEZONE', env('TIMEZONE', 'Europe/Helsinki'));
+}
+
+// Set PHP timezone to ensure consistency with database queries
+date_default_timezone_set(TIMEZONE);
 
 // ============================================================
 // Database Configuration
@@ -80,10 +89,18 @@ define('BID_RATE_WINDOW', env('BID_RATE_WINDOW', 60)); // 1 minute
 // ============================================================
 // File Upload Settings
 // ============================================================
-define('UPLOAD_DIR', BASE_PATH . '/uploads/');
-define('UPLOAD_MAX_SIZE', env('UPLOAD_MAX_SIZE', 5 * 1024 * 1024)); // 5MB
-define('UPLOAD_MAX_FILES', env('UPLOAD_MAX_FILES', 8));
-define('ALLOWED_IMAGE_TYPES', ['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
+if (!defined('UPLOAD_DIR')) {
+    define('UPLOAD_DIR', BASE_PATH . '/uploads/');
+}
+if (!defined('UPLOAD_MAX_SIZE')) {
+    define('UPLOAD_MAX_SIZE', env('UPLOAD_MAX_SIZE', 5 * 1024 * 1024)); // 5MB
+}
+if (!defined('UPLOAD_MAX_FILES')) {
+    define('UPLOAD_MAX_FILES', env('UPLOAD_MAX_FILES', 8));
+}
+if (!defined('ALLOWED_IMAGE_TYPES')) {
+    define('ALLOWED_IMAGE_TYPES', ['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
+}
 
 // ============================================================
 // Email Configuration
