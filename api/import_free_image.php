@@ -5,13 +5,6 @@ header('Content-Type: application/json; charset=utf-8');
 
 const IMPORT_IMAGE_MAX_SIZE = 10485760; // 10MB
 
-function json_error(string $message, int $statusCode = 400): void
-{
-    http_response_code($statusCode);
-    echo json_encode(['ok' => false, 'error' => $message], JSON_UNESCAPED_UNICODE);
-    exit;
-}
-
 function is_allowed_image_host(string $url): bool
 {
     $host = strtolower((string)parse_url($url, PHP_URL_HOST));

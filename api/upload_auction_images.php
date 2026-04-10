@@ -7,13 +7,6 @@ header('Content-Type: application/json; charset=utf-8');
 const AUCTION_IMAGE_MAX_SIZE = 10485760; // 10MB
 const AUCTION_IMAGE_MAX_COUNT = 8;
 
-function json_error(string $message, int $statusCode = 400): void
-{
-    http_response_code($statusCode);
-    echo json_encode(['ok' => false, 'error' => $message], JSON_UNESCAPED_UNICODE);
-    exit;
-}
-
 function get_uploaded_files(array $files): array
 {
     $normalized = [];

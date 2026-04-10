@@ -24,9 +24,11 @@ if (file_exists($envFile) && !function_exists('env')) {
     }
 }
 
-function env($key, $default = null) {
-    $value = getenv($key);
-    return $value !== false ? $value : $default;
+if (!function_exists('env')) {
+    function env($key, $default = null) {
+        $value = getenv($key);
+        return $value !== false ? $value : $default;
+    }
 }
 
 return [

@@ -3,13 +3,6 @@ require_once dirname(__DIR__) . '/bootstrap.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
-function json_error(string $message, int $statusCode = 400): void
-{
-    http_response_code($statusCode);
-    echo json_encode(['ok' => false, 'error' => $message], JSON_UNESCAPED_UNICODE);
-    exit;
-}
-
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         json_error('Virheellinen HTTP-metodi.', 405);

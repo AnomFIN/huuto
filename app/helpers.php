@@ -5,6 +5,16 @@
  */
 
 /**
+ * JSON error response helper for API endpoints
+ */
+function json_error(string $message, int $statusCode = 400): void {
+    http_response_code($statusCode);
+    header('Content-Type: application/json');
+    echo json_encode(['error' => $message]);
+    exit;
+}
+
+/**
  * Output escaping - prevent XSS
  */
 function e($value, $encoding = 'UTF-8') {
