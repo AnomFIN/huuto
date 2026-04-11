@@ -573,6 +573,9 @@ $ogImage = rtrim((string)BASE_URL, '/') . '/assets/logo.png';
       </form>
     </dialog>
     <script>
+      <!-- DEBUG JSON DATA: Popular count = <?php echo count($popularUiData); ?>, Closing count = <?php echo count($closingUiData); ?>, Featured count = <?php echo count($featuredUiData); ?> -->
+      console.log('DEBUG: Starting to load HOME_DATA...');
+      
       window.__HOME_DATA__ = {
         categories: <?php echo json_encode($categories, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG); ?>,
         popular: <?php echo json_encode($popularUiData, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG); ?>,
@@ -581,7 +584,25 @@ $ogImage = rtrim((string)BASE_URL, '/') . '/assets/logo.png';
         isLoggedIn: <?php echo $isUserLoggedIn ? 'true' : 'false'; ?>,
         favoriteIds: <?php echo json_encode($favoriteIds, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG); ?>,
       };
+      
+      console.log('DEBUG: HOME_DATA loaded:', window.__HOME_DATA__);
+      console.log('DEBUG: Popular items:', window.__HOME_DATA__.popular.length);
+      console.log('DEBUG: Closing items:', window.__HOME_DATA__.closing.length);
+      console.log('DEBUG: Featured items:', window.__HOME_DATA__.featured.length);
     </script>
-    <script src="app.js" defer></script>
+    <script>
+      console.log('DEBUG: About to load app.js...');
+      
+      // Test if app.js loads
+      window.APP_JS_LOADED = false;
+      
+      // Add error handling for script loading
+      window.addEventListener('error', function(e) {
+        if (e.target && e.target.src && e.target.src.includes('app.js')) {
+          console.error('DEBUG: app.js failed to load!', e);
+        }
+      });
+    </script>
+    <script src="app.js" defer onload="console.log('DEBUG: app.js loaded successfully!'); window.APP_JS_LOADED = true;" onerror="console.error('DEBUG: app.js loading FAILED!');"></script>
   </body>
 </html>
