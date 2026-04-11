@@ -41,6 +41,11 @@ try {
     $auctionModel = new Auction();
     echo "<!-- DEBUG: Auction model created successfully -->\n";
     
+    // TEMP TEST: Käytä samaa metodia kuin category.php
+    echo "<!-- DEBUG: Testing getActiveAuctions (same as category.php) -->\n";
+    $testAuctions = $auctionModel->getActiveAuctions(10);
+    echo "<!-- DEBUG: TEST RESULT: " . count($testAuctions) . " auctions from getActiveAuctions -->\n";
+    
     echo "<!-- DEBUG: Calling getPopularAuctions(120) -->\n";
     $popularAuctions = $auctionModel->getPopularAuctions(120);
     echo "<!-- DEBUG: Popular auctions loaded: " . count($popularAuctions) . " -->\n";
@@ -136,6 +141,7 @@ function normalizeAuctionForUi(array $auction): ?array
     $endTimeRaw = isset($auction['end_time']) ? strtotime((string) $auction['end_time']) : false;
     // Skip auctions with invalid or past end times
     if (!$endTimeRaw || $endTimeRaw <= time()) {
+        error_log("DEBUG: Auction ID " . ($auction['id'] ?? 'unknown') . " rejected - end_time: " . ($auction['end_time'] ?? 'missing') . " (parsed: $endTimeRaw, current: " . time() . ")");
         return null;
     }
 
@@ -149,6 +155,7 @@ function normalizeAuctionForUi(array $auction): ?array
 
     // Skip auctions without any valid price information
     if ($priceNow === null) {
+        error_log("DEBUG: Auction ID " . ($auction['id'] ?? 'unknown') . " rejected - no valid price. current_price: " . ($auction['current_price'] ?? 'missing') . ", starting_price: " . ($auction['starting_price'] ?? 'missing'));
         return null;
     }
     $bidCount = isset($auction['bid_count']) ? (int) $auction['bid_count'] : 0;
@@ -178,6 +185,9 @@ function normalizeAuctionForUi(array $auction): ?array
 function buildUiData(array $source): array
 {
     $items = [];
+    $totalCount = count($source);
+    $rejectedCount = 0;
+    
     foreach ($source as $auction) {
         if (!is_array($auction)) {
             continue;
@@ -185,8 +195,13 @@ function buildUiData(array $source): array
         $normalized = normalizeAuctionForUi($auction);
         if ($normalized !== null) {
             $items[] = $normalized;
+        } else {
+            $rejectedCount++;
         }
     }
+    
+    echo "<!-- DEBUG buildUiData: Käsiteltiin $totalCount, hyväksyttiin " . count($items) . ", hylättiin $rejectedCount -->\n";
+    
     return $items;
 }
 
