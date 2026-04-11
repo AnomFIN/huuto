@@ -320,7 +320,7 @@ function audit_log($action, $entity_type = null, $entity_id = null, $details = n
     ];
     
     try {
-        $db->insert('audit_log', $data);
+        $db->insert('audit_logs', $data);
     } catch (Exception $e) {
         error_log('Failed to log audit event: ' . $e->getMessage());
     }
