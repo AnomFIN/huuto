@@ -41,6 +41,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if ($currentStep === 2) {
         // Database configuration step
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        
         $host = trim($_POST['db_host'] ?? '');
         $dbname = trim($_POST['db_name'] ?? '');
         $username = trim($_POST['db_user'] ?? '');
@@ -80,7 +84,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if ($currentStep === 3) {
         // Database setup step
-        session_start();
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
         
         if (isset($_SESSION['db_config'])) {
             $config = $_SESSION['db_config'];
@@ -117,7 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Start session for multi-step process
-if ($currentStep > 1) {
+if ($currentStep > 1 && session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
