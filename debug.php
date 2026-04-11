@@ -88,13 +88,13 @@ try {
     // Testaa yksinkertainen kysely
     try {
         if ($driver === 'mysql') {
-            $testQuery = $pdo->query("SELECT NOW() as current_time");
+            $testQuery = $pdo->query("SELECT NOW() as server_time");
             $result = $testQuery->fetch();
-            echo '<p>🕐 <strong>MySQL Aika:</strong> ' . $result['current_time'] . '</p>';
+            echo '<p>🕐 <strong>MySQL Aika:</strong> ' . $result['server_time'] . '</p>';
         } else {
-            $testQuery = $pdo->query("SELECT datetime('now') as current_time");
+            $testQuery = $pdo->query("SELECT datetime('now') as server_time");
             $result = $testQuery->fetch();
-            echo '<p>🕐 <strong>SQLite Aika:</strong> ' . $result['current_time'] . '</p>';
+            echo '<p>🕐 <strong>SQLite Aika:</strong> ' . $result['server_time'] . '</p>';
         }
     } catch (Exception $timeError) {
         echo '<p>⚠️ <strong>Aika-kysely epäonnistui:</strong> ' . $timeError->getMessage() . '</p>';
