@@ -391,7 +391,7 @@ Performance:
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5h16v11H4v-11Zm2 2v7h12v-7H6Zm2.5 10h7v1.8h-7V18.5Z"/></svg>
           </button>
           <?php if ($isUserLoggedIn): ?>
-            <span id="loginLink" class="user-greeting">Hei, <?php echo htmlspecialchars($displayFirstName !== '' ? $displayFirstName : 'Käyttäjä', ENT_QUOTES, 'UTF-8'); ?>!</span>
+            <span id="userGreeting" class="user-greeting">Hei, <?php echo htmlspecialchars($displayFirstName !== '' ? $displayFirstName : 'Käyttäjä', ENT_QUOTES, 'UTF-8'); ?>!</span>
           <?php else: ?>
             <button id="loginLink">Kirjaudu sisään</button>
             <button id="registerLink" class="register-pill">Rekisteröidy</button>
@@ -573,7 +573,7 @@ Performance:
             <p>Suomen johtava huutokauppapalvelu</p>
           </div>
 
-          <div class="footer-links">
+          <div class="footer-links" id="footerLinks">
             <div class="footer-col">
               <h4>Huutokaupat</h4>
               <a href="/category.php">Kaikki kategoriat</a>
@@ -618,6 +618,58 @@ Performance:
       </div>
     </footer>
 
+    <!-- Cookie Consent -->
+    <div id="cookieConsent" class="cookie-consent hidden">
+      <div class="cookie-content">
+        <h3>🍪 Evästekäytäntö</h3>
+        <p>Käytämme evästeitä parantaaksemme käyttökokemustasi ja analysoidaksemme liikennettä.</p>
+        <div class="cookie-buttons">
+          <button id="acceptAllCookies" class="btn-primary">Hyväksy kaikki</button>
+          <button id="acceptNecessary" class="btn-secondary">Vain välttämättömät</button>
+          <button id="cookieSettings" class="btn-link">Evästeasetukset</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cookie Settings Modal -->
+    <div id="cookieSettingsModal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Evästeasetukset</h3>
+          <button id="closeCookieSettings" class="modal-close">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="cookie-category">
+            <h4>Välttämättömät evästeet</h4>
+            <p>Nämä evästeet ovat välttämättömiä sivuston toiminnalle.</p>
+            <label class="switch">
+              <input type="checkbox" checked disabled>
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="cookie-category">
+            <h4>Analytiikka-evästeet</h4>
+            <p>Auttavat meitä ymmärtämään miten käytät sivustoa.</p>
+            <label class="switch">
+              <input type="checkbox" id="analyticsToggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="cookie-category">
+            <h4>Markkinointievästeet</h4>
+            <p>Mahdollistavat kohdistetun mainonnan.</p>
+            <label class="switch">
+              <input type="checkbox" id="marketingToggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="saveCookieSettings" class="btn-primary">Tallenna asetukset</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Modals -->
     <dialog id="loginModal" class="modal">
       <form method="dialog" class="modal-content">
@@ -640,11 +692,70 @@ Performance:
       </form>
     </dialog>
 
+    <!-- Login Modal -->
+    <dialog id="loginModal" class="modal">
+      <form method="dialog" class="modal-content">
+        <h2>Kirjaudu sisään</h2>
+        <p>Kirjaudu sisään huutaaksesi kohteista!</p>
+        <div class="modal-actions">
+          <button id="simulateLogin" type="button" class="btn-primary">Kirjaudu demo-tilille</button>
+          <button type="button" class="btn-secondary" data-close-modal>Peruuta</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="benefitModal" class="modal">
+      <form method="dialog" class="modal-content">
+        <h2>Ensihuutajan etu</h2>
+        <p>Rekisteröidy ja nauti erikoisalennuksista sekä ensihuutajan eduista!</p>
+        <div class="modal-actions">
+          <button type="button" class="btn-primary">Ymmärretty</button>
+        </div>
+      </form>
+    </dialog>
+
     <dialog id="itemModal" class="modal item-modal">
       <form method="dialog" class="modal-content" id="itemModalContent">
         <!-- Populated by JavaScript -->
       </form>
     </dialog>
+
+    <!-- Cookie Consent -->
+    <div id="cookieConsent" class="cookie-consent hidden">
+      <div class="cookie-content">
+        <h3>🍪 Evästekäytäntö</h3>
+        <p>Käytämme evästeitä parantaaksemme käyttökokemustasi.</p>
+        <div class="cookie-buttons">
+          <button id="acceptAllCookies" class="btn-primary">Hyväksy kaikki</button>
+          <button id="acceptNecessary" class="btn-secondary">Vain välttämättömät</button>
+          <button id="cookieSettings" class="btn-link">Asetukset</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cookie Settings Modal -->
+    <div id="cookieSettingsModal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Evästeasetukset</h3>
+          <button id="closeCookieSettings" class="modal-close">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="cookie-option">
+            <label for="analyticsToggle">Analytiikka-evästeet:</label>
+            <input type="checkbox" id="analyticsToggle">
+          </div>
+          <div class="cookie-option">
+            <label for="marketingToggle">Markkinointievästeet:</label>
+            <input type="checkbox" id="marketingToggle">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="saveCookieSettings" class="btn-primary">Tallenna</button>
+        </div>
+      </div>
+    </div>
+
     <script>
       <!-- DEBUG JSON DATA: Popular count = <?php echo count($popularUiData); ?>, Closing count = <?php echo count($closingUiData); ?>, Featured count = <?php echo count($featuredUiData); ?> -->
       // HOME_DATA loaded
