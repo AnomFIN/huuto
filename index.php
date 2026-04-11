@@ -424,7 +424,7 @@ $ogImage = rtrim((string)BASE_URL, '/') . '/assets/logo.png';
         <article class="carousel-card" aria-label="Sulkeutuu pian karuselli" data-hero style="transition-delay:200ms">
           <div class="urgent-badge">SULKEUTUU PIAN, TOIMI NYT!</div>
           <div class="carousel-progress"><span id="carouselProgress"></span></div>
-          <div class="carousel-wrap">
+          <div class="carousel-wrap" id="heroCarousel">
             <button class="arrow" id="carouselPrev" aria-label="Edellinen">←</button>
             <div class="carousel-track" id="carouselTrack"></div>
             <button class="arrow" id="carouselNext" aria-label="Seuraava">→</button>
@@ -435,6 +435,8 @@ $ogImage = rtrim((string)BASE_URL, '/') . '/assets/logo.png';
         <aside class="category-card" id="heroCategories" data-hero style="transition-delay:340ms">
           <div class="category-head">Kaikki kategoriat</div>
           <ul id="categoryList"></ul>
+          <div id="categoryGrid" style="display: none;"></div>
+          <div id="liveAuctionCount" style="display: none;"></div>
         </aside>
       </section>
       
