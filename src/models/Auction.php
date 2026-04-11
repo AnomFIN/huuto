@@ -13,8 +13,10 @@ class Auction {
      * Get featured auctions for homepage showcase
      */
     public function getFeaturedAuctions($limit = 8) {
+        error_log("DEBUG: Starting getFeaturedAuctions");
+        // MySQL-yhteensopiva kysely
         $sql = "SELECT a.*, 
-                       COALESCE(c.name, 'Luokittelematon') as category_name, 
+                       COALESCE(c.name, 'Luokittelematon') as category_name,
                        COALESCE(c.slug, 'other') as category_slug,
                        COALESCE(u.username, 'Tuntematon myyjä') as seller_username,
                        (SELECT image_path
@@ -27,7 +29,7 @@ class Auction {
                 FROM auctions a
                 LEFT JOIN categories c ON a.category_id = c.id
                 LEFT JOIN users u ON a.user_id = u.id
-                WHERE a.status = 'active' AND a.end_time > NOW() AND a.featured = 1
+                WHERE a.end_time > NOW() AND a.is_featured = 1
                 ORDER BY a.end_time ASC
                 LIMIT :limit";
         
@@ -36,10 +38,13 @@ class Auction {
         $stmt->execute();
         
         $results = $stmt->fetchAll();
+        
+        // Add current_price field
         foreach ($results as &$auction) {
-            // Use highest bid as current price, fallback to starting price
             $auction['current_price'] = $auction['highest_bid'] ?: $auction['starting_price'];
         }
+        
+        error_log("DEBUG: getFeaturedAuctions returned " . count($results) . " results");
         
         // If no featured auctions, fallback to popular ones
         if (empty($results)) {
@@ -67,7 +72,7 @@ class Auction {
                 FROM auctions a
                 LEFT JOIN categories c ON a.category_id = c.id
                 LEFT JOIN users u ON a.user_id = u.id
-                WHERE a.status = 'active' AND a.end_time > NOW() 
+                WHERE a.end_time > NOW() 
                   AND a.category_id = :category_id AND a.id != :exclude_id
                 ORDER BY a.end_time ASC
                 LIMIT :limit";
@@ -86,8 +91,10 @@ class Auction {
         return $results;
     }
     public function getPopularAuctions($limit = 20) {
+        error_log("DEBUG: Starting getPopularAuctions");
+        // MySQL-yhteensopiva kysely
         $sql = "SELECT a.*, 
-                       COALESCE(c.name, 'Luokittelematon') as category_name, 
+                       COALESCE(c.name, 'Luokittelematon') as category_name,
                        COALESCE(c.slug, 'other') as category_slug,
                        COALESCE(u.username, 'Tuntematon myyjä') as seller_username,
                        (SELECT image_path
@@ -100,8 +107,8 @@ class Auction {
                 FROM auctions a
                 LEFT JOIN categories c ON a.category_id = c.id
                 LEFT JOIN users u ON a.user_id = u.id
-                WHERE a.status = 'active' AND a.end_time > NOW()
-                ORDER BY (SELECT COUNT(*) FROM bids WHERE auction_id = a.id) DESC, a.views DESC
+                WHERE a.end_time > NOW()
+                ORDER BY a.bid_count DESC, a.id ASC
                 LIMIT :limit";
         
         $stmt = $this->db->prepare($sql);
@@ -109,20 +116,24 @@ class Auction {
         $stmt->execute();
         
         $results = $stmt->fetchAll();
+        
+        // Add current_price field
         foreach ($results as &$auction) {
-            // Use highest bid as current price, fallback to starting price
             $auction['current_price'] = $auction['highest_bid'] ?: $auction['starting_price'];
         }
+        
+        error_log("DEBUG: getPopularAuctions returned " . count($results) . " results");
         
         return $results;
     }
     
     /**
-     * Get auctions closing soon (within next 24 hours)
+     * Get auctions closing soon (within next 7 days)
      */
     public function getClosingSoonAuctions($limit = 5) {
+        // MySQL-yhteensopiva kysely
         $sql = "SELECT a.*, 
-                       COALESCE(c.name, 'Luokittelematon') as category_name, 
+                       COALESCE(c.name, 'Luokittelematon') as category_name,
                        COALESCE(c.slug, 'other') as category_slug,
                        COALESCE(u.username, 'Tuntematon myyjä') as seller_username,
                        (SELECT image_path
@@ -131,12 +142,11 @@ class Auction {
                         ORDER BY is_primary DESC, sort_order ASC, id ASC
                         LIMIT 1) as primary_image,
                        (SELECT COUNT(*) FROM bids WHERE auction_id = a.id) as bid_count,
-                       (SELECT MAX(amount) FROM bids WHERE auction_id = a.id) as current_price
+                       (SELECT MAX(amount) FROM bids WHERE auction_id = a.id) as highest_bid
                 FROM auctions a
                 LEFT JOIN categories c ON a.category_id = c.id
                 LEFT JOIN users u ON a.user_id = u.id
-                WHERE a.status = 'active' 
-                  AND a.end_time > NOW() 
+                WHERE a.end_time > NOW() 
                   AND a.end_time <= DATE_ADD(NOW(), INTERVAL 7 DAY)
                 ORDER BY a.end_time ASC
                 LIMIT :limit";
@@ -146,9 +156,10 @@ class Auction {
         $stmt->execute();
         
         $results = $stmt->fetchAll();
+        
+        // Add current_price field
         foreach ($results as &$auction) {
-            // Use highest bid as current price, fallback to starting price
-            $auction['current_price'] = $auction['current_price'] ?: $auction['starting_price'];
+            $auction['current_price'] = $auction['highest_bid'] ?: $auction['starting_price'];
         }
         
         return $results;
@@ -167,11 +178,12 @@ class Auction {
                         WHERE auction_id = a.id
                         ORDER BY is_primary DESC, sort_order ASC, id ASC
                         LIMIT 1) as primary_image,
-                       (SELECT COUNT(*) FROM bids WHERE auction_id = a.id) as bid_count
+                       (SELECT COUNT(*) FROM bids WHERE auction_id = a.id) as bid_count,
+                       (SELECT MAX(amount) FROM bids WHERE auction_id = a.id) as highest_bid
                 FROM auctions a
                 LEFT JOIN categories c ON a.category_id = c.id
                 LEFT JOIN users u ON a.user_id = u.id
-                WHERE a.status = 'active' AND a.end_time > NOW()
+                WHERE a.end_time > NOW()
                 ORDER BY a.end_time ASC
                 LIMIT :limit OFFSET :offset";
         
@@ -179,7 +191,15 @@ class Auction {
         $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
         $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
         $stmt->execute();
-        return $stmt->fetchAll();
+        
+        $results = $stmt->fetchAll();
+        
+        // Add current_price field
+        foreach ($results as &$auction) {
+            $auction['current_price'] = $auction['highest_bid'] ?: $auction['starting_price'];
+        }
+        
+        return $results;
     }
 
     /**
@@ -193,11 +213,12 @@ class Auction {
                         WHERE auction_id = a.id
                         ORDER BY is_primary DESC, sort_order ASC, id ASC
                         LIMIT 1) as primary_image,
-                       (SELECT COUNT(*) FROM bids WHERE auction_id = a.id) as bid_count
+                       (SELECT COUNT(*) FROM bids WHERE auction_id = a.id) as bid_count,
+                       (SELECT MAX(amount) FROM bids WHERE auction_id = a.id) as highest_bid
                 FROM auctions a
                 JOIN categories c ON a.category_id = c.id
                 JOIN users u ON a.user_id = u.id
-                WHERE a.status = 'active' AND a.end_time > NOW() AND c.slug = :slug
+                WHERE a.end_time > NOW() AND c.slug = :slug
                 ORDER BY a.end_time ASC
                 LIMIT :limit OFFSET :offset";
         
@@ -206,7 +227,15 @@ class Auction {
         $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
         $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
         $stmt->execute();
-        return $stmt->fetchAll();
+        
+        $results = $stmt->fetchAll();
+        
+        // Add current_price field
+        foreach ($results as &$auction) {
+            $auction['current_price'] = $auction['highest_bid'] ?: $auction['starting_price'];
+        }
+        
+        return $results;
     }
 
     /**
@@ -299,7 +328,7 @@ class Auction {
 
             // Check if auction is still active
             $auction = $this->getAuctionById($auctionId);
-            if (!$auction || $auction['status'] !== 'active' || strtotime($auction['end_time']) <= time()) {
+            if (!$auction || strtotime($auction['end_time']) <= time()) {
                 throw new Exception('Huutokauppa ei ole enää aktiivinen');
             }
 
@@ -365,7 +394,7 @@ class Auction {
                 FROM auctions a
                 JOIN categories c ON a.category_id = c.id
                 JOIN users u ON a.user_id = u.id
-                WHERE a.status = 'active' AND a.end_time > NOW()
+                WHERE a.end_time > datetime('now')
                 AND (a.title LIKE :query OR a.description LIKE :query)
                 ORDER BY a.end_time ASC
                 LIMIT :limit OFFSET :offset";
