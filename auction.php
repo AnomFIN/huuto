@@ -606,6 +606,219 @@ include SRC_PATH . '/views/header.php';
             const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
             const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
             
+            if (days > 0) {
+                display.innerHTML = `
+                    <div class="countdown-part"><span class="countdown-number">${days}</span><span class="countdown-unit">päivää</span></div>
+                    <div class="countdown-part"><span class="countdown-number">${hours}</span><span class="countdown-unit">tuntia</span></div>
+                `;
+            } else if (hours > 0) {
+                display.innerHTML = `
+                    <div class="countdown-part"><span class="countdown-number">${hours}</span><span class="countdown-unit">h</span></div>
+                    <div class="countdown-part"><span class="countdown-number">${minutes}</span><span class="countdown-unit">min</span></div>
+                `;
+            } else {
+                display.innerHTML = `
+                    <div class="countdown-part urgent"><span class="countdown-number">${minutes}</span><span class="countdown-unit">min</span></div>
+                    <div class="countdown-part urgent"><span class="countdown-number">${seconds}</span><span class="countdown-unit">sek</span></div>
+                `;
+                display.classList.add('urgent');
+            }
+        } else {
+            display.innerHTML = '<div class="countdown-expired">Huutokauppa päättynyt</div>';
+            display.classList.add('expired');
+        }
+    }
+    
+    // Bidding Functions
+    document.getElementById('placeBidBtn')?.addEventListener('click', function() {
+        showBidModal();
+    });
+    
+    document.getElementById('buyNowBtn')?.addEventListener('click', function() {
+        showBuyNowModal();
+    });
+    
+    document.getElementById('watchBtn')?.addEventListener('click', function() {
+        toggleWatchStatus();
+    });
+    
+    function showBidModal() {
+        // Premium bid modal implementation
+        const modal = createPremiumModal('Tee tarjous', `
+            <div class="bid-modal-content">
+                <div class="current-price-display">
+                    <span class="label">Nykyinen hinta:</span>
+                    <span class="price"><?php echo number_format($auction['current_price'], 0, ',', ' '); ?> €</span>
+                </div>
+                <div class="bid-input-group">
+                    <label for="bidAmount">Tarjouksesi:</label>
+                    <div class="bid-input-wrapper">
+                        <input type="number" id="bidAmount" min="<?php echo $auction['current_price'] + 10; ?>" step="10" placeholder="<?php echo $auction['current_price'] + 10; ?>">
+                        <span class="currency">€</span>
+                    </div>
+                    <div class="bid-suggestions">
+                        <button class="bid-suggestion" data-amount="<?php echo $auction['current_price'] + 10; ?>"><?php echo number_format($auction['current_price'] + 10, 0, ',', ' '); ?> €</button>
+                        <button class="bid-suggestion" data-amount="<?php echo $auction['current_price'] + 50; ?>"><?php echo number_format($auction['current_price'] + 50, 0, ',', ' '); ?> €</button>
+                        <button class="bid-suggestion" data-amount="<?php echo $auction['current_price'] + 100; ?>"><?php echo number_format($auction['current_price'] + 100, 0, ',', ' '); ?> €</button>
+                    </div>
+                </div>
+                <div class="bid-actions">
+                    <button class="btn-cancel" onclick="closePremiumModal()">Peruuta</button>
+                    <button class="btn-confirm" onclick="submitBid()">Tee tarjous</button>
+                </div>
+            </div>
+        `);
+        
+        // Bid suggestion handlers
+        modal.querySelectorAll('.bid-suggestion').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('bidAmount').value = btn.dataset.amount;
+            });
+        });
+    }
+    
+    function showBuyNowModal() {
+        const modal = createPremiumModal('Osta heti', `
+            <div class="buynow-modal-content">
+                <div class="buynow-price-display">
+                    <span class="label">Hinta:</span>
+                    <span class="price"><?php echo number_format($auction['buy_now_price'], 0, ',', ' '); ?> €</span>
+                </div>
+                <p class="buynow-description">Ostamalla heti saat kohteen välittömästi ja huutokauppa päättyy.</p>
+                <div class="buynow-actions">
+                    <button class="btn-cancel" onclick="closePremiumModal()">Peruuta</button>
+                    <button class="btn-confirm success" onclick="submitBuyNow()">Osta heti <?php echo number_format($auction['buy_now_price'], 0, ',', ' '); ?> €</button>
+                </div>
+            </div>
+        `);
+    }
+    
+    function toggleWatchStatus() {
+        const btn = document.getElementById('watchBtn');
+        const isWatching = btn.classList.contains('watching');
+        
+        // Optimistic UI update
+        btn.classList.toggle('watching');
+        btn.innerHTML = isWatching ? 
+            '<svg viewBox="0 0 20 20" fill="currentColor"><path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/><path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/></svg>Seuraa kohdetta' :
+            '<svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 9.542 3a9.284 9.284 0 00-3.8.828l-1.036-1.035a1 1 0 011.414-1.414zM5.834 5.834L9 9a2 2 0 112 2l3.166 3.166a8.012 8.012 0 01-5.624 2.5 8.012 8.012 0 01-7.084-5.834z" clip-rule="evenodd"/></svg>Lopeta seuranta';
+        
+        // TODO: Add actual API call here
+        showToast(isWatching ? 'Seuranta poistettu' : 'Kohde lisätty seurantaan', 'success');
+    }
+    
+    function createPremiumModal(title, content) {
+        const modal = document.createElement('div');
+        modal.className = 'premium-modal-overlay';
+        modal.innerHTML = `
+            <div class="premium-modal-content">
+                <div class="premium-modal-header">
+                    <h3>${title}</h3>
+                    <button class="premium-modal-close" onclick="closePremiumModal()">×</button>
+                </div>
+                <div class="premium-modal-body">
+                    ${content}
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        document.body.style.overflow = 'hidden';
+        
+        // Animate in
+        requestAnimationFrame(() => {
+            modal.classList.add('show');
+        });
+        
+        return modal;
+    }
+    
+    window.closePremiumModal = function() {
+        const modal = document.querySelector('.premium-modal-overlay');
+        if (modal) {
+            modal.classList.remove('show');
+            setTimeout(() => {
+                document.body.removeChild(modal);
+                document.body.style.overflow = '';
+            }, 300);
+        }
+    };
+    
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `premium-toast ${type}`;
+        toast.textContent = message;
+        
+        document.body.appendChild(toast);
+        
+        requestAnimationFrame(() => {
+            toast.classList.add('show');
+        });
+        
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => {
+                if (document.body.contains(toast)) {
+                    document.body.removeChild(toast);
+                }
+            }, 300);
+        }, 3000);
+    }
+    
+    // Keyboard navigation for image viewer
+    document.addEventListener('keydown', function(e) {
+        const viewer = document.getElementById('imageViewer');
+        if (viewer && viewer.classList.contains('open')) {
+            switch(e.key) {
+                case 'Escape':
+                    closeImageViewer();
+                    break;
+                case 'ArrowLeft':
+                    navigateImage(-1);
+                    break;
+                case 'ArrowRight':
+                    navigateImage(1);
+                    break;
+            }
+        }
+    });
+    
+    // Initialize countdown
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+    
+    // Initialize smooth animations
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('fade-in-up');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, observerOptions);
+    
+    // Observe elements for animation
+    document.querySelectorAll('.premium-card, .premium-gallery, .premium-bidding-card').forEach(el => {
+        observer.observe(el);
+    });
+})();
+</script>
+
+<?php include SRC_PATH . '/views/footer.php'; ?>
+        
+        if (!display) return;
+        
+        if (timeLeft > 0) {
+            const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+            
             let timeString = '';
             if (days > 0) {
                 timeString = `${days}pv ${hours}h ${minutes}min`;

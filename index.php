@@ -618,57 +618,7 @@ Performance:
       </div>
     </footer>
 
-    <!-- Cookie Consent -->
-    <div id="cookieConsent" class="cookie-consent hidden">
-      <div class="cookie-content">
-        <h3>🍪 Evästekäytäntö</h3>
-        <p>Käytämme evästeitä parantaaksemme käyttökokemustasi ja analysoidaksemme liikennettä.</p>
-        <div class="cookie-buttons">
-          <button id="acceptAllCookies" class="btn-primary">Hyväksy kaikki</button>
-          <button id="acceptNecessary" class="btn-secondary">Vain välttämättömät</button>
-          <button id="cookieSettings" class="btn-link">Evästeasetukset</button>
-        </div>
-      </div>
-    </div>
 
-    <!-- Cookie Settings Modal -->
-    <div id="cookieSettingsModal" class="modal hidden">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>Evästeasetukset</h3>
-          <button id="closeCookieSettings" class="modal-close">×</button>
-        </div>
-        <div class="modal-body">
-          <div class="cookie-category">
-            <h4>Välttämättömät evästeet</h4>
-            <p>Nämä evästeet ovat välttämättömiä sivuston toiminnalle.</p>
-            <label class="switch">
-              <input type="checkbox" checked disabled>
-              <span class="slider"></span>
-            </label>
-          </div>
-          <div class="cookie-category">
-            <h4>Analytiikka-evästeet</h4>
-            <p>Auttavat meitä ymmärtämään miten käytät sivustoa.</p>
-            <label class="switch">
-              <input type="checkbox" id="analyticsToggle">
-              <span class="slider"></span>
-            </label>
-          </div>
-          <div class="cookie-category">
-            <h4>Markkinointievästeet</h4>
-            <p>Mahdollistavat kohdistetun mainonnan.</p>
-            <label class="switch">
-              <input type="checkbox" id="marketingToggle">
-              <span class="slider"></span>
-            </label>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button id="saveCookieSettings" class="btn-primary">Tallenna asetukset</button>
-        </div>
-      </div>
-    </div>
 
     <!-- Modals -->
     <dialog id="loginModal" class="modal">
@@ -720,38 +670,75 @@ Performance:
       </form>
     </dialog>
 
-    <!-- Cookie Consent -->
-    <div id="cookieConsent" class="cookie-consent hidden">
-      <div class="cookie-content">
-        <h3>🍪 Evästekäytäntö</h3>
-        <p>Käytämme evästeitä parantaaksemme käyttökokemustasi.</p>
-        <div class="cookie-buttons">
-          <button id="acceptAllCookies" class="btn-primary">Hyväksy kaikki</button>
-          <button id="acceptNecessary" class="btn-secondary">Vain välttämättömät</button>
-          <button id="cookieSettings" class="btn-link">Asetukset</button>
+    <!-- Premium Cookie Consent -->
+    <div id="cookieConsent" class="premium-cookie-consent hidden">
+      <div class="cookie-backdrop"></div>
+      <div class="cookie-card">
+        <div class="cookie-icon">🍪</div>
+        <div class="cookie-content">
+          <h3>Evästeiden käyttö</h3>
+          <p>Käytämme evästeitä tarjotaksemme sinulle parhaan mahdollisen käyttökokemuksen ja analysoidaksemme sivuston käyttöä.</p>
+        </div>
+        <div class="cookie-actions">
+          <button id="acceptAllCookies" class="btn-cookie-primary">✓ Hyväksy kaikki</button>
+          <button id="acceptNecessaryCookies" class="btn-cookie-secondary">Vain vaaditut</button>
+          <button id="cookieSettings" class="btn-cookie-settings">⚙️ Mukautusasetukset</button>
         </div>
       </div>
     </div>
 
-    <!-- Cookie Settings Modal -->
-    <div id="cookieSettingsModal" class="modal hidden">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>Evästeasetukset</h3>
-          <button id="closeCookieSettings" class="modal-close">×</button>
+    <!-- Premium Cookie Settings Modal -->
+    <div id="cookieSettingsModal" class="premium-cookie-modal hidden">
+      <div class="cookie-modal-overlay" id="cookieModalOverlay"></div>
+      <div class="cookie-modal-container">
+        <div class="cookie-modal-header">
+          <h3>🍪 Evästeasetukset</h3>
+          <button id="closeCookieSettings" class="cookie-modal-close">×</button>
         </div>
-        <div class="modal-body">
-          <div class="cookie-option">
-            <label for="analyticsToggle">Analytiikka-evästeet:</label>
-            <input type="checkbox" id="analyticsToggle">
+        <div class="cookie-modal-body">
+          <p class="cookie-description">Hallitse evästeiden käyttöä sivustollamme. Voit sallia tai estää eri tyyppisiä evästeitä alla olevista vaihtoehdoista.</p>
+          
+          <div class="cookie-category">
+            <div class="cookie-category-header">
+              <div class="cookie-category-info">
+                <h4>🔒 Välttämättömät evästeet</h4>
+                <p>Tarvitaan sivuston perustoiminnoille ja turvallisuudelle. Näitä ei voi poistaa käytöstä.</p>
+              </div>
+              <label class="cookie-switch">
+                <input type="checkbox" checked disabled>
+                <span class="cookie-slider"></span>
+              </label>
+            </div>
           </div>
-          <div class="cookie-option">
-            <label for="marketingToggle">Markkinointievästeet:</label>
-            <input type="checkbox" id="marketingToggle">
+          
+          <div class="cookie-category">
+            <div class="cookie-category-header">
+              <div class="cookie-category-info">
+                <h4>📊 Analytiikan evästeet</h4>
+                <p>Auttavat meitä ymmärtämään, miten käytät sivustoamme, ja parantamaan palvelua.</p>
+              </div>
+              <label class="cookie-switch">
+                <input type="checkbox" id="analyticsToggle">
+                <span class="cookie-slider"></span>
+              </label>
+            </div>
+          </div>
+          
+          <div class="cookie-category">
+            <div class="cookie-category-header">
+              <div class="cookie-category-info">
+                <h4>🎯 Markkinoinnin evästeet</h4>
+                <p>Käytetään kohdistetun mainonnan ja personoitujen sisältöjen näyttämiseen.</p>
+              </div>
+              <label class="cookie-switch">
+                <input type="checkbox" id="marketingToggle">
+                <span class="cookie-slider"></span>
+              </label>
+            </div>
           </div>
         </div>
-        <div class="modal-footer">
-          <button id="saveCookieSettings" class="btn-primary">Tallenna</button>
+        <div class="cookie-modal-footer">
+          <button id="saveCookieSettings" class="btn-cookie-save">✓ Tallenna valinnat</button>
         </div>
       </div>
     </div>

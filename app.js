@@ -115,10 +115,11 @@
     cookieConsent: byId('cookieConsent'),
     cookieSettingsModal: byId('cookieSettingsModal'),
     acceptAllCookies: byId('acceptAllCookies'),
-    acceptNecessary: byId('acceptNecessary'),
+    acceptNecessaryCookies: byId('acceptNecessaryCookies'),
     cookieSettings: byId('cookieSettings'),
     saveCookieSettings: byId('saveCookieSettings'),
     closeCookieSettings: byId('closeCookieSettings'),
+    cookieModalOverlay: byId('cookieModalOverlay'),
     analyticsToggle: byId('analyticsToggle'),
     marketingToggle: byId('marketingToggle'),
   };
@@ -431,8 +432,8 @@
     if (refs.acceptAllCookies) {
       refs.acceptAllCookies.addEventListener('click', acceptAllCookies);
     }
-    if (refs.acceptNecessary) {
-      refs.acceptNecessary.addEventListener('click', acceptNecessaryCookies);
+    if (refs.acceptNecessaryCookies) {
+      refs.acceptNecessaryCookies.addEventListener('click', acceptNecessaryCookies);
     }
     if (refs.cookieSettings) {
       refs.cookieSettings.addEventListener('click', showCookieSettings);
@@ -443,32 +444,35 @@
     if (refs.closeCookieSettings) {
       refs.closeCookieSettings.addEventListener('click', closeCookieSettings);
     }
+    if (refs.cookieModalOverlay) {
+      refs.cookieModalOverlay.addEventListener('click', closeCookieSettings);
+    }
 
     refs.loadMorePopular.addEventListener('click', () => loadMore('popular'));
     refs.loadMoreEnding.addEventListener('click', () => loadMore('ending'));
 
-    if (refs.loginLink && refs.loginLink.tagName === 'BUTTON') {
-      refs.loginLink.addEventListener('click', () => {
-        if (state.user.loggedIn) return logout();
-        refs.loginModal.showModal();
-      });
+    // Login/Register links now navigate to actual auth pages
+    if (refs.loginLink && refs.loginLink.tagName === 'A') {
+      // Login links are now handled by href navigation naturally
+      console.log('Login link found and configured for navigation');
     }
 
-    if (refs.registerLink && refs.registerLink.tagName === 'BUTTON') {
-      refs.registerLink.addEventListener('click', () => {
-        if (state.user.loggedIn) return logout();
-        refs.loginModal.showModal();
-      });
+    if (refs.registerLink && refs.registerLink.tagName === 'A') {
+      // Register links are now handled by href navigation naturally
+      console.log('Register link found and configured for navigation');
     }
 
+    // Keep demo login functionality for testing
     if (refs.simulateLogin) {
       refs.simulateLogin.addEventListener('click', () => {
         state.user.loggedIn = true;
-        if (refs.loginLink && refs.loginLink.tagName === 'BUTTON') {
+        if (refs.loginLink && refs.loginLink.tagName === 'A') {
           refs.loginLink.textContent = state.user.name;
+          refs.loginLink.href = '#'; // Disable navigation when logged in
         }
-        if (refs.registerLink && refs.registerLink.tagName === 'BUTTON') {
+        if (refs.registerLink && refs.registerLink.tagName === 'A') {
           refs.registerLink.textContent = 'Kirjaudu ulos';
+          refs.registerLink.href = '/auth/logout.php'; // Point to logout
         }
         refs.loginModal.close();
       });

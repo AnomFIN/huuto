@@ -123,8 +123,8 @@ $twitterCard = trim((string)($twitterCardType ?? 'summary_large_image'));
                     <?php if (function_exists('is_logged_in') && is_logged_in()): ?>
                         <span class="user-greeting">Hei, <?php echo htmlspecialchars($headerUserGreeting !== '' ? $headerUserGreeting : 'Käyttäjä', ENT_QUOTES, 'UTF-8'); ?>!</span>
                     <?php else: ?>
-            <button id="loginLink">Kirjaudu sisään</button>
-            <button id="registerLink" class="register-pill">Rekisteröidy</button>
+            <a href="/auth/login.php" id="loginLink" class="btn-login">Kirjaudu sisään</a>
+            <a href="/auth/register.php" id="registerLink" class="btn-register">Rekisteröidy</a>
                     <?php endif; ?>
                 </nav>
             </div>
