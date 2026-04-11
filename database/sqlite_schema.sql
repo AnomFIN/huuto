@@ -75,6 +75,29 @@ CREATE TABLE IF NOT EXISTS auction_images (
     FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE
 );
 
+-- Watchlist table
+CREATE TABLE IF NOT EXISTS watchlist (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    auction_id INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE,
+    UNIQUE(user_id, auction_id)
+);
+
+-- Auction metadata table
+CREATE TABLE IF NOT EXISTS auction_metadata (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    auction_id INTEGER NOT NULL,
+    field_name VARCHAR(100) NOT NULL,
+    field_value TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (auction_id) REFERENCES auctions(id) ON DELETE CASCADE,
+    UNIQUE(auction_id, field_name)
+);
+
 -- Sample categories
 INSERT OR IGNORE INTO categories (id, name, slug, description) VALUES
 (1, 'Elektroniikka', 'elektroniikka', 'Tietokoneet, puhelimet ja muut laitteet'),

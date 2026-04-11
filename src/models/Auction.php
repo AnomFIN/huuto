@@ -309,7 +309,7 @@ class Auction {
                 FROM bids b
                 JOIN users u ON b.user_id = u.id
                 WHERE b.auction_id = :auction_id
-                ORDER BY b.bid_time DESC
+                ORDER BY b.created_at DESC
                 LIMIT :limit";
         
         $stmt = $this->db->prepare($sql);
