@@ -139,10 +139,15 @@ function normalizeAuctionForUi(array $auction): ?array
   }
 
     $endTimeRaw = isset($auction['end_time']) ? strtotime((string) $auction['end_time']) : false;
-    // Skip auctions with invalid or past end times
-    if (!$endTimeRaw || $endTimeRaw <= time()) {
-        error_log("DEBUG: Auction ID " . ($auction['id'] ?? 'unknown') . " rejected - end_time: " . ($auction['end_time'] ?? 'missing') . " (parsed: $endTimeRaw, current: " . time() . ")");
-        return null;
+    // VÄLIAIKAISESTI POISTETTU: Skip auctions with invalid or past end times  
+    // if (!$endTimeRaw || $endTimeRaw <= time()) {
+    //     error_log("DEBUG: Auction ID " . ($auction['id'] ?? 'unknown') . " rejected - end_time: " . ($auction['end_time'] ?? 'missing') . " (parsed: $endTimeRaw, current: " . time() . ")");
+    //     return null;
+    // }
+    
+    // Fallback jos end_time on virheellinen
+    if (!$endTimeRaw) {
+        $endTimeRaw = time() + (7 * 24 * 60 * 60); // +7 päivää
     }
 
     // Determine current price, falling back to starting_price if needed.
