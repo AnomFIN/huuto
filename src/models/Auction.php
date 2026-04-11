@@ -29,7 +29,7 @@ class Auction {
                 FROM auctions a
                 LEFT JOIN categories c ON a.category_id = c.id
                 LEFT JOIN users u ON a.user_id = u.id
-                WHERE a.end_time > NOW() AND a.is_featured = 1
+                WHERE a.end_time > NOW() AND a.featured = 1
                 ORDER BY a.end_time ASC
                 LIMIT :limit";
         
