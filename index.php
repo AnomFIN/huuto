@@ -1,15 +1,19 @@
 <?php
-// Application bootstrap: load shared configuration, autoloading and common setup.
-require_once __DIR__ . '/bootstrap.php';
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+ini_set('log_errors', 1);
+
+try {
+    // Application bootstrap: load shared configuration, autoloading and common setup.
+    require_once __DIR__ . '/bootstrap.php';
+} catch (Exception $e) {
+    die("Bootstrap error: " . $e->getMessage());
+} catch (Error $e) {
+    die("Fatal error: " . $e->getMessage());
+}
 
 $pageTitle = SITE_NAME . ' - Etusivu';
-
-// Load categories from database
-$categoryModel = new Category();
-$categoriesFromDb = $categoryModel->getAllCategories();
-$categories = array_map(function($cat) {
-    return $cat['name'];
-}, $categoriesFromDb);
 
 $popularAuctions = [];
 $closingSoonAuctions = [];
@@ -17,18 +21,38 @@ $featuredAuctions = [];
 $dataLoadError = null;
 $favoriteIds = [];
 $displayFirstName = '';
+$categories = [];
+$categoriesFromDb = [];
+
+try {
+    // Load categories from database
+    $categoryModel = new Category();
+    $categoriesFromDb = $categoryModel->getAllCategories();
+    $categories = array_map(function($cat) {
+        return $cat['name'];
+    }, $categoriesFromDb);
+} catch (Exception $e) {
+    error_log("Category error: " . $e->getMessage());
+    $categories = ['Antiikki', 'Ajoneuvot', 'Elektroniikka', 'Kodin tavarat', 'Urheilu', 'Vaatteet', 'Keräily', 'Taide'];
+}
 
 try {
     $auctionModel = new Auction();
+    echo "<!-- Auction model created successfully -->\n";
+    
     $popularAuctions = $auctionModel->getPopularAuctions(120);
+    echo "<!-- Popular auctions loaded: " . count($popularAuctions) . " -->\n";
+    
     $closingSoonAuctions = $auctionModel->getClosingSoonAuctions(120);
+    echo "<!-- Closing soon auctions loaded: " . count($closingSoonAuctions) . " -->\n";
+    
     $featuredAuctions = $auctionModel->getFeaturedAuctions(8);
+    echo "<!-- Featured auctions loaded: " . count($featuredAuctions) . " -->\n";
+    
 } catch (Exception $error) {
-    error_log(json_encode([
-        'event' => 'homepage_data_load_failed',
-        'message' => $error->getMessage(),
-    ], JSON_UNESCAPED_UNICODE));
-    $dataLoadError = 'Tietojen lataaminen epäonnistui. Emme voineet ladata huutokohteita.';
+    error_log("Homepage auction data load failed: " . $error->getMessage() . "\n" . $error->getTraceAsString());
+    echo "<!-- ERROR: " . htmlspecialchars($error->getMessage()) . " -->\n";
+    $dataLoadError = 'Tietojen lataaminen epäonnistui: ' . $error->getMessage();
 }
 
 // Sanitize user-generated content to prevent XSS attacks

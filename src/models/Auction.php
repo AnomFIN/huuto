@@ -108,7 +108,7 @@ class Auction {
                 LEFT JOIN categories c ON a.category_id = c.id
                 LEFT JOIN users u ON a.user_id = u.id
                 WHERE a.end_time > NOW()
-                ORDER BY a.bid_count DESC, a.id ASC
+                ORDER BY bid_count DESC, a.id ASC
                 LIMIT :limit";
         
         $stmt = $this->db->prepare($sql);

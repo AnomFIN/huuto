@@ -27,13 +27,20 @@ class Database {
                 PDO::ATTR_EMULATE_PREPARES => false
             ];
             
+            error_log("Trying to connect to database: " . DB_HOST . "/" . DB_NAME . " as " . DB_USER);
+            
             $this->pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
             
             // Set charset after connection  
             $this->pdo->exec("SET NAMES " . (defined('DB_CHARSET') ? DB_CHARSET : 'utf8mb4'));
             
+            error_log("Database connection successful");
+            
         } catch (PDOException $e) {
-            error_log("Database connection failed: " . $e->getMessage());
+            error_log("Database connection failed: " . $e->getMessage() . " (DSN: $dsn)");
+            throw new RuntimeException("Tietokantayhteys epäonnistui: " . $e->getMessage() . ". Tarkista tietokanta-asetukset.", 0, $e);
+        } catch (Exception $e) {
+            error_log("General database error: " . $e->getMessage());
             throw new RuntimeException("Tietokantayhteys epäonnistui. Yritä myöhemmin uudelleen.", 0, $e);
         }
     }
