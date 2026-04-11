@@ -13,6 +13,31 @@ try {
     die("Fatal error: " . $e->getMessage());
 }
 
+// =============================================================================
+// DEBUG SECTION - Vianmääritystä varten (näkyy HTML-kommenteissa)
+// =============================================================================
+$debugInfo = [
+    'timestamp' => date('Y-m-d H:i:s'),
+    'php_version' => PHP_VERSION,
+    'db_driver' => 'unknown',
+    'db_host' => defined('DB_HOST') ? DB_HOST : 'NOT_DEFINED',
+    'db_name' => defined('DB_NAME') ? DB_NAME : 'NOT_DEFINED', 
+    'db_connection' => 'not_tested',
+    'auction_counts' => ['popular' => 0, 'closing' => 0, 'featured' => 0],
+    'errors' => []
+];
+
+try {
+    $database = Database::getInstance();
+    $pdo = $database->getConnection();
+    $debugInfo['db_connection'] = 'SUCCESS';
+    $debugInfo['db_driver'] = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+    $debugInfo['db_version'] = $pdo->getAttribute(PDO::ATTR_SERVER_VERSION);
+} catch (Exception $e) {
+    $debugInfo['db_connection'] = 'FAILED: ' . $e->getMessage();
+    $debugInfo['errors'][] = 'Database connection: ' . $e->getMessage();
+}
+
 $pageTitle = SITE_NAME . ' - Etusivu';
 
 $popularAuctions = [];
@@ -48,19 +73,21 @@ try {
     
     // Load popular auctions
     $popularAuctions = $auctionModel->getPopularAuctions(120);
-    // Popular auctions loaded
+    $debugInfo['auction_counts']['popular'] = count($popularAuctions);
     
     // Load closing soon auctions
     $closingSoonAuctions = $auctionModel->getClosingSoonAuctions(120);
-    // Closing soon auctions loaded
+    $debugInfo['auction_counts']['closing'] = count($closingSoonAuctions);
     
     // Load featured auctions
     $featuredAuctions = $auctionModel->getFeaturedAuctions(8);
-    // Featured auctions loaded
+    $debugInfo['auction_counts']['featured'] = count($featuredAuctions);
     
     // All auction data loaded successfully
     
 } catch (Exception $error) {
+    $dataLoadError = $error->getMessage();
+    $debugInfo['errors'][] = 'Auction loading: ' . $error->getMessage();
     error_log("Homepage auction data load failed: " . $error->getMessage() . "\n" . $error->getTraceAsString());
     echo "<!-- ERROR: " . htmlspecialchars($error->getMessage()) . " -->\n";
     echo "<!-- ERROR TRACE: " . htmlspecialchars($error->getTraceAsString()) . " -->\n";
@@ -248,7 +275,51 @@ $metaKeywords = 'Huuto247, huuto247.fi, huutokauppa, verkkohuutokauppa, myy huut
 $metaRobots = 'index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1';
 $canonicalUrl = rtrim((string)BASE_URL, '/') . '/index.php';
 $ogImage = rtrim((string)BASE_URL, '/') . '/assets/logo.png';
+
+// Finalize debug info 
+$debugInfo['total_categories'] = count($categories);
+$debugInfo['page_load_time'] = microtime(true) - $_SERVER['REQUEST_TIME_FLOAT'];
+$debugInfo['memory_usage'] = memory_get_peak_usage(true);
 ?>
+<!--
+=============================================================================
+HUUTO247.FI DEBUG INFO (vianmääritystä varten)
+=============================================================================
+Timestamp: <?php echo $debugInfo['timestamp']; ?>
+
+PHP Version: <?php echo $debugInfo['php_version']; ?>
+
+Database:
+- Host: <?php echo $debugInfo['db_host']; ?>
+- Name: <?php echo $debugInfo['db_name']; ?>
+- Driver: <?php echo $debugInfo['db_driver']; ?>
+- Connection: <?php echo $debugInfo['db_connection']; ?>
+<?php if (isset($debugInfo['db_version'])): ?>
+- Version: <?php echo $debugInfo['db_version']; ?>
+<?php endif; ?>
+
+Auction Counts:
+- Popular: <?php echo $debugInfo['auction_counts']['popular']; ?> pcs
+- Closing Soon: <?php echo $debugInfo['auction_counts']['closing']; ?> pcs  
+- Featured: <?php echo $debugInfo['auction_counts']['featured']; ?> pcs
+
+Categories: <?php echo $debugInfo['total_categories']; ?> pcs
+
+<?php if (!empty($debugInfo['errors'])): ?>
+Errors:
+<?php foreach ($debugInfo['errors'] as $error): ?>
+- <?php echo htmlspecialchars($error); ?>
+<?php endforeach; ?>
+<?php else: ?>
+Errors: None
+<?php endif; ?>
+
+Performance:
+- Load Time: <?php echo number_format($debugInfo['page_load_time'] * 1000, 2); ?> ms
+- Memory: <?php echo number_format($debugInfo['memory_usage'] / 1024 / 1024, 2); ?> MB
+
+=============================================================================
+-->
 <!doctype html>
 <html lang="fi">
   <head>
