@@ -1072,4 +1072,350 @@ body {
 .p-1 { padding: var(--space-xs); }
 .p-2 { padding: var(--space-sm); }
 .p-3 { padding: var(--space-md); }
+
+/* ============================================================================
+   MOBILE NAVIGATION & HAMBURGER MENU
+   ============================================================================ */
+
+.mobile-header {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    height: 60px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--glass-border);
+    padding: 0 1rem;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.mobile-logo {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.hamburger-menu {
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+.hamburger-line {
+    width: 100%;
+    height: 2px;
+    background: var(--text-primary);
+    border-radius: 2px;
+    transition: var(--transition-smooth);
+    transform-origin: center;
+}
+
+.hamburger-menu.active .hamburger-line:nth-child(1) {
+    transform: rotate(45deg) translate(5px, 5px);
+}
+
+.hamburger-menu.active .hamburger-line:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger-menu.active .hamburger-line:nth-child(3) {
+    transform: rotate(-45deg) translate(7px, -6px);
+}
+
+.mobile-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    z-index: 900;
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--transition-smooth);
+}
+
+.mobile-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* ============================================================================
+   ENHANCED MOBILE RESPONSIVENESS
+   ============================================================================ */
+
+@media (max-width: 768px) {
+    .app-container {
+        flex-direction: column;
+    }
+    
+    .mobile-header {
+        display: flex;
+    }
+    
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: -280px;
+        width: 280px;
+        height: 100vh;
+        z-index: 950;
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transform: translateX(0);
+    }
+    
+    .sidebar.mobile-open {
+        transform: translateX(280px);
+    }
+    
+    .main-content {
+        margin: 60px 0 0 0;
+        width: 100%;
+        padding: 1rem;
+    }
+    
+    .top-bar {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    
+    .top-actions {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .search-box {
+        order: -1;
+    }
+    
+    .todos-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .todo-card {
+        padding: 1rem;
+    }
+    
+    .modal-content {
+        margin: 1rem;
+        width: calc(100vw - 2rem);
+        max-height: calc(100vh - 2rem);
+        border-radius: var(--radius-md);
+    }
+    
+    .nav-item {
+        padding: 0.75rem 1rem;
+    }
+    
+    .nav-icon {
+        font-size: 1.1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    :root {
+        --space-xs: 0.25rem;
+        --space-sm: 0.5rem;
+        --space-md: 0.75rem;
+        --space-lg: 1rem;
+        --space-xl: 1.5rem;
+    }
+    
+    .page-title {
+        font-size: 1.5rem;
+    }
+    
+    .sidebar {
+        width: 260px;
+        left: -260px;
+    }
+    
+    .sidebar.mobile-open {
+        transform: translateX(260px);
+    }
+    
+    .btn-primary {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* ============================================================================
+   PREMIUM ANIMATION ENHANCEMENTS
+   ============================================================================ */
+
+/* Smooth card entrance animations */
+@keyframes cardSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.todo-card {
+    animation: cardSlideIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Staggered animation for multiple cards */
+.todo-card:nth-child(1n) { animation-delay: 0ms; }
+.todo-card:nth-child(2n) { animation-delay: 50ms; }
+.todo-card:nth-child(3n) { animation-delay: 100ms; }
+.todo-card:nth-child(4n) { animation-delay: 150ms; }
+.todo-card:nth-child(5n) { animation-delay: 200ms; }
+.todo-card:nth-child(6n) { animation-delay: 250ms; }
+
+/* Badge update animations */
+@keyframes badgePulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.nav-badge.updated {
+    animation: badgePulse 0.3s ease-out;
+}
+
+/* Button click ripple effect */
+.ripple {
+    position: relative;
+    overflow: hidden;
+}
+
+.ripple::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    animation: rippleEffect 0.6s ease-out;
+}
+
+@keyframes rippleEffect {
+    to {
+        width: 200px;
+        height: 200px;
+        opacity: 0;
+    }
+}
+
+/* Smooth sidebar transitions */
+.sidebar {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Enhanced loading states */
+.loading {
+    position: relative;
+}
+
+.loading::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--text-accent), transparent);
+    animation: loadingBar 1.5s linear infinite;
+}
+
+@keyframes loadingBar {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* Smooth status toggle animations */
+.status-toggle {
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.status-toggle.active {
+    transform: scale(1.1);
+}
+
+/* ============================================================================
+   PREMIUM GLASSMORPHISM ENHANCEMENTS
+   ============================================================================ */
+
+/* Enhanced glass effects for modern browsers */
+@supports (backdrop-filter: blur(20px)) {
+    .sidebar,
+    .modal-content,
+    .mobile-header,
+    .todo-card {
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+    }
+}
+
+/* Fallback for older browsers */
+@supports not (backdrop-filter: blur(20px)) {
+    .sidebar {
+        background: rgba(21, 21, 21, 0.95);
+    }
+    
+    .modal-content {
+        background: rgba(10, 10, 10, 0.95);
+    }
+    
+    .mobile-header {
+        background: rgba(21, 21, 21, 0.9);
+    }
+    
+    .todo-card {
+        background: rgba(255, 255, 255, 0.08);
+    }
+}
+
+/* High-performance animations */
+.todo-card,
+.nav-item,
+.btn-primary,
+.status-toggle {
+    will-change: transform;
+    transform: translateZ(0);
+}
+
+/* Smooth scrolling for sidebar */
+.sidebar-nav {
+    scroll-behavior: smooth;
+}
+
+/* Focus states for accessibility */
+.nav-item:focus-visible,
+.btn-primary:focus-visible,
+.todo-card:focus-visible {
+    outline: 2px solid var(--text-accent);
+    outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    :root {
+        --bg-card: rgba(255, 255, 255, 0.1);
+        --glass-border: rgba(255, 255, 255, 0.3);
+        --text-secondary: rgba(255, 255, 255, 0.9);
+    }
+}
 .p-4 { padding: var(--space-lg); }

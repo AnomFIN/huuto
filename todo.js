@@ -28,7 +28,7 @@ $(document).ready(function() {
     
     function init() {
         initEventListeners();
-        initDragAndDrop();
+        initMobileNavigation();\n        initDragAndDrop();
         initAnimations();
         loadTodos();
         updateCounts();
@@ -89,6 +89,76 @@ $(document).ready(function() {
     }
 
     // ========================================================================
+    // MOBILE NAVIGATION
+    // ========================================================================
+    
+    function initMobileNavigation() {
+        // Create mobile header if it doesn't exist
+        if ($('.mobile-header').length === 0) {
+            const mobileHeader = `
+                <div class="mobile-header">
+                    <div class="mobile-logo">Premium Todo</div>
+                    <button class="hamburger-menu" id="hamburger-toggle">
+                        <span class="hamburger-line"></span>
+                        <span class="hamburger-line"></span>
+                        <span class="hamburger-line"></span>
+                    </button>
+                </div>
+                <div class="mobile-overlay" id="mobile-overlay"></div>
+            `;
+            $('body').prepend(mobileHeader);
+        }
+        
+        // Hamburger menu toggle
+        $(document).on('click', '#hamburger-toggle', function() {
+            const $hamburger = $(this);
+            const $sidebar = $('.sidebar');
+            const $overlay = $('#mobile-overlay');
+            
+            $hamburger.toggleClass('active');
+            $sidebar.toggleClass('mobile-open');
+            $overlay.toggleClass('active');
+            
+            // Prevent body scroll when menu is open
+            if ($sidebar.hasClass('mobile-open')) {
+                $('body').addClass('modal-open');
+            } else {
+                $('body').removeClass('modal-open');
+            }
+        });
+        
+        // Close mobile menu when overlay is clicked
+        $(document).on('click', '#mobile-overlay', function() {
+            $('#hamburger-toggle').removeClass('active');
+            $('.sidebar').removeClass('mobile-open');
+            $(this).removeClass('active');
+            $('body').removeClass('modal-open');
+        });
+        
+        // Close mobile menu when navigation item is clicked
+        $(document).on('click', '.nav-item', function() {
+            if (window.innerWidth <= 768) {
+                setTimeout(() => {
+                    $('#hamburger-toggle').removeClass('active');
+                    $('.sidebar').removeClass('mobile-open');
+                    $('#mobile-overlay').removeClass('active');
+                    $('body').removeClass('modal-open');
+                }, 300);
+            }
+        });
+        
+        // Handle window resize
+        $(window).on('resize', function() {
+            if (window.innerWidth > 768) {
+                $('#hamburger-toggle').removeClass('active');
+                $('.sidebar').removeClass('mobile-open');
+                $('#mobile-overlay').removeClass('active');
+                $('body').removeClass('modal-open');
+            }
+        });
+    }
+
+    // ========================================================================
     // NAVIGATION & FILTERING
     // ========================================================================
     
@@ -109,135 +179,53 @@ $(document).ready(function() {
         const title = $item.find('.nav-text').text();
         $('.page-title').text(title);
         
-        // Filter todos with animation
-        filterTodos(filter);
-        updateCounts();
+        // Load todos with new filter (server-side filtering)
+        loadTodos(filter);
         
         // Add ripple effect
         addRippleEffect($item[0], e);
     }
     
-    function filterTodos(filter) {
-        const $grid = $('.todos-grid');
-        const $cards = $('.todo-card');
-        
-        if (!App.settings.animations) {
-            showFilteredTodos(filter);
-            return;
-        }
-        
-        // Smooth fade out
-        $cards.addClass('fade-out');
-        
-        setTimeout(() => {
-            showFilteredTodos(filter);
-            
-            // Staggered fade in
-            $('.todo-card:visible').each(function(index) {
-                const $card = $(this);
-                setTimeout(() => {
-                    $card.removeClass('fade-out').addClass('fade-in');
-                }, index * 50);
-            });
-        }, 200);
-    }
-    
-    function showFilteredTodos(filter) {
-        $('.todo-card').hide();
-        
-        switch(filter) {
-            case 'today':
-                $('.todo-card').filter(function() {
-                    const createdAt = $(this).data('created-at');
-                    return isToday(new Date(createdAt));
-                }).show();
-                break;
-            case 'tomorrow':
-                $('.todo-card').filter(function() {
-                    const dueDate = $(this).data('due-date');
-                    return dueDate && isTomorrow(new Date(dueDate));
-                }).show();
-                break;
-            case 'completed':
-                $('.todo-card.completed').show();
-                break;
-            case 'pending':
-                $('.todo-card').not('.completed').show();
-                break;
-            case 'deleted':
-                $('.todo-card.deleted').show();
-                break;
-            case 'public':
-                $('.todo-card').filter(function() {
-                    return $(this).data('is-public') === 1;
-                }).show();
-                break;
-            case 'files':
-                $('.todo-card').filter(function() {
-                    return $(this).data('file-count') > 0;
-                }).show();
-                break;
-            default:
-                $('.todo-card').not('.deleted').show();
-        }
-        
-        // Show empty state if no todos
-        if ($('.todo-card:visible').length === 0) {
-            showEmptyState(filter);
-        } else {
-            hideEmptyState();
-        }
-    }
+
 
     // ========================================================================
     // SEARCH FUNCTIONALITY
     // ========================================================================
     
     function handleSearch() {
-        const query = $('#search-input').val().toLowerCase();
+        const query = $('#search-input').val();
+        const currentFilter = App.currentFilter || 'all';
         
-        if (!query) {
-            filterTodos(App.currentFilter);
-            return;
-        }
-        
-        $('.todo-card').each(function() {
-            const $card = $(this);
-            const title = $card.find('.todo-title').text().toLowerCase();
-            const content = $card.find('.todo-content').text().toLowerCase();
-            
-            if (title.includes(query) || content.includes(query)) {
-                $card.show().addClass('search-highlight');
-            } else {
-                $card.hide();
-            }
-        });
-        
-        // Remove highlight after animation
-        setTimeout(() => {
-            $('.search-highlight').removeClass('search-highlight');
-        }, 1000);
+        // Load todos with search and current filter
+        loadTodos(currentFilter, query);
     }
 
     // ========================================================================
     // TODO MANAGEMENT
     // ========================================================================
     
-    function loadTodos() {
+    function loadTodos(filter = null, search = '') {
         showLoading();
+        
+        const currentFilter = filter || App.currentFilter;
         
         $.ajax({
             url: 'todo.php',
             method: 'POST',
-            data: { action: 'load_todos' },
+            data: { 
+                action: 'load_todos',
+                filter: currentFilter,
+                search: search
+            },
             dataType: 'json',
             success: function(response) {
                 hideLoading();
                 
                 if (response.success) {
                     App.todos = response.todos;
+                    App.currentFilter = response.filter;
                     renderTodos(response.todos);
-                    updateCounts();
+                    updateCounts(); // This will fetch fresh counts from server
                 } else {
                     showToast('error', 'Virhe ladattaessa tehtäviä');
                 }
@@ -279,7 +267,6 @@ $(document).ready(function() {
         });
         
         hideEmptyState();
-        filterTodos(App.currentFilter);
     }
     
     function createTodoCard(todo) {
@@ -1078,28 +1065,34 @@ $(document).ready(function() {
     }
     
     function updateCounts() {
-        const counts = {
-            all: $('.todo-card').not('.deleted').length,
-            today: $('.todo-card').filter(function() {
-                return isToday(new Date($(this).data('created-at')));
-            }).length,
-            completed: $('.todo-card.completed').not('.deleted').length,
-            pending: $('.todo-card').not('.completed, .deleted').length,
-            deleted: $('.todo-card.deleted').length,
-            public: $('.todo-card').filter('[data-is-public="1"]').not('.deleted').length,
-            files: $('.todo-card').filter(function() {
-                return $(this).data('file-count') > 0;
-            }).not('.deleted').length
-        };
-        
-        // Update navigation badges
-        $('.nav-item[data-filter="all"] .nav-badge').text(counts.all);
-        $('.nav-item[data-filter="today"] .nav-badge').text(counts.today);
-        $('.nav-item[data-filter="completed"] .nav-badge').text(counts.completed);
-        $('.nav-item[data-filter="pending"] .nav-badge').text(counts.pending);
-        $('.nav-item[data-filter="deleted"] .nav-badge').text(counts.deleted);
-        $('.nav-item[data-filter="public"] .nav-badge').text(counts.public);
-        $('.nav-item[data-filter="files"] .nav-badge').text(counts.files);
+        $.ajax({
+            url: 'todo.php',
+            method: 'POST',
+            data: { action: 'get_counts' },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success && response.counts) {
+                    const counts = response.counts;
+                    
+                    // Update navigation badges with animation
+                    $('.nav-item[data-filter="all"] .nav-badge').text(counts.all);
+                    $('.nav-item[data-filter="today"] .nav-badge').text(counts.today);
+                    $('.nav-item[data-filter="tomorrow"] .nav-badge').text(counts.tomorrow || 0);
+                    $('.nav-item[data-filter="completed"] .nav-badge').text(counts.completed);
+                    $('.nav-item[data-filter="pending"] .nav-badge').text(counts.pending);
+                    $('.nav-item[data-filter="deleted"] .nav-badge').text(counts.deleted);
+                    $('.nav-item[data-filter="public"] .nav-badge').text(counts.public);
+                    $('.nav-item[data-filter="files"] .nav-badge').text(counts.files);
+                    
+                    // Animate badge updates
+                    $('.nav-badge').addClass('updated');
+                    setTimeout(() => $('.nav-badge').removeClass('updated'), 300);
+                }
+            },
+            error: function() {
+                console.warn('Failed to update counts');
+            }
+        });
     }
 
     // ========================================================================

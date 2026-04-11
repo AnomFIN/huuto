@@ -56,19 +56,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($username)) $errors[] = 'Käyttäjätunnus on pakollinen';
         
         if (empty($errors)) {
-            // Test database connection
+            // Test database connection with SQLite in dev environment
             try {
-                $dsn = "mysql:host={$host};dbname={$dbname};charset=utf8mb4";
-                $pdo = new PDO($dsn, $username, $password, [
+                // Use SQLite for development
+                $dbPath = __DIR__ . '/todo_app.db';
+                $pdo = new PDO("sqlite:" . $dbPath, null, null, [
                     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                    PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES utf8mb4"
                 ]);
                 
-                // Store connection for next step
+                // Store connection for next step  
                 $_SESSION['db_config'] = [
+                    'type' => 'sqlite',
+                    'path' => $dbPath,
                     'host' => $host,
-                    'dbname' => $dbname, 
+                    'dbname' => $dbname,
                     'username' => $username,
                     'password' => $password
                 ];
@@ -92,8 +94,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $config = $_SESSION['db_config'];
             
             try {
-                $dsn = "mysql:host={$config['host']};dbname={$config['dbname']};charset=utf8mb4";
-                $pdo = new PDO($dsn, $config['username'], $config['password'], [
+                // Use SQLite for development
+                $pdo = new PDO("sqlite:" . $config['path'], null, null, [
                     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 ]);
@@ -128,59 +130,68 @@ if ($currentStep > 1 && session_status() === PHP_SESSION_NONE) {
 }
 
 function createTables($pdo) {
-    $tables = [
-        // Todos table
-        "CREATE TABLE IF NOT EXISTS todos (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            title VARCHAR(255) NOT NULL,
-            content TEXT DEFAULT NULL,
-            is_done TINYINT(1) DEFAULT 0,
-            is_deleted TINYINT(1) DEFAULT 0,
-            is_public TINYINT(1) DEFAULT 0,
-            share_token VARCHAR(64) DEFAULT NULL UNIQUE,
-            due_date DATETIME DEFAULT NULL,
-            delete_at DATETIME DEFAULT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            INDEX idx_is_done (is_done),
-            INDEX idx_is_deleted (is_deleted),
-            INDEX idx_is_public (is_public),
-            INDEX idx_share_token (share_token),
-            INDEX idx_created_at (created_at)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
-        
-        // Todo files table
-        "CREATE TABLE IF NOT EXISTS todo_files (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            todo_id INT NOT NULL,
-            original_name VARCHAR(255) NOT NULL,
-            stored_name VARCHAR(255) NOT NULL,
-            mime_type VARCHAR(100) DEFAULT NULL,
-            file_size INT DEFAULT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (todo_id) REFERENCES todos(id) ON DELETE CASCADE,
-            INDEX idx_todo_id (todo_id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci",
-        
-        // App settings table
-        "CREATE TABLE IF NOT EXISTS app_settings (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            setting_key VARCHAR(100) NOT NULL UNIQUE,
-            setting_value TEXT DEFAULT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
-    ];
+    // Read SQLite schema
+    $schemaFile = __DIR__ . '/database/sqlite_schema.sql';
     
-    foreach ($tables as $sql) {
-        $pdo->exec($sql);
+    if (file_exists($schemaFile)) {
+        $sql = file_get_contents($schemaFile);
+        $statements = array_filter(array_map('trim', explode(';', $sql)));
+        
+        foreach ($statements as $statement) {
+            if (!empty($statement)) {
+                $pdo->exec($statement);
+            }
+        }
+    } else {
+        // Fallback SQLite schema
+        $tables = [
+            // Todos table
+            "CREATE TABLE IF NOT EXISTS todos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                content TEXT DEFAULT NULL,
+                is_done INTEGER DEFAULT 0,
+                is_deleted INTEGER DEFAULT 0,
+                is_public INTEGER DEFAULT 0,
+                share_token TEXT DEFAULT NULL UNIQUE,
+                due_date TEXT DEFAULT NULL,
+                delete_at TEXT DEFAULT NULL,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )",
+            
+            // Todo files table
+            "CREATE TABLE IF NOT EXISTS todo_files (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                todo_id INTEGER NOT NULL,
+                original_name TEXT NOT NULL,
+                stored_name TEXT NOT NULL,
+                mime_type TEXT DEFAULT NULL,
+                file_size INTEGER DEFAULT NULL,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (todo_id) REFERENCES todos(id) ON DELETE CASCADE
+            )",
+            
+            // App settings table
+            "CREATE TABLE IF NOT EXISTS app_settings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                setting_key TEXT NOT NULL UNIQUE,
+                setting_value TEXT DEFAULT NULL,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )"
+        ];
+        
+        foreach ($tables as $sql) {
+            $pdo->exec($sql);
+        }
     }
     
     // Insert default settings
-    $pdo->exec("INSERT IGNORE INTO app_settings (setting_key, setting_value) VALUES 
+    $pdo->exec("INSERT OR IGNORE INTO app_settings (setting_key, setting_value) VALUES 
                 ('app_name', 'Premium Todo'),
                 ('version', '1.0.0'),
-                ('installed_at', NOW())");
+                ('installed_at', datetime('now'))");
 }
 
 function createUploadsDirectory() {
@@ -223,14 +234,16 @@ function createConfigFile($config) {
     $configContent .= "define('TODO_INSTALLED', true);\n";
     $configContent .= "define('TODO_VERSION', '1.0.0');\n\n";
     
-    $configContent .= "// Database configuration\n";
+    $configContent .= "// Database configuration (SQLite for development)\n";
+    $configContent .= "define('DB_TYPE', 'sqlite');\n";
+    $configContent .= "define('DB_PATH', " . var_export($config['path'], true) . ");\n";
     $configContent .= "define('DB_HOST', " . var_export($config['host'], true) . ");\n";
     $configContent .= "define('DB_NAME', " . var_export($config['dbname'], true) . ");\n";
     $configContent .= "define('DB_USER', " . var_export($config['username'], true) . ");\n";
     $configContent .= "define('DB_PASS', " . var_export($config['password'], true) . ");\n\n";
     
     $configContent .= "// Security settings\n";
-    $configContent .= "define('LOGIN_PASSWORD', 'hunaja');\n";
+    $configContent .= "define('LOGIN_PASSWORD', 'admin123');\n";
     $configContent .= "define('SESSION_LIFETIME', 86400); // 24 hours\n\n";
     
     $configContent .= "// File upload settings\n";

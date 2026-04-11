@@ -29,16 +29,31 @@ if (!defined('TODO_INSTALLED') || !TODO_INSTALLED) {
 
 // Database connection
 try {
-    $pdo = new PDO(
-        "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
-        DB_USER,
-        DB_PASS,
-        [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES => false
-        ]
-    );
+    if (defined('DB_TYPE') && DB_TYPE === 'sqlite') {
+        // SQLite connection for development
+        $pdo = new PDO(
+            "sqlite:" . DB_PATH,
+            null,
+            null,
+            [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES => false
+            ]
+        );
+    } else {
+        // MySQL connection for production
+        $pdo = new PDO(
+            "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
+            DB_USER,
+            DB_PASS,
+            [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES => false
+            ]
+        );
+    }
 } catch (PDOException $e) {
     die('Tietokantayhteys epäonnistui: ' . $e->getMessage());
 }
@@ -107,7 +122,112 @@ function generateSafeFileName($originalName) {
 }
 
 // ============================================================================
-// AJAX HANDLERS
+// ============================================================================
+// CENTRALIZED FILTER & QUERY LOGIC
+// ============================================================================
+
+function buildTodoQuery($filter = 'all', $search = '', $countOnly = false) {
+    $selectColumns = $countOnly ? 'COUNT(DISTINCT t.id) as count' : 't.*, COUNT(f.id) as file_count';
+    $joins = 'LEFT JOIN todo_files f ON t.id = f.todo_id';
+    $groupBy = $countOnly ? '' : 'GROUP BY t.id';
+    $orderBy = $countOnly ? '' : 'ORDER BY t.updated_at DESC';
+    
+    $sql = "SELECT {$selectColumns} FROM todos t {$joins}";
+    
+    $conditions = [];
+    $params = [];
+    
+    // Base filter conditions
+    switch ($filter) {
+        case 'today':
+            $conditions[] = "DATE(t.created_at) = DATE('now')";
+            $conditions[] = 't.is_deleted = 0';
+            break;
+        case 'tomorrow':
+            $conditions[] = "DATE(t.due_date) = DATE('now', '+1 day')";
+            $conditions[] = 't.is_deleted = 0';
+            break;
+        case 'pending':
+            $conditions[] = 't.is_done = 0';
+            $conditions[] = 't.is_deleted = 0';
+            break;
+        case 'completed':
+            $conditions[] = 't.is_done = 1';
+            $conditions[] = 't.is_deleted = 0';
+            break;
+        case 'deleted':
+            $conditions[] = 't.is_deleted = 1';
+            break;
+        case 'public':
+            $conditions[] = 't.is_public = 1';
+            $conditions[] = 't.is_deleted = 0';
+            break;
+        case 'files':
+            $conditions[] = 'EXISTS (SELECT 1 FROM todo_files tf WHERE tf.todo_id = t.id)';
+            $conditions[] = 't.is_deleted = 0';
+            break;
+        default: // 'all'
+            $conditions[] = 't.is_deleted = 0';
+            break;
+    }
+    
+    // Search conditions
+    if (!empty($search)) {
+        $conditions[] = '(t.title LIKE ? OR t.content LIKE ?)';
+        $searchTerm = "%{$search}%";
+        $params[] = $searchTerm;
+        $params[] = $searchTerm;
+    }
+    
+    // Build final query
+    if (!empty($conditions)) {
+        $sql .= ' WHERE ' . implode(' AND ', $conditions);
+    }
+    
+    if (!$countOnly) {
+        $sql .= " {$groupBy} {$orderBy}";
+    }
+    
+    return ['sql' => $sql, 'params' => $params];
+}
+
+function getTodosWithFilter($filter = 'all', $search = '') {
+    global $pdo;
+    
+    $query = buildTodoQuery($filter, $search, false);
+    $stmt = $pdo->prepare($query['sql']);
+    $stmt->execute($query['params']);
+    $todos = $stmt->fetchAll();
+    
+    // Load files for each todo
+    foreach ($todos as &$todo) {
+        $fileStmt = $pdo->prepare("SELECT * FROM todo_files WHERE todo_id = ? ORDER BY created_at DESC");
+        $fileStmt->execute([$todo['id']]);
+        $todo['files'] = $fileStmt->fetchAll();
+    }
+    
+    return $todos;
+}
+
+function getAllFilterCounts() {
+    global $pdo;
+    
+    $filters = ['all', 'today', 'tomorrow', 'pending', 'completed', 'deleted', 'public', 'files'];
+    $counts = [];
+    
+    foreach ($filters as $filter) {
+        $query = buildTodoQuery($filter, '', true);
+        $stmt = $pdo->prepare($query['sql']);
+        $stmt->execute($query['params']);
+        $result = $stmt->fetch();
+        $counts[$filter] = (int)($result['count'] ?? 0);
+    }
+    
+    return $counts;
+}
+
+// ============================================================================
+// ENHANCED AJAX HANDLERS
 // ============================================================================
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
@@ -140,6 +260,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         switch ($action) {
             case 'load_todos':
                 handleLoadTodos();
+                break;
+                
+            case 'get_counts':
+                handleGetCounts();
                 break;
                 
             case 'create_todo':
@@ -180,28 +304,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
 }
 
 function handleLoadTodos() {
-    global $pdo;
+    $filter = sanitizeInput($_POST['filter'] ?? 'all');
+    $search = sanitizeInput($_POST['search'] ?? '');
     
-    $stmt = $pdo->prepare("
-        SELECT t.*, 
-               COUNT(f.id) as file_count
-        FROM todos t 
-        LEFT JOIN todo_files f ON t.id = f.todo_id 
-        WHERE t.is_deleted = 0
-        GROUP BY t.id
-        ORDER BY t.updated_at DESC
-    ");
-    $stmt->execute();
-    $todos = $stmt->fetchAll();
+    $todos = getTodosWithFilter($filter, $search);
     
-    // Load files for each todo
-    foreach ($todos as &$todo) {
-        $fileStmt = $pdo->prepare("SELECT * FROM todo_files WHERE todo_id = ? ORDER BY created_at DESC");
-        $fileStmt->execute([$todo['id']]);
-        $todo['files'] = $fileStmt->fetchAll();
-    }
+    jsonResponse([
+        'success' => true,
+        'todos' => $todos,
+        'filter' => $filter,
+        'search' => $search
+    ]);
+}
+
+function handleGetCounts() {
+    $counts = getAllFilterCounts();
     
-    jsonResponse(['success' => true, 'todos' => $todos]);
+    jsonResponse([
+        'success' => true,
+        'counts' => $counts
+    ]);
 }
 
 function handleCreateTodo() {
