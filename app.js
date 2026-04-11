@@ -2,15 +2,23 @@
 (() => {
   'use strict';
 
-  const CAROUSEL_INTERVAL_MS = 6000;
+  // Enhanced Premium Configuration
+  const CAROUSEL_INTERVAL_MS = 7000; // Slightly longer for premium feel
+  const CAROUSEL_TRANSITION_MS = 800; // Smoother transitions
   const INITIAL_COUNT = 20;
-  const LOAD_MORE_COUNT = 10;
-  const LOAD_DELAY_MS = 550;
-  const IMAGE_FALLBACK = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="320" height="240"><rect width="320" height="240" fill="#f0f0f0"/><text x="50%" y="50%" text-anchor="middle" dy=".35em" fill="#999" font-family="Arial" font-size="14">Ei kuvaa</text></svg>')}`;
+  const LOAD_MORE_COUNT = 12;
+  const LOAD_DELAY_MS = 350; // Faster, more responsive
+  const ANIMATION_DELAY_INCREMENT = 100; // For staggered animations
+  const PARALLAX_INTENSITY = 0.5;
+  const TOUCH_THRESHOLD = 50; // Minimum swipe distance
+  
+  const IMAGE_FALLBACK = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="320" height="240" viewBox="0 0 320 240"><defs><linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#667eea"/><stop offset="100%" stop-color="#764ba2"/></linearGradient></defs><rect width="320" height="240" fill="url(#bg)" opacity="0.1"/><g transform="translate(160,120)"><circle r="40" fill="none" stroke="#667eea" stroke-width="2" opacity="0.5"/><path d="M-15,-10 L15,-10 L15,5 L10,10 L-10,10 L-15,5 Z" fill="#667eea" opacity="0.3"/><circle cx="-5" cy="-2" r="3" fill="#764ba2" opacity="0.4"/></g><text x="160" y="180" text-anchor="middle" fill="#667eea" font-family="Inter, sans-serif" font-size="14" font-weight="500" opacity="0.7">Premium Preview</text></svg>')}`;
+  
   const CATEGORIES = ['Ajoneuvot', 'Työkoneet', 'Asunnot', 'Vapaa-aika', 'Piha', 'Työkalut', 'Rakennus', 'Sisustus', 'Elektroniikka', 'Keräily', 'Muut'];
   const FILTER_PILLS = ['', 'Ajoneuvot', 'Työkoneet', 'Elektroniikka'];
   const LOCATIONS = ['Helsinki', 'Lahti', 'Tampere', 'Oulu', 'Turku', 'Jyväskylä'];
   const SELLERS = ['Kone Keltto Oy', 'Lahden Varaosa Oy', 'Pohjolan Kodit', 'Yritysmyyjä', 'Yksityinen myyjä'];
+  
   const FOOTER_LINKS = [
     { label: 'Tietoa palvelusta', page: 'tietoa-palvelusta' },
     { label: 'Tietoa huutajalle', page: 'tietoa-huutajalle' },
@@ -33,11 +41,14 @@
     { label: 'Läpinäkyvyysraportointi', page: 'lapinakyvyys' },
     { label: 'Saavutettavuusseloste', page: 'saavutettavuus' },
   ];
+  
+  // Enhanced Premium Slogans
   const SLOGANS = [
     'Luottamusta herättävä markkinapaikka jokaiselle huutajalle.',
     'Kun sekunnit ratkaisevat, näkymäsi pysyy edellä.',
-    'Premium-kokemus ilman backend-kompleksisuutta.',
-    'Huuda fiksusti, voita oikeat kohteet.',
+    'Premium-kokemus modernilla teknologialla.',
+    'Huuda fiksusti, voita parhaat kohteet.',
+    'Suomen johtava huutokauppa-alusta.',
   ];
 
   const storedFavorites = readJson('huuto247-favorites', []);
