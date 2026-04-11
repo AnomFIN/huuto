@@ -13,7 +13,7 @@ class Auction {
      * Get featured auctions for homepage showcase
      */
     public function getFeaturedAuctions($limit = 8) {
-        error_log("DEBUG: Starting getFeaturedAuctions");
+        // Starting getFeaturedAuctions
         // MySQL-yhteensopiva kysely
         $sql = "SELECT a.*, 
                        COALESCE(c.name, 'Luokittelematon') as category_name,
@@ -29,7 +29,7 @@ class Auction {
                 FROM auctions a
                 LEFT JOIN categories c ON a.category_id = c.id
                 LEFT JOIN users u ON a.user_id = u.id
-                WHERE a.end_time > NOW() AND a.featured = 1 AND a.status = 'active'
+                WHERE a.end_time > datetime('now') AND a.featured = 1 AND a.status = 'active'
                 ORDER BY a.end_time ASC
                 LIMIT :limit";
         
@@ -44,7 +44,7 @@ class Auction {
             $auction['current_price'] = $auction['highest_bid'] ?: $auction['starting_price'];
         }
         
-        error_log("DEBUG: getFeaturedAuctions returned " . count($results) . " results");
+        // getFeaturedAuctions returned results
         
         // Väliaikaisesti poistettu fallback getPopularAuctions kutsusta
         // if (empty($results)) {
@@ -72,7 +72,7 @@ class Auction {
                 FROM auctions a
                 LEFT JOIN categories c ON a.category_id = c.id
                 LEFT JOIN users u ON a.user_id = u.id
-                WHERE a.end_time > NOW() AND a.status = 'active'
+                WHERE a.end_time > datetime('now') AND a.status = 'active'
                   AND a.category_id = :category_id AND a.id != :exclude_id
                 ORDER BY a.end_time ASC
                 LIMIT :limit";
@@ -91,7 +91,7 @@ class Auction {
         return $results;
     }
     public function getPopularAuctions($limit = 20) {
-        error_log("DEBUG: Starting getPopularAuctions");
+        // Starting getPopularAuctions
         // MySQL-yhteensopiva kysely
         $sql = "SELECT a.*, 
                        COALESCE(c.name, 'Luokittelematon') as category_name,
@@ -107,7 +107,7 @@ class Auction {
                 FROM auctions a
                 LEFT JOIN categories c ON a.category_id = c.id
                 LEFT JOIN users u ON a.user_id = u.id
-                WHERE a.end_time > NOW() AND a.status = 'active'
+                WHERE a.end_time > datetime('now') AND a.status = 'active'
                 ORDER BY bid_count DESC, a.id ASC
                 LIMIT :limit";
         
@@ -122,7 +122,7 @@ class Auction {
             $auction['current_price'] = $auction['highest_bid'] ?: $auction['starting_price'];
         }
         
-        error_log("DEBUG: getPopularAuctions returned " . count($results) . " results");
+        // getPopularAuctions returned results
         
         return $results;
     }
@@ -146,8 +146,8 @@ class Auction {
                 FROM auctions a
                 LEFT JOIN categories c ON a.category_id = c.id
                 LEFT JOIN users u ON a.user_id = u.id
-                WHERE a.end_time > NOW() AND a.status = 'active'
-                  AND a.end_time <= DATE_ADD(NOW(), INTERVAL 7 DAY)
+                WHERE a.end_time > datetime('now') AND a.status = 'active'
+                  AND a.end_time <= datetime('now', '+7 days')
                 ORDER BY a.end_time ASC
                 LIMIT :limit";
         
@@ -183,7 +183,7 @@ class Auction {
                 FROM auctions a
                 LEFT JOIN categories c ON a.category_id = c.id
                 LEFT JOIN users u ON a.user_id = u.id
-                WHERE a.end_time > NOW() AND a.status = 'active'
+                WHERE a.end_time > datetime('now') AND a.status = 'active'
                 ORDER BY a.end_time ASC
                 LIMIT :limit OFFSET :offset";
         
@@ -218,7 +218,7 @@ class Auction {
                 FROM auctions a
                 JOIN categories c ON a.category_id = c.id
                 JOIN users u ON a.user_id = u.id
-                WHERE a.end_time > NOW() AND c.slug = :slug AND a.status = 'active'
+                WHERE a.end_time > datetime('now') AND c.slug = :slug AND a.status = 'active'
                 ORDER BY a.end_time ASC
                 LIMIT :limit OFFSET :offset";
         
@@ -609,7 +609,7 @@ class Auction {
                     status = :status,
                     location = :location,
                     condition_description = :condition_description,
-                    updated_at = NOW()
+                    updated_at = datetime('now')
                 WHERE id = :id";
         
         $stmt = $this->db->prepare($sql);

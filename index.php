@@ -37,28 +37,28 @@ try {
 }
 
 try {
-    echo "<!-- DEBUG: Creating Auction model -->\n";
+    // Create auction model
     $auctionModel = new Auction();
-    echo "<!-- DEBUG: Auction model created successfully -->\n";
+    // Auction model created successfully
     
     // TEMP TEST: Käytä samaa metodia kuin category.php
-    echo "<!-- DEBUG: Testing getActiveAuctions (same as category.php) -->\n";
+    // Test getActiveAuctions (same as category.php)
     $testAuctions = $auctionModel->getActiveAuctions(10);
-    echo "<!-- DEBUG: TEST RESULT: " . count($testAuctions) . " auctions from getActiveAuctions -->\n";
+    // TEST RESULT: auction count from getActiveAuctions
     
-    echo "<!-- DEBUG: Calling getPopularAuctions(120) -->\n";
+    // Load popular auctions
     $popularAuctions = $auctionModel->getPopularAuctions(120);
-    echo "<!-- DEBUG: Popular auctions loaded: " . count($popularAuctions) . " -->\n";
+    // Popular auctions loaded
     
-    echo "<!-- DEBUG: Calling getClosingSoonAuctions(120) -->\n";
+    // Load closing soon auctions
     $closingSoonAuctions = $auctionModel->getClosingSoonAuctions(120);
-    echo "<!-- DEBUG: Closing soon auctions loaded: " . count($closingSoonAuctions) . " -->\n";
+    // Closing soon auctions loaded
     
-    echo "<!-- DEBUG: Calling getFeaturedAuctions(8) -->\n";
+    // Load featured auctions
     $featuredAuctions = $auctionModel->getFeaturedAuctions(8);
-    echo "<!-- DEBUG: Featured auctions loaded: " . count($featuredAuctions) . " -->\n";
+    // Featured auctions loaded
     
-    echo "<!-- DEBUG: All auction data loaded successfully -->\n";
+    // All auction data loaded successfully
     
 } catch (Exception $error) {
     error_log("Homepage auction data load failed: " . $error->getMessage() . "\n" . $error->getTraceAsString());
@@ -141,7 +141,7 @@ function normalizeAuctionForUi(array $auction): ?array
     $endTimeRaw = isset($auction['end_time']) ? strtotime((string) $auction['end_time']) : false;
     // VÄLIAIKAISESTI POISTETTU: Skip auctions with invalid or past end times  
     // if (!$endTimeRaw || $endTimeRaw <= time()) {
-    //     error_log("DEBUG: Auction ID " . ($auction['id'] ?? 'unknown') . " rejected - end_time: " . ($auction['end_time'] ?? 'missing') . " (parsed: $endTimeRaw, current: " . time() . ")");
+        // error_log("Auction ID " . ($auction['id'] ?? 'unknown') . " rejected - end_time: " . ($auction['end_time'] ?? 'missing') . " (parsed: $endTimeRaw, current: " . time() . ")");
     //     return null;
     // }
     
@@ -160,7 +160,7 @@ function normalizeAuctionForUi(array $auction): ?array
 
     // Skip auctions without any valid price information
     if ($priceNow === null) {
-        error_log("DEBUG: Auction ID " . ($auction['id'] ?? 'unknown') . " rejected - no valid price. current_price: " . ($auction['current_price'] ?? 'missing') . ", starting_price: " . ($auction['starting_price'] ?? 'missing'));
+        // error_log("Auction ID " . ($auction['id'] ?? 'unknown') . " rejected - no valid price. current_price: " . ($auction['current_price'] ?? 'missing') . ", starting_price: " . ($auction['starting_price'] ?? 'missing'));
         return null;
     }
     $bidCount = isset($auction['bid_count']) ? (int) $auction['bid_count'] : 0;
@@ -576,7 +576,7 @@ $ogImage = rtrim((string)BASE_URL, '/') . '/assets/logo.png';
     </dialog>
     <script>
       <!-- DEBUG JSON DATA: Popular count = <?php echo count($popularUiData); ?>, Closing count = <?php echo count($closingUiData); ?>, Featured count = <?php echo count($featuredUiData); ?> -->
-      console.log('DEBUG: Starting to load HOME_DATA...');
+      // HOME_DATA loaded
       
       window.__HOME_DATA__ = {
         categories: <?php echo json_encode($categories, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG); ?>,
@@ -587,13 +587,13 @@ $ogImage = rtrim((string)BASE_URL, '/') . '/assets/logo.png';
         favoriteIds: <?php echo json_encode($favoriteIds, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG); ?>,
       };
       
-      console.log('DEBUG: HOME_DATA loaded:', window.__HOME_DATA__);
-      console.log('DEBUG: Popular items:', window.__HOME_DATA__.popular.length);
-      console.log('DEBUG: Closing items:', window.__HOME_DATA__.closing.length);
-      console.log('DEBUG: Featured items:', window.__HOME_DATA__.featured.length);
+      // console.log('HOME_DATA loaded:', window.__HOME_DATA__);
+      // console.log('Popular items:', window.__HOME_DATA__.popular.length);
+      // console.log('Closing items:', window.__HOME_DATA__.closing.length);
+      // console.log('Featured items:', window.__HOME_DATA__.featured.length);
     </script>
     <script>
-      console.log('DEBUG: About to load app.js...');
+      // About to load app.js
       
       // Test if app.js loads
       window.APP_JS_LOADED = false;
@@ -601,10 +601,10 @@ $ogImage = rtrim((string)BASE_URL, '/') . '/assets/logo.png';
       // Add error handling for script loading
       window.addEventListener('error', function(e) {
         if (e.target && e.target.src && e.target.src.includes('app.js')) {
-          console.error('DEBUG: app.js failed to load!', e);
+          // console.error('app.js failed to load!', e);
         }
       });
     </script>
-    <script src="app.js" defer onload="console.log('DEBUG: app.js loaded successfully!'); window.APP_JS_LOADED = true;" onerror="console.error('DEBUG: app.js loading FAILED!');"></script>
+    <script src="app.js" defer></script>
   </body>
 </html>
