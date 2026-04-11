@@ -600,6 +600,78 @@ include SRC_PATH . '/views/header.php';
         
         if (!display) return;
         
+        if (timeLeft > 0) {
+            const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+            
+            let timeString = '';
+            if (days > 0) {
+                timeString = `${days}pv ${hours}h ${minutes}min`;
+                display.className = 'countdown-time';
+            } else if (hours > 0) {
+                timeString = `${hours}h ${minutes}min ${seconds}s`;
+                display.className = 'countdown-time warning';
+            } else if (minutes > 0) {
+                timeString = `${minutes}min ${seconds}s`;
+                display.className = 'countdown-time urgent';
+            } else {
+                timeString = `${seconds}s`;
+                display.className = 'countdown-time critical';
+            }
+            
+            display.textContent = timeString;
+        } else {
+            display.textContent = 'Huutokauppa päättynyt';
+            display.className = 'countdown-time ended';
+        }
+    }
+    
+    // Update countdown every second
+    updateCountdown();
+    const countdownInterval = setInterval(updateCountdown, 1000);
+    
+    // Bidding functionality
+    document.getElementById('placeBidBtn')?.addEventListener('click', () => {
+        // TODO: Open bid modal
+        console.log('Place bid clicked');
+    });
+    
+    document.getElementById('buyNowBtn')?.addEventListener('click', () => {
+        // TODO: Open buy now modal
+        console.log('Buy now clicked');
+    });
+    
+    document.getElementById('watchBtn')?.addEventListener('click', () => {
+        // TODO: Toggle watch status
+        console.log('Watch clicked');
+    });
+    
+    // Keyboard navigation for image viewer
+    document.addEventListener('keydown', (e) => {
+        const viewer = document.getElementById('imageViewer');
+        if (!viewer.classList.contains('open')) return;
+        
+        switch (e.key) {
+            case 'Escape':
+                closeImageViewer();
+                break;
+            case 'ArrowLeft':
+                navigateImage(-1);
+                break;
+            case 'ArrowRight':
+                navigateImage(1);
+                break;
+        }
+    });
+})();
+</script>
+
+<?php include SRC_PATH . '/views/footer.php'; ?>
+        
+        if (!display) return;
+        
         if (timeLeft <= 0) {
             display.textContent = 'Huutokauppa päättynyt';
             display.closest('.countdown-timer').classList.add('ended');
