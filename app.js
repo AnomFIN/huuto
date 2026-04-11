@@ -282,6 +282,7 @@
     };
     writeJson('huuto247-cookies', state.cookiesAccepted);
     hideCookieConsent();
+    console.log('All cookies accepted');
   }
 
   function acceptNecessaryCookies() {
@@ -293,11 +294,13 @@
     };
     writeJson('huuto247-cookies', state.cookiesAccepted);
     hideCookieConsent();
+    console.log('Necessary cookies accepted');
   }
 
   function showCookieSettings() {
     if (refs.cookieSettingsModal) {
       refs.cookieSettingsModal.classList.remove('hidden');
+      refs.cookieSettingsModal.style.display = ''; // Reset display style
       
       // Pre-populate settings if previously set
       if (state.cookiesAccepted && refs.analyticsToggle) {
@@ -307,18 +310,43 @@
         refs.marketingToggle.checked = state.cookiesAccepted.marketing || false;
       }
     }
+    
+    // Varmista että premium-modal näytetään
+    const premiumModal = document.querySelector('.premium-cookie-modal');
+    if (premiumModal) {
+      premiumModal.classList.remove('hidden');
+      premiumModal.style.display = '';
+    }
+    
+    console.log('Cookie settings opened');
   }
 
   function hideCookieConsent() {
-    if (refs.cookieConsent) {
-      refs.cookieConsent.classList.add('hidden');
+    // Varmista että sekä premium että legacy cookie consent piilotetaan
+    const cookieConsent = refs.cookieConsent || document.querySelector('.premium-cookie-consent') || document.querySelector('.cookie-consent');
+    if (cookieConsent) {
+      cookieConsent.classList.add('hidden');
+      cookieConsent.style.display = 'none'; // Varmatoimen vuoksi
     }
+    // Piilota myös legacy versiot
+    document.querySelectorAll('.cookie-consent, .premium-cookie-consent').forEach(el => {
+      el.classList.add('hidden');
+      el.style.display = 'none';
+    });
   }
 
   function closeCookieSettings() {
-    if (refs.cookieSettingsModal) {
-      refs.cookieSettingsModal.classList.add('hidden');
+    // Varmista että sekä premium että legacy modal piilotetaan
+    const modal = refs.cookieSettingsModal || document.querySelector('.premium-cookie-modal') || document.querySelector('#cookieSettingsModal');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.style.display = 'none'; // Varmatoimen vuoksi
     }
+    // Piilota kaikki mahdolliset modalt
+    document.querySelectorAll('.premium-cookie-modal, #cookieSettingsModal').forEach(el => {
+      el.classList.add('hidden');
+      el.style.display = 'none';
+    });
   }
 
   function saveCookieSettings() {
@@ -332,8 +360,20 @@
       timestamp: new Date().toISOString(),
     };
     writeJson('huuto247-cookies', state.cookiesAccepted);
+    
+    // Aggressiivinen sulkeminen - 100% varmatoiminen
     closeCookieSettings();
     hideCookieConsent();
+    
+    // Vielä yksi varmistus setTimeout:lla
+    setTimeout(() => {
+      document.querySelectorAll('.premium-cookie-modal, .premium-cookie-consent, .cookie-consent, #cookieSettingsModal, #cookieConsent').forEach(el => {
+        el.classList.add('hidden');
+        el.style.display = 'none';
+      });
+    }, 100);
+    
+    console.log('Cookie settings saved:', state.cookiesAccepted);
   }
 
   function normalizeServerItems(items) {
