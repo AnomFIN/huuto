@@ -516,8 +516,16 @@ Performance:
         <div class="container">
           <div class="section-header-premium">
             <div class="section-badge">Toimituksen valinta</div>
-            <h2 class="section-title">Viikonlopun parhaat löydöt</h2>
-            <p class="section-subtitle">Asiantuntijamme ovat valikoineet nämä ainutlaatuiset kohteet</p>
+            <div class="ohitus-header">
+              <div class="ohitus-badge">🏆 PREMIUM</div>
+              <h2 class="section-title gold-title">⚡ Ohituskaista</h2>
+              <p class="section-subtitle">Ostamalla Ohituskaista-paikan kohteesi saa 5x enemmän huomiota ja näkyy etusivulla. <span class="highlight">Korkeammat tarjoukset taattu!</span></p>
+              <div class="ohitus-pricing">
+                <div class="price-item">📈 Etusivu-näkyvyys: <strong>29€</strong></div>
+                <div class="price-item">⭐ Premium-merkki: <strong>19€</strong></div>
+                <div class="price-item">🚀 Boost-paketti: <strong>39€</strong></div>
+              </div>
+            </div>
           </div>
           
           <div class="featured-grid" id="featuredGrid">
@@ -642,14 +650,48 @@ Performance:
       </form>
     </dialog>
 
-    <!-- Login Modal -->
-    <dialog id="loginModal" class="modal">
-      <form method="dialog" class="modal-content">
-        <h2>Kirjaudu sisään</h2>
-        <p>Kirjaudu sisään huutaaksesi kohteista!</p>
-        <div class="modal-actions">
-          <button id="simulateLogin" type="button" class="btn-primary">Kirjaudu demo-tilille</button>
-          <button type="button" class="btn-secondary" data-close-modal>Peruuta</button>
+    <!-- Premium Login Modal -->
+    <dialog id="loginModal" class="premium-login-modal">
+      <form method="dialog" class="premium-modal-content">
+        <div class="modal-header">
+          <div class="login-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+              <polyline points="10,17 15,12 10,7"/>
+              <line x1="15" y1="12" x2="3" y2="12"/>
+            </svg>
+          </div>
+          <h2>Kirjaudu sisään</h2>
+          <p>Kirjaudu sisään käyttääksesi kaikkia ominaisuuksia</p>
+        </div>
+        <div class="premium-login-form">
+          <div class="input-group">
+            <input type="email" placeholder="Sähköposti" class="premium-input" required>
+            <span class="input-icon">📧</span>
+          </div>
+          <div class="input-group">
+            <input type="password" placeholder="Salasana" class="premium-input" required>
+            <span class="input-icon">🔒</span>
+          </div>
+          <div class="login-options">
+            <label class="checkbox-wrapper">
+              <input type="checkbox"> <span class="checkmark"></span> Muista minut
+            </label>
+            <a href="/auth/reset-password.php" class="forgot-link">Unohtuiko salasana?</a>
+          </div>
+        </div>
+        <div class="premium-modal-actions">
+          <button id="simulateLogin" type="button" class="btn-login-primary">
+            <svg viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/>
+            </svg>
+            Kirjaudu sisään
+          </button>
+          <button type="button" class="btn-login-secondary" data-close-modal>Peruuta</button>
+        </div>
+        <div class="register-prompt">
+          <p>Puuttuuko käyttäjätunnus?</p>
+          <a href="/auth/register.php" class="register-link">Rekisteröidy tästä →</a>
         </div>
       </form>
     </dialog>

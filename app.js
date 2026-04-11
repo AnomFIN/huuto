@@ -265,11 +265,27 @@
 
   /* ----- COOKIE CONSENT SYSTEM ----- */
   function initializeCookieConsent() {
-    // Show consent popup if not previously decided
-    if (state.cookiesAccepted === null) {
-      if (refs.cookieConsent) {
-        refs.cookieConsent.classList.remove('hidden');
-      }
+    // Tarkista onko evästeet jo asetettu
+    const saved = readJson('huuto247-cookies', null);
+    if (saved && saved.timestamp) {
+      state.cookiesAccepted = saved;
+      console.log('Cookies already configured:', saved);
+      return; // Älä näytä popupia jos evästeet on jo asetettu
+    }
+    
+    // Näytä evästepopup pehmeällä fade-in animaatiolla
+    if (refs.cookieConsent) {
+      // Aloita piilossa
+      refs.cookieConsent.style.opacity = '0';
+      refs.cookieConsent.style.transform = 'translateY(100px)';
+      refs.cookieConsent.classList.remove('hidden');
+      
+      // Fade in 1.5s viiveellä jotta ei särähdä käyttäjää
+      setTimeout(() => {
+        refs.cookieConsent.style.transition = 'opacity 0.8s ease-out, transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        refs.cookieConsent.style.opacity = '1';
+        refs.cookieConsent.style.transform = 'translateY(0)';
+      }, 1500);
     }
   }
 
@@ -281,8 +297,10 @@
       timestamp: new Date().toISOString(),
     };
     writeJson('huuto247-cookies', state.cookiesAccepted);
-    hideCookieConsent();
-    console.log('All cookies accepted');
+    
+    // Smooth hide with animation
+    hideConsentWithAnimation();
+    console.log('All cookies accepted and saved:', state.cookiesAccepted);
   }
 
   function acceptNecessaryCookies() {
@@ -293,8 +311,10 @@
       timestamp: new Date().toISOString(),
     };
     writeJson('huuto247-cookies', state.cookiesAccepted);
-    hideCookieConsent();
-    console.log('Necessary cookies accepted');
+    
+    // Smooth hide with animation
+    hideConsentWithAnimation();
+    console.log('Necessary cookies accepted and saved:', state.cookiesAccepted);
   }
 
   function showCookieSettings() {
@@ -334,6 +354,23 @@
       el.style.display = 'none';
     });
   }
+  
+  function hideConsentWithAnimation() {
+    const cookieConsent = refs.cookieConsent || document.querySelector('.premium-cookie-consent');
+    if (cookieConsent) {
+      // Smooth fade out animation
+      cookieConsent.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
+      cookieConsent.style.opacity = '0';
+      cookieConsent.style.transform = 'translateY(100px)';
+      
+      // Piilota kokonaan animaation jälkeen
+      setTimeout(() => {
+        hideCookieConsent();
+      }, 500);
+    } else {
+      hideCookieConsent(); // Fallback
+    }
+  }
 
   function closeCookieSettings() {
     // Varmista että sekä premium että legacy modal piilotetaan
@@ -359,11 +396,13 @@
       marketing,
       timestamp: new Date().toISOString(),
     };
+    
+    // Tallenna evästeet pysyvästi
     writeJson('huuto247-cookies', state.cookiesAccepted);
     
-    // Aggressiivinen sulkeminen - 100% varmatoiminen
+    // Sulje modal ja popup smooth animaatioilla
     closeCookieSettings();
-    hideCookieConsent();
+    hideConsentWithAnimation();
     
     // Vielä yksi varmistus setTimeout:lla
     setTimeout(() => {
@@ -371,9 +410,14 @@
         el.classList.add('hidden');
         el.style.display = 'none';
       });
-    }, 100);
+    }, 600);
     
-    console.log('Cookie settings saved:', state.cookiesAccepted);
+    console.log('Cookie settings saved permanently:', state.cookiesAccepted);
+    
+    // Näytä käyttäjälle vahvistus (valinnainen)
+    if (window.showToast) {
+      showToast('✓ Evästeasetukset tallennettu', 'success');
+    }
   }
 
   function normalizeServerItems(items) {
@@ -799,11 +843,74 @@
           <span class="countdown" data-end-time="${item.endTime}">${formatCountdown(item.endTime)}</span>
           <p class="price">Hinta nyt: ${formatPrice(item.priceNow)}</p>
           <p class="subline">Tarjouksia ${item.bidsCount} • Minikorotus ${formatPrice(item.minIncrement)}</p>
-          <p class="trust-line">Myyjä: ${escapeHtml(item.seller)} • ${escapeHtml(item.delivery)}</p>
+          <div class="seller-info">✅ Tunnistautunut myyjä</div>
+          <p class="trust-line">${escapeHtml(item.delivery)}</p>
           <div class="badges">${todayBadge}${newBadge}</div>
+          <div class="card-actions">
+            <button class="btn-bid" onclick="handleBid(${item.id})">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              Huuda
+            </button>
+            <button class="btn-buy" onclick="handleBuyNow(${item.id})">
+              <svg viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm-2 5V6a2 2 0 114 0v1H8z" clip-rule="evenodd"/></svg>
+              Osta heti
+            </button>
+          </div>
         </article>
       `;
     }).join('');
+  }
+
+  // Premium Action Button Handlers
+  window.handleBid = function(itemId) {
+    if (!state.user.loggedIn) {
+      refs.loginModal.showModal();
+      return;
+    }
+    // TODO: Implement bidding modal
+    console.log('Bidding on item:', itemId);
+    showToast('🔨 Tarjous-toiminto tulossa pian!', 'info');
+  };
+  
+  window.handleBuyNow = function(itemId) {
+    if (!state.user.loggedIn) {
+      refs.loginModal.showModal();
+      return;
+    }
+    // TODO: Implement buy now functionality
+    console.log('Buy now for item:', itemId);
+    showToast('💰 Osta heti -toiminto tulossa pian!', 'info');
+  };
+  
+  // Premium Toast Notification System
+  function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `premium-toast ${type}`;
+    toast.innerHTML = `
+      <div class="toast-content">
+        <span class="toast-message">${message}</span>
+        <button class="toast-close" onclick="this.parentElement.parentElement.remove()">&times;</button>
+      </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Animate in
+    requestAnimationFrame(() => {
+      toast.classList.add('show');
+    });
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+      if (document.body.contains(toast)) {
+        toast.classList.remove('show');
+        setTimeout(() => {
+          if (document.body.contains(toast)) {
+            document.body.removeChild(toast);
+          }
+        }, 300);
+      }
+    }, 3000);
   }
 
   function loadMore(kind) {
