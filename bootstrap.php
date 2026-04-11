@@ -82,7 +82,18 @@ try {
     }
     
     // Load the main configuration file
-    require_once APP_PATH . '/config.php';
+    if (file_exists(APP_PATH . '/config.php')) {
+        require_once APP_PATH . '/config.php';
+    } elseif (file_exists(BASE_PATH . '/config/production.php')) {
+        // Tuotantopalvelimen konfiguraatio
+        require_once BASE_PATH . '/config/production.php';
+    } else {
+        // Fallback kehitysympäristöön
+        if (!defined('DB_HOST')) define('DB_HOST', 'localhost');
+        if (!defined('DB_NAME')) define('DB_NAME', 'huuto247_dev');
+        if (!defined('DB_USER')) define('DB_USER', 'dev_user');
+        if (!defined('DB_PASS')) define('DB_PASS', '');
+    }
     
     // Load core application files in correct order
     require_once APP_PATH . '/db.php';

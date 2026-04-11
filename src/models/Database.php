@@ -8,19 +8,48 @@ class Database {
 
     private function __construct() {
         try {
-            $dbPath = __DIR__ . '/../../database/huuto247.db';
-            $dsn = "sqlite:$dbPath";
+            // MySQL yhteys tuotantopalvelimelle
+            if (!defined('DB_HOST') || !defined('DB_NAME') || !defined('DB_USER') || !defined('DB_PASS')) {
+                // Lataa config tiedot jos ei ole vielä ladattu
+                $this->loadDatabaseConfig();
+            }
             
-            $this->pdo = new PDO($dsn, null, null, [
+            $dsn = sprintf(
+                'mysql:host=%s;dbname=%s;charset=%s',
+                DB_HOST,
+                DB_NAME,
+                defined('DB_CHARSET') ? DB_CHARSET : 'utf8mb4'
+            );
+            
+            $options = [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-            ]);
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES => false
+            ];
             
-            // Enable foreign keys for SQLite
-            $this->pdo->exec('PRAGMA foreign_keys = ON');
+            $this->pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
+            
+            // Set charset after connection  
+            $this->pdo->exec("SET NAMES " . (defined('DB_CHARSET') ? DB_CHARSET : 'utf8mb4'));
             
         } catch (PDOException $e) {
-            throw new RuntimeException("Tietokantayhteys epäonnistui: " . $e->getMessage());
+            error_log("Database connection failed: " . $e->getMessage());
+            throw new RuntimeException("Tietokantayhteys epäonnistui: " . $e->getMessage() . ". Tarkista tietokanta-asetukset.", 0, $e);
+        } catch (Exception $e) {
+            error_log("General database error: " . $e->getMessage());
+            throw new RuntimeException("Tietokantayhteys epäonnistui. Yritä myöhemmin uudelleen.", 0, $e);
+        }
+    }
+    
+    private function loadDatabaseConfig() {
+        // Lataa tietokanta konfiguraatio config tiedostosta jos ei ole vielä ladattu
+        if (!defined('DB_HOST') || !defined('DB_NAME') || !defined('DB_USER') || !defined('DB_PASS')) {
+            // Tuotantopalvelimen MySQL asetukset - nämä pitää määritellä config.php:ssä
+            if (!defined('DB_HOST')) define('DB_HOST', 'localhost');
+            if (!defined('DB_NAME')) define('DB_NAME', 'huuto247_db');  
+            if (!defined('DB_USER')) define('DB_USER', 'huuto247_user');
+            if (!defined('DB_PASS')) define('DB_PASS', ''); // Todellinen salasana config.php:ssä
+            if (!defined('DB_CHARSET')) define('DB_CHARSET', 'utf8mb4');
         }
     }
     public static function getInstance() {
