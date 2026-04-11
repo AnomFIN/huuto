@@ -46,10 +46,10 @@ class Auction {
         
         error_log("DEBUG: getFeaturedAuctions returned " . count($results) . " results");
         
-        // If no featured auctions, fallback to popular ones
-        if (empty($results)) {
-            return $this->getPopularAuctions($limit);
-        }
+        // Väliaikaisesti poistettu fallback getPopularAuctions kutsusta
+        // if (empty($results)) {
+        //     return $this->getPopularAuctions($limit);
+        // }
         
         return $results;
     }

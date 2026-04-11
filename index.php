@@ -37,21 +37,28 @@ try {
 }
 
 try {
+    echo "<!-- DEBUG: Creating Auction model -->\n";
     $auctionModel = new Auction();
-    echo "<!-- Auction model created successfully -->\n";
+    echo "<!-- DEBUG: Auction model created successfully -->\n";
     
+    echo "<!-- DEBUG: Calling getPopularAuctions(120) -->\n";
     $popularAuctions = $auctionModel->getPopularAuctions(120);
-    echo "<!-- Popular auctions loaded: " . count($popularAuctions) . " -->\n";
+    echo "<!-- DEBUG: Popular auctions loaded: " . count($popularAuctions) . " -->\n";
     
+    echo "<!-- DEBUG: Calling getClosingSoonAuctions(120) -->\n";
     $closingSoonAuctions = $auctionModel->getClosingSoonAuctions(120);
-    echo "<!-- Closing soon auctions loaded: " . count($closingSoonAuctions) . " -->\n";
+    echo "<!-- DEBUG: Closing soon auctions loaded: " . count($closingSoonAuctions) . " -->\n";
     
+    echo "<!-- DEBUG: Calling getFeaturedAuctions(8) -->\n";
     $featuredAuctions = $auctionModel->getFeaturedAuctions(8);
-    echo "<!-- Featured auctions loaded: " . count($featuredAuctions) . " -->\n";
+    echo "<!-- DEBUG: Featured auctions loaded: " . count($featuredAuctions) . " -->\n";
+    
+    echo "<!-- DEBUG: All auction data loaded successfully -->\n";
     
 } catch (Exception $error) {
     error_log("Homepage auction data load failed: " . $error->getMessage() . "\n" . $error->getTraceAsString());
     echo "<!-- ERROR: " . htmlspecialchars($error->getMessage()) . " -->\n";
+    echo "<!-- ERROR TRACE: " . htmlspecialchars($error->getTraceAsString()) . " -->\n";
     $dataLoadError = 'Tietojen lataaminen epäonnistui: ' . $error->getMessage();
 }
 
