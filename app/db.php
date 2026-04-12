@@ -10,24 +10,36 @@ class DB {
     
     private function __construct() {
         try {
-            $dsn = sprintf(
-                'mysql:host=%s;dbname=%s;charset=%s',
-                DB_HOST,
-                DB_NAME,
-                DB_CHARSET
-            );
-            
-            $options = [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES => false, // Use real prepared statements
-                PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES " . DB_CHARSET
-            ];
-            
-            $this->pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
+            if (defined('DB_TYPE') && DB_TYPE === 'sqlite') {
+                // SQLite connection for development
+                $dsn = 'sqlite:' . (DB_PATH[0] === '/' ? DB_PATH : BASE_PATH . '/' . DB_PATH);
+                $options = [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                    PDO::ATTR_EMULATE_PREPARES => false,
+                ];
+                $this->pdo = new PDO($dsn, null, null, $options);
+            } else {
+                // MySQL connection for production
+                $dsn = sprintf(
+                    'mysql:host=%s;dbname=%s;charset=%s',
+                    DB_HOST,
+                    DB_NAME,
+                    DB_CHARSET
+                );
+                
+                $options = [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                    PDO::ATTR_EMULATE_PREPARES => false, // Use real prepared statements
+                    PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES " . DB_CHARSET
+                ];
+                
+                $this->pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
+            }
         } catch (PDOException $e) {
             error_log('Database connection failed: ' . $e->getMessage());
-            throw new RuntimeException('Tietokantayhteys epäonnistui. Yritä myöhemmin uudelleen.');
+            throw new RuntimeException('Tietokantayhteys epäonnistui: ' . $e->getMessage() . '. Tarkista tietokanta-asetukset.');
         }
     }
     

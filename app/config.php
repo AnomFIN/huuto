@@ -67,6 +67,8 @@ date_default_timezone_set(TIMEZONE);
 // ============================================================
 // Database Configuration
 // ============================================================
+define('DB_TYPE', env('DB_TYPE', 'mysql'));
+define('DB_PATH', env('DB_PATH', BASE_PATH . '/test.db'));
 define('DB_HOST', env('DB_HOST', 'localhost'));
 define('DB_NAME', env('DB_NAME', 'huuto_db'));
 define('DB_USER', env('DB_USER', 'root'));
