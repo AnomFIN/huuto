@@ -14,9 +14,9 @@ class Category {
      */
     public function getAllCategories() {
         $sql = "SELECT c.*, 
-                       (SELECT COUNT(*) FROM auctions a WHERE a.category_id = c.id AND a.end_time > datetime('now')) as active_count
+                       (SELECT COUNT(*) FROM auctions a WHERE a.category_id = c.id AND a.status = 'active' AND a.end_time > NOW()) as active_count
                 FROM categories c
-                ORDER BY c.name ASC";
+                ORDER BY c.sort_order ASC, c.name ASC";
         
         $stmt = $this->db->prepare($sql);
         $stmt->execute();

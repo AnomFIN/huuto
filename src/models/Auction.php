@@ -21,7 +21,7 @@ class Auction {
                        a.current_price
                 FROM auctions a
                 LEFT JOIN categories c ON a.category_id = c.id
-                WHERE a.end_time > datetime('now') AND a.is_featured = 1
+                WHERE a.end_time > NOW() AND a.is_featured = 1
                 ORDER BY a.end_time ASC
                 LIMIT :limit";
         
@@ -40,7 +40,7 @@ class Auction {
                            a.current_price
                     FROM auctions a
                     LEFT JOIN categories c ON a.category_id = c.id
-                    WHERE a.end_time > datetime('now')
+                    WHERE a.end_time > NOW()
                     ORDER BY a.created_at DESC
                     LIMIT :limit";
             
@@ -69,7 +69,7 @@ class Auction {
                        a.current_price
                 FROM auctions a
                 LEFT JOIN categories c ON a.category_id = c.id
-                WHERE a.end_time > datetime('now')
+                WHERE a.status = 'active' AND a.end_time > NOW() 
                   AND a.category_id = :category_id AND a.id != :exclude_id
                 ORDER BY a.created_at DESC
                 LIMIT :limit";
@@ -315,7 +315,7 @@ class Auction {
 
             // Check if auction is still active
             $auction = $this->getAuctionById($auctionId);
-            if (!$auction || strtotime($auction['end_time']) <= time()) {
+            if (!$auction || $auction['status'] !== 'active' || strtotime($auction['end_time']) <= time()) {
                 throw new Exception('Huutokauppa ei ole enää aktiivinen');
             }
 
