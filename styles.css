@@ -3085,7 +3085,8 @@ input:disabled + .cookie-slider {
   }
 }
 
-/* Legacy Cookie Consent Compatibility */
+/* Legacy Cookie Consent - Commented out to fix duplicate popup issue */
+/*
 .cookie-consent {
   position: fixed;
   bottom: 0;
@@ -3141,6 +3142,7 @@ input:disabled + .cookie-slider {
   text-decoration: underline;
   padding: 0;
 }
+*/
 
 /* Cookie Settings Modal */
 .cookie-settings-modal {
