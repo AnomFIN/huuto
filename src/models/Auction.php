@@ -58,10 +58,6 @@ class Auction {
         }
         
         return $results;
-        //     return $this->getPopularAuctions($limit);
-        // }
-        
-        return $results;
     }
     
     /**
@@ -90,11 +86,6 @@ class Auction {
         $stmt->execute();
         
         return $stmt->fetchAll();
-        foreach ($results as &$auction) {
-            $auction['current_price'] = $auction['highest_bid'] ?: $auction['starting_price'];
-        }
-        
-        return $results;
     }
     public function getPopularAuctions($limit = 20) {
         // Starting getPopularAuctions
@@ -176,7 +167,7 @@ class Auction {
      */
     public function getActiveAuctions($limit = 20, $offset = 0) {
         $sql = "SELECT a.*, 
-                       COALESCE(c.name, 'Luokittelematon') as category_name, 
+                       COALESCE(c.name, 'Luokittelematon') as category_name,
                        COALESCE(c.slug, 'other') as category_slug,
                        COALESCE(u.username, 'Tuntematon myyjä') as seller_username,
                        (SELECT image_path
@@ -212,7 +203,7 @@ class Auction {
      * Get auctions by category
      */
     public function getAuctionsByCategory($categorySlug, $limit = 20, $offset = 0) {
-        $sql = "SELECT a.*, c.name as category_name, c.slug as category_slug,
+        $sql = "SELECT a.*, c.name as category_name, COALESCE(c.slug, 'other') as category_slug,
                        u.username as seller_username,
                        (SELECT image_path
                         FROM auction_images
@@ -224,7 +215,7 @@ class Auction {
                 FROM auctions a
                 JOIN categories c ON a.category_id = c.id
                 JOIN users u ON a.user_id = u.id
-                WHERE a.end_time > NOW() AND c.slug = :slug AND a.status = 'active'
+                WHERE a.end_time > NOW() AND COALESCE(c.slug, 'other') = :slug AND a.status = 'active'
                 ORDER BY a.end_time ASC
                 LIMIT :limit OFFSET :offset";
         
@@ -254,7 +245,11 @@ class Auction {
                     COALESCE(c.name, 'Luokittelematon') as category_name,
                     COALESCE(u.username, 'Tuntematon') as seller_username,
                     (SELECT COUNT(*) FROM bids b WHERE b.auction_id = a.id) as bid_count,
-                    (SELECT COUNT(*) FROM watchlist w WHERE w.auction_id = a.id) as watch_count
+                    (SELECT COUNT(*) FROM watchlist w WHERE w.auction_id = a.id) as watch_count,
+                    (SELECT image_path FROM auction_images ai 
+                     WHERE ai.auction_id = a.id 
+                     ORDER BY is_primary DESC, sort_order ASC, id ASC
+                     LIMIT 1) as primary_image
                 FROM auctions a
                 LEFT JOIN categories c ON c.id = a.category_id
                 LEFT JOIN users u ON u.id = a.user_id
@@ -268,11 +263,20 @@ class Auction {
     }
 
     /**
-     * Get auction metadata as key-value array (simplified for SQLite)
+     * Get auction metadata as key-value array
      */
     public function getAuctionMetadata($auctionId) {
-        // Return empty array since we don't have metadata table in simple schema
-        return [];
+        $sql = "SELECT field_name, field_value FROM auction_metadata WHERE auction_id = :auction_id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':auction_id', (int)$auctionId, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        $metadata = [];
+        while ($row = $stmt->fetch()) {
+            $metadata[$row['field_name']] = $row['field_value'];
+        }
+        
+        return $metadata;
     }
 
     /**
@@ -295,29 +299,39 @@ class Auction {
     }
 
     /**
-     * Get auction images (simplified for SQLite)
+     * Get auction images
      */
     public function getAuctionImages($auctionId) {
-        // With our simple schema, return primary image if it exists
-        $auction = $this->getAuctionById($auctionId);
-        if ($auction && $auction['primary_image']) {
-            return [
-                [
-                    'image_path' => $auction['primary_image'],
-                    'is_primary' => 1,
-                    'sort_order' => 1
-                ]
-            ];
-        }
-        return [];
+        $sql = "SELECT id, auction_id, image_path, caption, is_primary, sort_order
+                FROM auction_images
+                WHERE auction_id = :auction_id
+                ORDER BY is_primary DESC, sort_order ASC, id ASC";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':auction_id', (int)$auctionId, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        return $stmt->fetchAll();
     }
 
     /**
-     * Get auction bids (simplified for SQLite)
+     * Get auction bids
      */
     public function getAuctionBids($auctionId, $limit = 200) {
-        // Return empty array since we don't have bids table in simple schema
-        return [];
+        $sql = "SELECT b.id, b.auction_id, b.user_id, b.amount, b.is_auto_bid, b.created_at as bid_time,
+                       u.username
+                FROM bids b
+                LEFT JOIN users u ON b.user_id = u.id
+                WHERE b.auction_id = :auction_id
+                ORDER BY b.created_at DESC
+                LIMIT :limit";
+        
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':auction_id', (int)$auctionId, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->execute();
+        
+        return $stmt->fetchAll();
     }
 
     /**
@@ -374,15 +388,17 @@ class Auction {
      * Increment view count
      */
     public function incrementViews($auctionId) {
-        // Views tracking not implemented in simple SQLite schema
-        return true;
+        $sql = "UPDATE auctions SET views = views + 1 WHERE id = :auction_id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':auction_id', (int)$auctionId, PDO::PARAM_INT);
+        return $stmt->execute();
     }
 
     /**
      * Search auctions
      */
     public function searchAuctions($query, $limit = 20, $offset = 0) {
-        $sql = "SELECT a.*, c.name as category_name, c.slug as category_slug,
+        $sql = "SELECT a.*, c.name as category_name, COALESCE(c.slug, 'other') as category_slug,
                        u.username as seller_username,
                        (SELECT image_path
                         FROM auction_images
@@ -570,7 +586,7 @@ class Auction {
      * Get all auctions (for admin interface)
      */
     public function getAllAuctions($limit = 100, $offset = 0) {
-        $sql = "SELECT a.*, c.name as category_name, c.slug as category_slug,
+        $sql = "SELECT a.*, c.name as category_name, COALESCE(c.slug, 'other') as category_slug,
                        u.username as seller_username,
                        (SELECT image_path
                         FROM auction_images
@@ -680,6 +696,23 @@ class Auction {
         } catch (Exception $e) {
             $this->db->rollBack();
             throw $e;
+        }
+    }
+
+    /**
+     * Ensure image caption column exists (for migration compatibility)
+     */
+    private function ensureImageCaptionColumn() {
+        try {
+            // Try to check if caption column exists
+            $this->db->query("SELECT caption FROM auction_images LIMIT 1");
+        } catch (Exception $e) {
+            // If column doesn't exist, add it
+            try {
+                $this->db->exec("ALTER TABLE auction_images ADD COLUMN caption TEXT");
+            } catch (Exception $e) {
+                // Ignore if column already exists or can't be added
+            }
         }
     }
 }
