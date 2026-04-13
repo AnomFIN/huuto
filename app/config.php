@@ -65,8 +65,13 @@ if (!defined('TIMEZONE')) {
 date_default_timezone_set(TIMEZONE);
 
 // ============================================================
-// Database Configuration
+// Database Configuration - MYSQL ONLY
+// IMPORTANT: This system uses MySQL exclusively in production
+// DO NOT change to SQLite or other databases - SQL queries are MySQL-optimized
+// Production site: www.huuto247.fi runs on MySQL with phpMyAdmin
 // ============================================================
+define('DATABASE_SYSTEM', env('DATABASE_SYSTEM', 'MYSQL')); // Documentation purpose
+define('USED_DATABASE_TECHNIQUE', env('USED_DATABASE_TECHNIQUE', 'MYSQL')); // AI/Developer notice
 define('DB_TYPE', env('DB_TYPE', 'mysql'));
 define('DB_PATH', env('DB_PATH', BASE_PATH . '/test.db'));
 define('DB_HOST', env('DB_HOST', 'localhost'));
