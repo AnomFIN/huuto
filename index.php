@@ -393,8 +393,8 @@ Performance:
           <?php if ($isUserLoggedIn): ?>
             <span id="userGreeting" class="user-greeting">Hei, <?php echo htmlspecialchars($displayFirstName !== '' ? $displayFirstName : 'Käyttäjä', ENT_QUOTES, 'UTF-8'); ?>!</span>
           <?php else: ?>
-            <button id="loginLink">Kirjaudu sisään</button>
-            <button id="registerLink" class="register-pill">Rekisteröidy</button>
+            <a href="/auth/login.php" id="loginLink" class="btn-login">Kirjaudu sisään</a>
+            <a href="/auth/register.php" id="registerLink" class="btn-register">Rekisteröidy</a>
           <?php endif; ?>
         </nav>
       </div>
@@ -804,47 +804,6 @@ Performance:
       // console.log('Featured items:', window.__HOME_DATA__.featured.length);
     </script>
     <script>
-      // Debug: Tarkista cookie elementien määrä
-      window.addEventListener('DOMContentLoaded', function() {
-        setTimeout(() => {
-          const cookieElements = document.querySelectorAll('[id*="cookie"], [class*="cookie"]');
-          const premiumCookieElements = document.querySelectorAll('.premium-cookie-consent');
-          const legacyCookieElements = document.querySelectorAll('.cookie-consent');
-          
-          console.log('🍪 Cookie Debug Info:');
-          console.log('- Kaikki cookie elementit:', cookieElements.length, cookieElements);
-          console.log('- Premium cookie elementit:', premiumCookieElements.length, premiumCookieElements);
-          console.log('- Legacy cookie elementit:', legacyCookieElements.length, legacyCookieElements);
-          console.log('- cookieConsent elementti:', document.getElementById('cookieConsent'));
-          
-          // Lisää debug info HTML:ään
-          const debugInfo = document.createElement('div');
-          debugInfo.style.cssText = 'position: fixed; top: 10px; right: 10px; background: rgba(0,0,0,0.8); color: white; padding: 10px; font-size: 12px; z-index: 99999; cursor: pointer;';
-          debugInfo.innerHTML = `
-            🍪 Cookie Debug:<br>
-            Kaikki: ${cookieElements.length}<br>
-            Premium: ${premiumCookieElements.length}<br>
-            Legacy: ${legacyCookieElements.length}<br>
-            cookieConsent: ${document.getElementById('cookieConsent') ? '✓' : '✗'}<br>
-            <small>Klikkaa palauttaaksesi cookie popup</small>
-          `;
-          
-          // Lisää klikkaus toiminnallisuus debug boxiin
-          debugInfo.addEventListener('click', function() {
-            console.log('🍪 Clearing cookies and reloading...');
-            localStorage.removeItem('huuto247-cookies');
-            window.location.reload();
-          });
-          
-          document.body.appendChild(debugInfo);
-          
-          // Piilota debug 15s kuluttua
-          setTimeout(() => debugInfo.remove(), 15000);
-        }, 100);
-      });
-      
-      // About to load app.js
-      
       // Test if app.js loads
       window.APP_JS_LOADED = false;
       

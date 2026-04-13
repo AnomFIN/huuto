@@ -534,7 +534,53 @@
   }
 
   function bindEvents() {
-    window.addEventListener('scroll', () => refs.header.classList.toggle('scrolled', window.scrollY > 6));
+    let lastScrollY = 0;
+    let ticking = false;
+    
+    function updateHeader() {
+      const scrollY = window.scrollY;
+      
+      // Standard scrolled class for all screen sizes
+      refs.header.classList.toggle('scrolled', scrollY > 6);
+      
+      // Mobile scroll-hide functionality
+      if (window.innerWidth <= 1240) {
+        const scrollingDown = scrollY > lastScrollY;
+        const scrolledEnough = scrollY > 100; // Start hiding after 100px scroll
+        
+        if (scrollingDown && scrolledEnough) {
+          refs.header.classList.add('scrolled-up', 'mobile-minimal');
+        } else if (!scrollingDown || scrollY <= 50) {
+          refs.header.classList.remove('scrolled-up');
+          
+          // Remove minimal mode when scrolled back to top
+          if (scrollY <= 50) {
+            refs.header.classList.remove('mobile-minimal');
+          }
+        }
+      } else {
+        // Remove mobile classes on desktop
+        refs.header.classList.remove('scrolled-up', 'mobile-minimal');
+      }
+      
+      lastScrollY = scrollY;
+      ticking = false;
+    }
+    
+    function requestHeaderUpdate() {
+      if (!ticking) {
+        requestAnimationFrame(updateHeader);
+        ticking = true;
+      }
+    }
+    
+    window.addEventListener('scroll', requestHeaderUpdate, { passive: true });
+    window.addEventListener('resize', () => {
+      // Reset mobile classes on resize
+      if (window.innerWidth > 1240) {
+        refs.header.classList.remove('scrolled-up', 'mobile-minimal');
+      }
+    });
 
     refs.langToggle.addEventListener('click', () => {
       const open = refs.langMenu.classList.toggle('open');
