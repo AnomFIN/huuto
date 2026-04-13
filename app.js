@@ -174,7 +174,11 @@
 
   /* ----- UTILITY FUNCTIONS ----- */
   function byId(id) {
-    return document.getElementById(id);
+    const element = document.getElementById(id);
+    if (!element) {
+      console.warn(`⚠️ DOM-elementti puuttuu id:llä "${id}" - tämä saattaa aiheuttaa ongelmia`);
+    }
+    return element;
   }
 
   function create(tag, className, content) {
@@ -357,42 +361,57 @@
   }
 
   function hideCookieConsent() {
-    console.log('🍪 hideCookieConsent() called');
+    console.log('🍪🔥 hideCookieConsent() called');
     // Varmista että premium cookie consent piilotetaan
     const cookieConsent = refs.cookieConsent || document.querySelector('.premium-cookie-consent');
+    console.log('🍪🔥 cookieConsent element:', cookieConsent);
     if (cookieConsent) {
-      console.log('🍪 Found cookie consent element, hiding it');
+      console.log('🍪🔥 Found cookie consent element, hiding it');
+      console.log('🍪🔥 Before hide - classes:', cookieConsent.className);
+      console.log('🍪🔥 Before hide - style:', cookieConsent.style.cssText);
+      
       cookieConsent.classList.add('hidden');
       cookieConsent.style.display = 'none'; // Varmatoimen vuoksi
+      
+      console.log('🍪🔥 After hide - classes:', cookieConsent.className);
+      console.log('🍪🔥 After hide - style:', cookieConsent.style.cssText);
     } else {
-      console.warn('🍪 No cookie consent element found to hide');
+      console.warn('🍪🔥 No cookie consent element found to hide');
     }
     // Piilota myös kaikki premium versiot
     const allCookieElements = document.querySelectorAll('.premium-cookie-consent');
-    console.log('🍪 Found', allCookieElements.length, 'premium cookie elements to hide');
-    allCookieElements.forEach(el => {
+    console.log('🍪🔥 Found', allCookieElements.length, 'premium cookie elements to hide');
+    allCookieElements.forEach((el, index) => {
+      console.log(`🍪🔥 Hiding premium element ${index+1}:`, el.className);
       el.classList.add('hidden');
       el.style.display = 'none';
     });
   }
   
   function hideConsentWithAnimation() {
-    console.log('🍪 Hiding cookie consent with animation...');
+    console.log('🍪🔥 hideConsentWithAnimation called...');
     const cookieConsent = refs.cookieConsent || document.querySelector('.premium-cookie-consent');
+    console.log('🍪🔥 cookieConsent element found:', cookieConsent);
     if (cookieConsent) {
-      console.log('🍪 Cookie element found, starting hide animation');
+      console.log('🍪🔥 Cookie element found, starting hide animation');
+      console.log('🍪🔥 Current element classes:', cookieConsent.className);
+      console.log('🍪🔥 Current element style:', cookieConsent.style.cssText);
+      
       // Smooth fade out animation
       cookieConsent.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
       cookieConsent.style.opacity = '0';
       cookieConsent.style.transform = 'translateY(100px)';
       
+      console.log('🍪🔥 Animation styles applied, waiting 500ms to hide completely...');
+      
       // Piilota kokonaan animaation jälkeen
       setTimeout(() => {
+        console.log('🍪🔥 Calling hideCookieConsent() after animation...');
         hideCookieConsent();
-        console.log('🍪 Cookie consent hidden completely');
+        console.log('🍪🔥 Cookie consent hidden completely');
       }, 500);
     } else {
-      console.warn('🍪 Cookie consent element not found for hiding');
+      console.warn('🍪🔥 Cookie consent element not found for hiding');
       hideCookieConsent(); // Fallback
     }
   }
@@ -412,12 +431,18 @@
   }
 
   function saveCookieSettings() {
-    console.log('🍪 saveCookieSettings called - starting process...');
+    console.log('🍪🔥 saveCookieSettings called - starting process...');
+    
+    // Debug: Tarkista että elementit löytyvät
+    console.log('🍪🔥 refs.analyticsToggle:', refs.analyticsToggle);
+    console.log('🍪🔥 refs.marketingToggle:', refs.marketingToggle);
+    console.log('🍪🔥 refs.cookieConsent:', refs.cookieConsent);
+    console.log('🍪🔥 refs.cookieSettingsModal:', refs.cookieSettingsModal);
     
     const analytics = refs.analyticsToggle ? refs.analyticsToggle.checked : false;
     const marketing = refs.marketingToggle ? refs.marketingToggle.checked : false;
     
-    console.log('🍪 Cookie preferences:', { analytics, marketing });
+    console.log('🍪🔥 Cookie preferences:', { analytics, marketing });
     
     state.cookiesAccepted = {
       necessary: true,
@@ -426,12 +451,16 @@
       timestamp: new Date().toISOString(),
     };
     
-    console.log('🍪 Saving to localStorage:', state.cookiesAccepted);
+    console.log('🍪🔥 Saving to localStorage:', state.cookiesAccepted);
     
     // Tallenna evästeet pysyvästi
     writeJson('huuto247-cookies', state.cookiesAccepted);
     
-    console.log('🍪 Closing modal and hiding consent...');
+    // Tarkista että tallennus onnistui
+    const saved = localStorage.getItem('huuto247-cookies');
+    console.log('🍪🔥 Saved to localStorage check:', saved);
+    
+    console.log('🍪🔥 Closing modal and hiding consent...');
     
     // Sulje modal ja popup smooth animaatioilla
     closeCookieSettings();
@@ -439,14 +468,18 @@
     
     // Vielä yksi varmistus setTimeout:lla
     setTimeout(() => {
-      document.querySelectorAll('.premium-cookie-modal, .premium-cookie-consent, #cookieSettingsModal, #cookieConsent').forEach(el => {
+      console.log('🍪🔥 Force hiding all cookie modals...');
+      const modals = document.querySelectorAll('.premium-cookie-modal, .premium-cookie-consent, #cookieSettingsModal, #cookieConsent');
+      console.log('🍪🔥 Found', modals.length, 'modals to hide');
+      modals.forEach((el, index) => {
+        console.log(`🍪🔥 Hiding modal ${index+1}:`, el.id || el.className);
         el.classList.add('hidden');
         el.style.display = 'none';
       });
-      console.log('🍪 All cookie modals forcibly hidden');
+      console.log('🍪🔥 All cookie modals forcibly hidden');
     }, 600);
     
-    console.log('🍪 Cookie settings saved permanently:', state.cookiesAccepted);
+    console.log('🍪🔥 Cookie settings saved permanently:', state.cookiesAccepted);
     
     // Näytä käyttäjälle vahvistus (valinnainen)
     if (window.showToast) {
@@ -577,14 +610,21 @@
       console.warn('🍪 cookieSettings button not found!');
     }
     if (refs.saveCookieSettings) {
-      console.log('🍪 Binding click handler to saveCookieSettings button');
+      console.log('🍪🔥 Binding click handler to saveCookieSettings button');
+      console.log('🍪🔥 Button element:', refs.saveCookieSettings);
       refs.saveCookieSettings.addEventListener('click', (e) => {
-        console.log('🍪 Save cookie settings button clicked!', e);
+        console.log('🍪🔥 Save cookie settings button clicked!', e);
+        console.log('🍪🔥 Event target:', e.target);
+        console.log('🍪🔥 Button ID:', e.target.id);
         e.preventDefault();  // Estä mahdolliset form submit -ongelmat
+        e.stopPropagation(); // Estä event bubbling
+        console.log('🍪🔥 About to call saveCookieSettings()...');
         saveCookieSettings();
       });
+      console.log('🍪🔥 Click handler bound successfully');
     } else {
-      console.error('🍪 saveCookieSettings button not found!');
+      console.error('🍪🔥 saveCookieSettings button not found!');
+      console.error('🍪🔥 Available refs:', Object.keys(refs));
     }
     if (refs.closeCookieSettings) {
       refs.closeCookieSettings.addEventListener('click', closeCookieSettings);
@@ -1283,14 +1323,6 @@
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
-  }
-
-  function byId(id) {
-    const element = document.getElementById(id);
-    if (!element) {
-      throw new Error(`Puuttuva DOM-elementti id:llä "${id}"`);
-    }
-    return element;
   }
 
   function readJson(key, fallback) {
