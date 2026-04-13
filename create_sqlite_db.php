@@ -65,8 +65,6 @@ try {
             starting_price DECIMAL(10,2),
             buy_now_price DECIMAL(10,2),
             views INTEGER DEFAULT 0,
-            primary_image TEXT,
-            is_featured INTEGER DEFAULT 0,
             featured INTEGER DEFAULT 0,
             status TEXT DEFAULT 'active',
             user_id INTEGER DEFAULT 1,
@@ -108,16 +106,16 @@ try {
     // Insert sample auctions (without bid_count)  
     $currentTime = time();
     $auctions = [
-        [1, 'Vintage kello 1970-luvulta', 'Kaunis vintage kello hyväkuntoisena. Toimii normaalisti.', 'Helsinki', 1, date('Y-m-d H:i:s', $currentTime + 3600), 45.50, 15.00, null, 125, '/uploads/sample1.jpg', 0, 0, 'active', 1],
-        [2, 'Sohva 3-paikkainen, hyvä kunto', 'Mukava sohva olohuoneeseen. Ei lampunpalamia.', 'Tampere', 2, date('Y-m-d H:i:s', $currentTime + 7200), 125.00, 80.00, 200.00, 89, '/uploads/sample2.jpg', 0, 0, 'active', 1],
-        [3, 'Polkupyörä 26" miesten malli', 'Hyväkuntoinen polkupyörä, käytetty vähän.', 'Turku', 3, date('Y-m-d H:i:s', $currentTime + 5400), 65.00, 30.00, 120.00, 200, '/uploads/sample3.jpg', 0, 0, 'active', 2],
-        [4, 'Kahvinkeitin Moccamaster', 'Toimiva kahvinkeitin, hyvässä kunnossa.', 'Espoo', 4, date('Y-m-d H:i:s', $currentTime + 1800), 89.50, 40.00, 150.00, 67, '/uploads/sample4.jpg', 0, 0, 'active', 2],
-        [5, 'Pelikonsolipaketti + pelejä', 'PlayStation 4 + 10 peliä. Kaikki toimii.', 'Oulu', 5, date('Y-m-d H:i:s', $currentTime + 2700), 156.00, 75.00, 300.00, 340, '/uploads/sample5.jpg', 1, 1, 'active', 3],
-        [6, 'Taulumaalaus 1800-luku', 'Harvinainen taulu tuntemattomalta taiteilijalta.', 'Helsinki', 6, date('Y-m-d H:i:s', $currentTime + 9000), 450.00, 200.00, 800.00, 89, '/uploads/sample6.jpg', 1, 1, 'active', 3],
-        [7, 'Keräilypostikortteja 1950-60', 'Kaunis kokoelma vanhoja postikortteja.', 'Lahti', 7, date('Y-m-d H:i:s', $currentTime + 12600), 23.50, 10.00, 50.00, 45, '/uploads/sample7.jpg', 1, 1, 'active', 1]
+        [1, 'Vintage kello 1970-luvulta', 'Kaunis vintage kello hyväkuntoisena. Toimii normaalisti.', 'Helsinki', 1, date('Y-m-d H:i:s', $currentTime + 3600), 45.50, 15.00, null, 125, 0, 'active', 1],
+        [2, 'Sohva 3-paikkainen, hyvä kunto', 'Mukava sohva olohuoneeseen. Ei lampunpalamia.', 'Tampere', 2, date('Y-m-d H:i:s', $currentTime + 7200), 125.00, 80.00, 200.00, 89, 0, 'active', 1],
+        [3, 'Polkupyörä 26" miesten malli', 'Hyväkuntoinen polkupyörä, käytetty vähän.', 'Turku', 3, date('Y-m-d H:i:s', $currentTime + 5400), 65.00, 30.00, 120.00, 200, 0, 'active', 2],
+        [4, 'Kahvinkeitin Moccamaster', 'Toimiva kahvinkeitin, hyvässä kunnossa.', 'Espoo', 4, date('Y-m-d H:i:s', $currentTime + 1800), 89.50, 40.00, 150.00, 67, 0, 'active', 2],
+        [5, 'Pelikonsolipaketti + pelejä', 'PlayStation 4 + 10 peliä. Kaikki toimii.', 'Oulu', 5, date('Y-m-d H:i:s', $currentTime + 2700), 156.00, 75.00, 300.00, 340, 1, 'active', 3],
+        [6, 'Taulumaalaus 1800-luku', 'Harvinainen taulu tuntemattomalta taiteilijalta.', 'Helsinki', 6, date('Y-m-d H:i:s', $currentTime + 9000), 450.00, 200.00, 800.00, 89, 1, 'active', 3],
+        [7, 'Keräilypostikortteja 1950-60', 'Kaunis kokoelma vanhoja postikortteja.', 'Lahti', 7, date('Y-m-d H:i:s', $currentTime + 12600), 23.50, 10.00, 50.00, 45, 1, 'active', 1]
     ];
     
-    $stmt = $pdo->prepare("INSERT OR IGNORE INTO auctions (id, title, description, location, category_id, end_time, current_price, starting_price, buy_now_price, views, primary_image, is_featured, featured, status, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt = $pdo->prepare("INSERT OR IGNORE INTO auctions (id, title, description, location, category_id, end_time, current_price, starting_price, buy_now_price, views, featured, status, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     
     foreach ($auctions as $auction) {
         $stmt->execute($auction);
