@@ -412,8 +412,12 @@
   }
 
   function saveCookieSettings() {
+    console.log('🍪 saveCookieSettings called - starting process...');
+    
     const analytics = refs.analyticsToggle ? refs.analyticsToggle.checked : false;
     const marketing = refs.marketingToggle ? refs.marketingToggle.checked : false;
+    
+    console.log('🍪 Cookie preferences:', { analytics, marketing });
     
     state.cookiesAccepted = {
       necessary: true,
@@ -422,8 +426,12 @@
       timestamp: new Date().toISOString(),
     };
     
+    console.log('🍪 Saving to localStorage:', state.cookiesAccepted);
+    
     // Tallenna evästeet pysyvästi
     writeJson('huuto247-cookies', state.cookiesAccepted);
+    
+    console.log('🍪 Closing modal and hiding consent...');
     
     // Sulje modal ja popup smooth animaatioilla
     closeCookieSettings();
@@ -435,13 +443,16 @@
         el.classList.add('hidden');
         el.style.display = 'none';
       });
+      console.log('🍪 All cookie modals forcibly hidden');
     }, 600);
     
-    console.log('Cookie settings saved permanently:', state.cookiesAccepted);
+    console.log('🍪 Cookie settings saved permanently:', state.cookiesAccepted);
     
     // Näytä käyttäjälle vahvistus (valinnainen)
     if (window.showToast) {
       showToast('✓ Evästeasetukset tallennettu', 'success');
+    } else {
+      console.log('🍪 Toast notification not available, but settings saved successfully');
     }
   }
 
@@ -566,7 +577,14 @@
       console.warn('🍪 cookieSettings button not found!');
     }
     if (refs.saveCookieSettings) {
-      refs.saveCookieSettings.addEventListener('click', saveCookieSettings);
+      console.log('🍪 Binding click handler to saveCookieSettings button');
+      refs.saveCookieSettings.addEventListener('click', (e) => {
+        console.log('🍪 Save cookie settings button clicked!', e);
+        e.preventDefault();  // Estä mahdolliset form submit -ongelmat
+        saveCookieSettings();
+      });
+    } else {
+      console.error('🍪 saveCookieSettings button not found!');
     }
     if (refs.closeCookieSettings) {
       refs.closeCookieSettings.addEventListener('click', closeCookieSettings);

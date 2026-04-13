@@ -2675,17 +2675,21 @@ h3 { font-size: clamp(1.25rem, 2.5vw, 1.75rem); }
 }
 
 /* Premium Cookie Consent */
+.hidden { 
+  display: none !important; 
+}
+
 .premium-cookie-consent {
   position: fixed;
   bottom: 2rem;
   left: 2rem;
   right: 2rem;
   z-index: 9999;
-  pointer-events: none;
+  pointer-events: auto; /* Always allow interactions when visible */
 }
 
-.premium-cookie-consent:not(.hidden) {
-  pointer-events: auto;
+.premium-cookie-consent.hidden {
+  display: none;
 }
 
 .cookie-backdrop {
@@ -2836,6 +2840,10 @@ h3 { font-size: clamp(1.25rem, 2.5vw, 1.75rem); }
   align-items: center;
   justify-content: center;
   padding: 2rem;
+}
+
+.premium-cookie-modal.hidden {
+  display: none;
 }
 
 .cookie-modal-overlay {
