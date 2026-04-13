@@ -558,12 +558,12 @@ h3 { font-size: clamp(1.25rem, 2.5vw, 1.75rem); }
 }
 
 .carousel-track { 
-  min-height: 420px; 
-  perspective: 2000px; 
+  min-height: 380px; 
   overflow: hidden; 
   position: relative;
   border-radius: var(--radius-lg);
-  background: linear-gradient(135deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.05) 100%);
+  background: linear-gradient(135deg, rgba(0,0,0,0.01) 0%, rgba(0,0,0,0.03) 100%);
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.05);
 }
 
 .carousel-item { 
@@ -573,21 +573,18 @@ h3 { font-size: clamp(1.25rem, 2.5vw, 1.75rem); }
   overflow: hidden; 
   border: 1px solid var(--glass-border); 
   opacity: 0; 
-  transform: translate3d(80%, 0, -150px) scale(0.8) rotateY(-30deg) rotateX(5deg); 
-  filter: blur(3px) brightness(0.6); 
-  will-change: transform, opacity, filter; 
+  transform: translateX(100%) scale(0.95); 
+  will-change: transform, opacity; 
   backface-visibility: hidden; 
-  transition: all 1s cubic-bezier(0.23, 1, 0.32, 1);
-  box-shadow: var(--shadow-premium);
+  transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+  box-shadow: var(--shadow-soft);
 }
 
 .carousel-item.active { 
   opacity: 1; 
-  transform: translateX(0) scale(1) rotateY(0) rotateX(0) translateZ(0); 
-  filter: blur(0) brightness(1); 
+  transform: translateX(0) scale(1); 
   z-index: 10;
-  box-shadow: var(--shadow-float), var(--glow-accent);
-  animation: activeItemFloat 6s ease-in-out infinite;
+  box-shadow: var(--shadow-premium);
 }
 
 @keyframes activeItemFloat {
@@ -598,16 +595,14 @@ h3 { font-size: clamp(1.25rem, 2.5vw, 1.75rem); }
 }
 
 .carousel-item.prev { 
-  opacity: 0.3; 
-  transform: translate3d(-80%, 0, -120px) scale(0.85) rotateY(35deg) rotateX(-3deg); 
-  filter: blur(2px) brightness(0.7);
+  opacity: 0.4; 
+  transform: translateX(-100%) scale(0.95); 
   z-index: 5;
 }
 
 .carousel-item.next { 
-  opacity: 0.3; 
-  transform: translate3d(80%, 0, -120px) scale(0.85) rotateY(-35deg) rotateX(-3deg); 
-  filter: blur(2px) brightness(0.7);
+  opacity: 0.4; 
+  transform: translateX(100%) scale(0.95); 
   z-index: 5;
 }
 
@@ -630,12 +625,11 @@ h3 { font-size: clamp(1.25rem, 2.5vw, 1.75rem); }
   position: absolute;
   inset: 0;
   background: linear-gradient(45deg, 
-    rgba(99, 102, 241, 0.1) 0%, 
-    transparent 40%, 
-    rgba(139, 92, 246, 0.1) 100%);
+    rgba(99, 102, 241, 0.03) 0%, 
+    transparent 50%, 
+    rgba(139, 92, 246, 0.03) 100%);
   z-index: 1;
   pointer-events: none;
-  animation: shimmer 8s ease-in-out infinite;
 }
 
 @keyframes shimmer {
@@ -664,8 +658,8 @@ h3 { font-size: clamp(1.25rem, 2.5vw, 1.75rem); }
 }
 
 .carousel-item.active .carousel-media img {
-  transform: scale(1.08) translateZ(20px);
-  animation: parallaxFloat 12s ease-in-out infinite;
+  transform: scale(1.05);
+  transition: transform 0.8s var(--ease-premium);
 }
 
 @keyframes parallaxFloat {
@@ -676,31 +670,28 @@ h3 { font-size: clamp(1.25rem, 2.5vw, 1.75rem); }
 }
 
 .carousel-item:hover .carousel-media img {
-  transform: scale(1.12) translateZ(30px);
-  filter: brightness(1.05) contrast(1.02);
+  transform: scale(1.08);
 }
 
 .carousel-overlay { 
   position: absolute; 
   inset: auto 0 0; 
   color: #fff; 
-  padding: 32px; 
+  padding: 28px; 
   background: linear-gradient(to top, 
-    rgba(0, 0, 0, 0.95) 0%,
-    rgba(0, 0, 0, 0.8) 40%,
-    rgba(0, 0, 0, 0.4) 70%,
+    rgba(0, 0, 0, 0.9) 0%,
+    rgba(0, 0, 0, 0.6) 50%,
     transparent 100%);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   z-index: 3;
-  transform: translateY(100%);
-  transition: transform 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+  transform: translateY(0);
+  transition: all 0.4s var(--ease-premium);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .carousel-item.active .carousel-overlay {
-  transform: translateY(0);
-  animation: overlayGlow 6s ease-in-out infinite;
+  opacity: 1;
 }
 
 @keyframes overlayGlow {
@@ -713,10 +704,7 @@ h3 { font-size: clamp(1.25rem, 2.5vw, 1.75rem); }
   font-size: clamp(1.1rem, 2vw, 1.4rem); 
   font-weight: 800; 
   line-height: 1.2;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.7);
-  transform: translateY(20px);
-  opacity: 0;
-  animation: slideInUp 0.8s 0.2s forwards cubic-bezier(0.23, 1, 0.32, 1);
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
 @keyframes slideInUp {
@@ -728,15 +716,11 @@ h3 { font-size: clamp(1.25rem, 2.5vw, 1.75rem); }
   font-size: clamp(1.4rem, 3vw, 1.8rem); 
   margin: 12px 0 8px; 
   font-weight: 900;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.7);
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
   background: var(--accent-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  transform: translateY(20px);
-  opacity: 0;
-  animation: slideInUp 0.8s 0.3s forwards cubic-bezier(0.23, 1, 0.32, 1);
-  position: relative;
 }
 
 .carousel-overlay .price::after {
@@ -906,11 +890,44 @@ h3 { font-size: clamp(1.25rem, 2.5vw, 1.75rem); }
   transform: scale(0.8);
 }
 
-.category-head { display: inline-block; border: 1px solid var(--hairline); border-radius: var(--radius-pill); padding: .22rem .48rem; font-size: .73rem; font-weight: 600; color: var(--text-700); margin-bottom: .52rem; }
-.category-card ul { margin: 0; padding: 0; list-style: none; display: grid; gap: .26rem; }
-.category-card button { width: 100%; border: 1px solid transparent; border-left: 2px solid transparent; border-radius: 10px; background: transparent; padding: .5rem .56rem; text-align: left; cursor: pointer; font-weight: 600; color: var(--text-700); }
-.category-card button:hover { background: var(--surface-soft); border-color: var(--hairline); }
-.category-card button.active { border-left-color: var(--accent-600); color: var(--text-900); background: #f4f8ff; }
+.category-head { 
+  display: inline-block; 
+  border: 1px solid var(--accent-600); 
+  border-radius: var(--radius-pill); 
+  padding: .28rem .6rem; 
+  font-size: .75rem; 
+  font-weight: 700; 
+  color: var(--accent-600); 
+  background: rgba(99, 102, 241, 0.05);
+  margin-bottom: .68rem; 
+}
+.category-card ul { margin: 0; padding: 0; list-style: none; display: grid; gap: .32rem; }
+.category-card button { 
+  width: 100%; 
+  border: 1px solid transparent; 
+  border-left: 3px solid transparent; 
+  border-radius: 12px; 
+  background: var(--surface-soft); 
+  padding: .6rem .7rem; 
+  text-align: left; 
+  cursor: pointer; 
+  font-weight: 600; 
+  color: var(--text-700);
+  transition: all 0.2s var(--ease-premium);
+  font-size: .88rem;
+}
+.category-card button:hover { 
+  background: var(--surface); 
+  border-color: var(--line); 
+  transform: translateX(4px);
+  box-shadow: var(--shadow-subtle);
+}
+.category-card button.active { 
+  border-left-color: var(--accent-600); 
+  color: var(--accent-600); 
+  background: rgba(99, 102, 241, 0.08); 
+  font-weight: 700;
+}
 
 .listing-section { padding: 1.55rem 0; }
 .section-tint { background: var(--bg-tint); }
@@ -922,8 +939,8 @@ h3 { font-size: clamp(1.25rem, 2.5vw, 1.75rem); }
 
 .auction-grid { 
   display: grid; 
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: clamp(20px, 3vw, 32px);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: clamp(16px, 2vw, 24px);
   padding: 8px;
 }
 
@@ -935,11 +952,19 @@ h3 { font-size: clamp(1.25rem, 2.5vw, 1.75rem); }
   }
 }
 
-/* Tablet: 3 per row */
+/* Large tablets: 3 per row */
 @media (min-width: 900px) and (max-width: 1199px) {
   .auction-grid {
     grid-template-columns: repeat(3, 1fr);
     gap: 20px;
+  }
+}
+
+/* Small tablets: 2 per row */
+@media (min-width: 600px) and (max-width: 899px) {
+  .auction-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
   }
 }
 
