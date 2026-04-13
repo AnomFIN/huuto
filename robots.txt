@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://huuto247.fi/sitemap.xml

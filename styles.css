@@ -65,6 +65,13 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Hidden utility class - CRITICAL for cookie popup disappearing */
+.hidden {
+  display: none !important;
+  pointer-events: none !important;
+  opacity: 0 !important;
+}
+
 html { 
   scroll-behavior: smooth;
 }
