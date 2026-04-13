@@ -939,8 +939,8 @@ h3 { font-size: clamp(1.25rem, 2.5vw, 1.75rem); }
 
 .auction-grid { 
   display: grid; 
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: clamp(16px, 2vw, 24px);
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
   padding: 8px;
 }
 
@@ -1874,7 +1874,8 @@ h3 { font-size: clamp(1.25rem, 2.5vw, 1.75rem); }
   .header-row { grid-template-columns: 1fr; gap: .5rem; padding: .5rem 0; }
   .lang-menu { left: auto; right: 0; }
   .header-links { border-left: 0; padding-left: 0; }
-  .auction-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+  /* auction-grid handled by main responsive rules */
+}
   
   /* Mobile scroll-hide header functionality */
   .site-header {
@@ -1936,7 +1937,7 @@ h3 { font-size: clamp(1.25rem, 2.5vw, 1.75rem); }
 }
 
 @media (max-width: 640px) {
-  .auction-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+  /* auction-grid handled by main responsive rules */
   .hero-orb { display: none; }
   .hero-stats { grid-template-columns: 1fr; gap: 16px; }
   .carousel-wrap { grid-template-columns: 1fr; }
@@ -2271,7 +2272,7 @@ h3 { font-size: clamp(1.25rem, 2.5vw, 1.75rem); }
   .trust-features { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
-  .auction-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* auction-grid handled by main responsive rules */
   .featured-grid { grid-template-columns: 1fr; }
   .hero-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .hero-actions { flex-direction: column; }
@@ -3352,12 +3353,12 @@ input:checked + .toggle-slider:before {
   color: var(--text-700);
   line-height: 1.5;
 }
-  .auction-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* auction-grid handled by main responsive rules */
   .footer-grid { grid-template-columns: 1fr; }
   .links-col { grid-template-columns: repeat(2, minmax(0,1fr)); }
 }
 @media (max-width: 640px) {
-  .auction-grid { grid-template-columns: 1fr; }
+  /* auction-grid handled by main responsive rules */
   .header-links { flex-wrap: wrap; }
 }
 
