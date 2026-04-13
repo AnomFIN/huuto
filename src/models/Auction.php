@@ -16,7 +16,10 @@ class Auction {
         // MySQL/MariaDB compatible query with dynamic counts
         $sql = "SELECT a.*, 
                        COALESCE(c.name, 'Luokittelematon') as category_name,
-                       a.primary_image,
+                       (SELECT image_path FROM auction_images ai 
+                        WHERE ai.auction_id = a.id 
+                        ORDER BY is_primary DESC, sort_order ASC, id ASC
+                        LIMIT 1) as primary_image,
                        (SELECT COUNT(*) FROM bids b WHERE b.auction_id = a.id) as bid_count,
                        a.current_price
                 FROM auctions a
@@ -35,7 +38,10 @@ class Auction {
         if (empty($results)) {
             $sql = "SELECT a.*, 
                            COALESCE(c.name, 'Luokittelematon') as category_name,
-                           a.primary_image,
+                           (SELECT image_path FROM auction_images ai 
+                            WHERE ai.auction_id = a.id 
+                            ORDER BY is_primary DESC, sort_order ASC, id ASC
+                            LIMIT 1) as primary_image,
                            (SELECT COUNT(*) FROM bids b WHERE b.auction_id = a.id) as bid_count,
                            a.current_price
                     FROM auctions a
@@ -64,7 +70,10 @@ class Auction {
     public function getRelatedAuctions($categoryId, $excludeAuctionId, $limit = 6) {
         $sql = "SELECT a.*, 
                        COALESCE(c.name, 'Luokittelematon') as category_name,
-                       a.primary_image,
+                       (SELECT image_path FROM auction_images ai 
+                        WHERE ai.auction_id = a.id 
+                        ORDER BY is_primary DESC, sort_order ASC, id ASC
+                        LIMIT 1) as primary_image,
                        (SELECT COUNT(*) FROM bids b WHERE b.auction_id = a.id) as bid_count,
                        a.current_price
                 FROM auctions a
