@@ -21,7 +21,7 @@ class Auction {
                        a.current_price
                 FROM auctions a
                 LEFT JOIN categories c ON a.category_id = c.id
-                WHERE a.end_time > datetime('now') AND a.is_featured = 1
+                WHERE a.end_time > NOW() AND a.is_featured = 1
                 ORDER BY a.end_time ASC
                 LIMIT :limit";
         
@@ -40,7 +40,7 @@ class Auction {
                            a.current_price
                     FROM auctions a
                     LEFT JOIN categories c ON a.category_id = c.id
-                    WHERE a.end_time > datetime('now')
+                    WHERE a.end_time > NOW()
                     ORDER BY a.created_at DESC
                     LIMIT :limit";
             
@@ -69,7 +69,7 @@ class Auction {
                        a.current_price
                 FROM auctions a
                 LEFT JOIN categories c ON a.category_id = c.id
-                WHERE a.status = 'active' AND a.end_time > datetime('now') 
+                WHERE a.status = 'active' AND a.end_time > NOW() 
                   AND a.category_id = :category_id AND a.id != :exclude_id
                 ORDER BY a.created_at DESC
                 LIMIT :limit";
@@ -104,7 +104,7 @@ class Auction {
                 FROM auctions a
                 LEFT JOIN categories c ON a.category_id = c.id
                 LEFT JOIN users u ON a.user_id = u.id
-                WHERE a.end_time > datetime('now') AND a.status = 'active'
+                WHERE a.end_time > NOW() AND a.status = 'active'
                 ORDER BY bid_count DESC, a.id ASC
                 LIMIT :limit";
         
@@ -143,8 +143,8 @@ class Auction {
                 FROM auctions a
                 LEFT JOIN categories c ON a.category_id = c.id
                 LEFT JOIN users u ON a.user_id = u.id
-                WHERE a.end_time > datetime('now') AND a.status = 'active'
-                  AND a.end_time <= datetime('now', '+7 days')
+                WHERE a.end_time > NOW() AND a.status = 'active'
+                  AND a.end_time <= DATE_ADD(NOW(), INTERVAL 7 DAY)
                 ORDER BY a.end_time ASC
                 LIMIT :limit";
         
@@ -180,7 +180,7 @@ class Auction {
                 FROM auctions a
                 LEFT JOIN categories c ON a.category_id = c.id
                 LEFT JOIN users u ON a.user_id = u.id
-                WHERE a.end_time > datetime('now') AND a.status = 'active'
+                WHERE a.end_time > NOW() AND a.status = 'active'
                 ORDER BY a.end_time ASC
                 LIMIT :limit OFFSET :offset";
         
@@ -215,7 +215,7 @@ class Auction {
                 FROM auctions a
                 JOIN categories c ON a.category_id = c.id
                 JOIN users u ON a.user_id = u.id
-                WHERE a.end_time > datetime('now') AND c.slug = :slug AND a.status = 'active'
+                WHERE a.end_time > NOW() AND c.slug = :slug AND a.status = 'active'
                 ORDER BY a.end_time ASC
                 LIMIT :limit OFFSET :offset";
         
@@ -384,7 +384,7 @@ class Auction {
                 FROM auctions a
                 JOIN categories c ON a.category_id = c.id
                 JOIN users u ON a.user_id = u.id
-                WHERE a.end_time > datetime('now')
+                WHERE a.end_time > NOW()
                 AND (a.title LIKE :query OR a.description LIKE :query)
                 ORDER BY a.end_time ASC
                 LIMIT :limit OFFSET :offset";
@@ -599,7 +599,7 @@ class Auction {
                     status = :status,
                     location = :location,
                     condition_description = :condition_description,
-                    updated_at = datetime('now')
+                    updated_at = NOW()
                 WHERE id = :id";
         
         $stmt = $this->db->prepare($sql);
