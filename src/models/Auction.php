@@ -13,15 +13,15 @@ class Auction {
      * Get featured auctions for homepage showcase
      */
     public function getFeaturedAuctions($limit = 8) {
-        // SQLite compatible query for development
+        // MySQL/MariaDB compatible query with dynamic counts
         $sql = "SELECT a.*, 
                        COALESCE(c.name, 'Luokittelematon') as category_name,
                        a.primary_image,
-                       a.bid_count,
+                       (SELECT COUNT(*) FROM bids b WHERE b.auction_id = a.id) as bid_count,
                        a.current_price
                 FROM auctions a
                 LEFT JOIN categories c ON a.category_id = c.id
-                WHERE a.end_time > NOW() AND a.is_featured = 1
+                WHERE a.end_time > datetime('now') AND a.is_featured = 1
                 ORDER BY a.end_time ASC
                 LIMIT :limit";
         
@@ -36,11 +36,11 @@ class Auction {
             $sql = "SELECT a.*, 
                            COALESCE(c.name, 'Luokittelematon') as category_name,
                            a.primary_image,
-                           a.bid_count,
+                           (SELECT COUNT(*) FROM bids b WHERE b.auction_id = a.id) as bid_count,
                            a.current_price
                     FROM auctions a
                     LEFT JOIN categories c ON a.category_id = c.id
-                    WHERE a.end_time > NOW()
+                    WHERE a.end_time > datetime('now')
                     ORDER BY a.created_at DESC
                     LIMIT :limit";
             
@@ -65,11 +65,11 @@ class Auction {
         $sql = "SELECT a.*, 
                        COALESCE(c.name, 'Luokittelematon') as category_name,
                        a.primary_image,
-                       a.bid_count,
+                       (SELECT COUNT(*) FROM bids b WHERE b.auction_id = a.id) as bid_count,
                        a.current_price
                 FROM auctions a
                 LEFT JOIN categories c ON a.category_id = c.id
-                WHERE a.status = 'active' AND a.end_time > NOW() 
+                WHERE a.status = 'active' AND a.end_time > datetime('now') 
                   AND a.category_id = :category_id AND a.id != :exclude_id
                 ORDER BY a.created_at DESC
                 LIMIT :limit";
@@ -104,7 +104,7 @@ class Auction {
                 FROM auctions a
                 LEFT JOIN categories c ON a.category_id = c.id
                 LEFT JOIN users u ON a.user_id = u.id
-                WHERE a.end_time > NOW() AND a.status = 'active'
+                WHERE a.end_time > datetime('now') AND a.status = 'active'
                 ORDER BY bid_count DESC, a.id ASC
                 LIMIT :limit";
         
@@ -143,8 +143,8 @@ class Auction {
                 FROM auctions a
                 LEFT JOIN categories c ON a.category_id = c.id
                 LEFT JOIN users u ON a.user_id = u.id
-                WHERE a.end_time > NOW() AND a.status = 'active'
-                  AND a.end_time <= DATE_ADD(NOW(), INTERVAL 7 DAY)
+                WHERE a.end_time > datetime('now') AND a.status = 'active'
+                  AND a.end_time <= datetime('now', '+7 days')
                 ORDER BY a.end_time ASC
                 LIMIT :limit";
         
@@ -180,7 +180,7 @@ class Auction {
                 FROM auctions a
                 LEFT JOIN categories c ON a.category_id = c.id
                 LEFT JOIN users u ON a.user_id = u.id
-                WHERE a.end_time > NOW() AND a.status = 'active'
+                WHERE a.end_time > datetime('now') AND a.status = 'active'
                 ORDER BY a.end_time ASC
                 LIMIT :limit OFFSET :offset";
         
@@ -215,7 +215,7 @@ class Auction {
                 FROM auctions a
                 JOIN categories c ON a.category_id = c.id
                 JOIN users u ON a.user_id = u.id
-                WHERE a.end_time > NOW() AND c.slug = :slug AND a.status = 'active'
+                WHERE a.end_time > datetime('now') AND c.slug = :slug AND a.status = 'active'
                 ORDER BY a.end_time ASC
                 LIMIT :limit OFFSET :offset";
         
@@ -239,13 +239,18 @@ class Auction {
      * Get auction by ID with full details
      */
     public function getAuctionById($id) {
-        // SQLite compatible query
-        $sql = "SELECT a.*, 
-                       COALESCE(c.name, 'Luokittelematon') as category_name,
-                       a.bid_count
+        // MySQL/MariaDB compatible query with dynamic counts
+        $sql = "SELECT 
+                    a.*, 
+                    COALESCE(c.name, 'Luokittelematon') as category_name,
+                    COALESCE(u.username, 'Tuntematon') as seller_username,
+                    (SELECT COUNT(*) FROM bids b WHERE b.auction_id = a.id) as bid_count,
+                    (SELECT COUNT(*) FROM watchlist w WHERE w.auction_id = a.id) as watch_count
                 FROM auctions a
-                LEFT JOIN categories c ON a.category_id = c.id
-                WHERE a.id = :id";
+                LEFT JOIN categories c ON c.id = a.category_id
+                LEFT JOIN users u ON u.id = a.user_id
+                WHERE a.id = :id
+                LIMIT 1";
         
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':id', (int)$id, PDO::PARAM_INT);
@@ -379,7 +384,7 @@ class Auction {
                 FROM auctions a
                 JOIN categories c ON a.category_id = c.id
                 JOIN users u ON a.user_id = u.id
-                WHERE a.end_time > NOW()
+                WHERE a.end_time > datetime('now')
                 AND (a.title LIKE :query OR a.description LIKE :query)
                 ORDER BY a.end_time ASC
                 LIMIT :limit OFFSET :offset";
@@ -594,7 +599,7 @@ class Auction {
                     status = :status,
                     location = :location,
                     condition_description = :condition_description,
-                    updated_at = NOW()
+                    updated_at = datetime('now')
                 WHERE id = :id";
         
         $stmt = $this->db->prepare($sql);
