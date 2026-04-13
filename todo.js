@@ -4,6 +4,8 @@
    ============================================================================ */
 
 $(document).ready(function() {
+    console.log('🚀 TODO.JS LOADED SUCCESSFULLY!'); // Debug log
+    
     // ========================================================================
     // GLOBAL STATE & CONFIGURATION
     // ========================================================================
@@ -25,11 +27,16 @@ $(document).ready(function() {
     // ========================================================================
     // INITIALIZATION
     // ========================================================================
-    
-    function init() {
+    console.log('🚀 Initializing TODO app...'); // Debug log
+        
         initEventListeners();
-        initMobileNavigation();\n        initDragAndDrop();
+        initMobileNavigation();
+        initDragAndDrop();
         initAnimations();
+        loadTodos();
+        updateCounts();
+        
+        console.log('🚀 TODO app initialization complete!'); // Debug log);
         loadTodos();
         updateCounts();
         
@@ -52,6 +59,9 @@ $(document).ready(function() {
         
         // New Todo
         $('#btn-new-todo').on('click', createNewTodo);
+        
+        // Upload Files
+        $('#btn-upload-files').on('click', openDirectUpload);
         
         // Todo Cards
         $(document).on('click', '.todo-card', openTodoModal);
@@ -325,6 +335,8 @@ $(document).ready(function() {
     }
     
     function createNewTodo() {
+        console.log('🔧 createNewTodo() called'); // Debug log
+        
         const newTodo = {
             id: 'new',
             title: '',
@@ -334,7 +346,30 @@ $(document).ready(function() {
             files: []
         };
         
+        console.log('🔧 Opening modal with todo:', newTodo); // Debug log
         openTodoModal(null, newTodo);
+    }
+    
+    function openDirectUpload() {
+        console.log('📎 openDirectUpload() called'); // Debug log
+        
+        // Luo väliaikainen tehtävä tiedostojen lataamiseksi
+        const tempTodo = {
+            id: 'temp-upload',
+            title: 'Tiedostojen lataus',
+            content: 'Latauskansio',
+            is_done: false,
+            is_public: false,
+            files: []
+        };
+        
+        console.log('📎 Opening upload modal with temp todo:', tempTodo); // Debug log
+        openTodoModal(null, tempTodo);
+        
+        // Fokus suoraan file upload -alueeseen
+        setTimeout(() => {
+            $('#file-upload-zone').click();
+        }, 500);
     }
 
     // ========================================================================
@@ -342,18 +377,25 @@ $(document).ready(function() {
     // ========================================================================
     
     function openTodoModal(event, todo = null) {
+        console.log('🔧 openTodoModal() called with event:', event, 'todo:', todo); // Debug log
+        
         if (event) {
             event.stopPropagation();
             
             // Don't open modal if clicking on action buttons
             if ($(event.target).closest('.card-action-btn, .status-toggle').length) {
+                console.log('🔧 Ignoring modal open - clicked on action button'); // Debug log
                 return;
             }
         }
         
         const todoData = todo || getTodoData($(this).data('id'));
-        if (!todoData) return;
+        if (!todoData) {
+            console.log('❌ No todo data found, aborting modal open'); // Debug log
+            return;
+        }
         
+        console.log('🔧 Setting modal state with todo data:', todoData); // Debug log
         App.modal.currentTodo = todoData;
         App.modal.isOpen = true;
         
@@ -363,15 +405,19 @@ $(document).ready(function() {
         const $overlay = $('.modal-overlay');
         $overlay.addClass('active');
         
+        console.log('🔧 Modal overlay activated, adding animation'); // Debug log
+        
         if (App.settings.animations) {
             setTimeout(() => {
                 $('.modal-content').addClass('modal-enter');
+                console.log('🔧 Modal animation completed'); // Debug log
             }, 50);
         }
         
         // Focus first input
         setTimeout(() => {
             $('#todo-title').focus();
+            console.log('🔧 Focused on todo title input'); // Debug log
         }, 300);
         
         // Prevent body scroll
@@ -404,8 +450,12 @@ $(document).ready(function() {
     }
     
     function renderModal(todo) {
-        const isNewTodo = todo.id === 'new';
-        const modalTitle = isNewTodo ? 'Uusi tehtävä' : 'Muokkaa tehtävää';
+        console.log('🔧 renderModal() called with todo:', todo); // Debug log
+        
+        const isNewTodo = todo.id === 'new' || todo.id === 'temp-upload';
+        const modalTitle = isNewTodo ? (todo.id === 'temp-upload' ? 'Lataa tiedostoja' : 'Uusi tehtävä') : 'Muokkaa tehtävää';
+        
+        console.log('🔧 Modal title will be:', modalTitle); // Debug log
         
         const modalHTML = `
             <div class="modal-content">
@@ -501,8 +551,10 @@ $(document).ready(function() {
             </div>
         `;
         
+        console.log('🔧 Removing existing modal content and adding new HTML'); // Debug log
         $('.modal-overlay .modal-content').remove();
         $('.modal-overlay').append(modalHTML);
+        console.log('🔧 Modal HTML added successfully'); // Debug log
     }
     
     function renderFilesList(files) {

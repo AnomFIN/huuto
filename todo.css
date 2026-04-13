@@ -446,6 +446,32 @@ body {
   box-shadow: var(--shadow-premium);
 }
 
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-bounce);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-premium);
+}
+
+.action-buttons {
+  display: flex;
+  gap: var(--space-md);
+  align-items: center;
+}
+
 /* Content Area */
 .content-area {
   flex: 1;

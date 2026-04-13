@@ -244,7 +244,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if ($action === 'login') {
         $password = $_POST['password'] ?? '';
         
-        if ($password === LOGIN_PASSWORD) {
+        // Kovakoodatut salasanat: hunaja tai HUNAJA
+        if ($password === 'hunaja' || $password === 'HUNAJA') {
             $_SESSION['logged_in'] = true;
             $_SESSION['login_time'] = time();
             jsonResponse(['success' => true]);
@@ -860,9 +861,14 @@ function showLoginPage() {
                         <input type="search" id="search-input" placeholder="Hae tehtäviä...">
                     </div>
                     
-                    <button class="btn-primary" id="btn-new-todo">
-                        ➕ Uusi tehtävä
-                    </button>
+                    <div class="action-buttons">
+                        <button class="btn-primary" id="btn-new-todo">
+                            ➕ Uusi tehtävä
+                        </button>
+                        <button class="btn-secondary" id="btn-upload-files">
+                            📎 Lataa tiedostoja
+                        </button>
+                    </div>
                 </div>
             </header>
             
