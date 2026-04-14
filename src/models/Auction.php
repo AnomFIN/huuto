@@ -4,16 +4,28 @@
  */
 class Auction {
     private $db;
+    private $driverName;
 
     public function __construct() {
         $this->db = Database::getInstance()->getConnection();
+        $this->driverName = $this->db->getAttribute(PDO::ATTR_DRIVER_NAME);
+    }
+
+    private function nowExpression(): string {
+        return $this->driverName === 'sqlite' ? "datetime('now')" : 'NOW()';
+    }
+
+    private function addDaysExpression(int $days): string {
+        return $this->driverName === 'sqlite'
+            ? sprintf("datetime('now', '+%d days')", $days)
+            : sprintf('DATE_ADD(NOW(), INTERVAL %d DAY)', $days);
     }
 
     /**
      * Get featured auctions for homepage showcase
      */
     public function getFeaturedAuctions($limit = 8) {
-        // MySQL/MariaDB compatible query with dynamic counts
+        // Queries are written to support both MySQL and SQLite via driver-specific date expressions
         $sql = "SELECT a.*, 
                        COALESCE(c.name, 'Luokittelematon') as category_name,
                        (SELECT image_path FROM auction_images ai 
@@ -24,10 +36,11 @@ class Auction {
                        a.current_price
                 FROM auctions a
                 LEFT JOIN categories c ON a.category_id = c.id
-                WHERE a.end_time > NOW() AND a.featured = 1
+                WHERE a.end_time > {$this->nowExpression()}
+                  AND a.featured = 1
                 ORDER BY a.end_time ASC
                 LIMIT :limit";
-        
+
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
         $stmt->execute();
@@ -46,7 +59,7 @@ class Auction {
                            a.current_price
                     FROM auctions a
                     LEFT JOIN categories c ON a.category_id = c.id
-                    WHERE a.end_time > NOW()
+                    WHERE a.end_time > {$this->nowExpression()}
                     ORDER BY a.created_at DESC
                     LIMIT :limit";
             
@@ -74,7 +87,7 @@ class Auction {
                        a.current_price
                 FROM auctions a
                 LEFT JOIN categories c ON a.category_id = c.id
-                WHERE a.status = 'active' AND a.end_time > NOW() 
+                WHERE a.status = 'active' AND a.end_time > {$this->nowExpression()} 
                   AND a.category_id = :category_id AND a.id != :exclude_id
                 ORDER BY a.created_at DESC
                 LIMIT :limit";
@@ -104,7 +117,7 @@ class Auction {
                 FROM auctions a
                 LEFT JOIN categories c ON a.category_id = c.id
                 LEFT JOIN users u ON a.user_id = u.id
-                WHERE a.end_time > NOW() AND a.status = 'active'
+                WHERE a.end_time > {$this->nowExpression()} AND a.status = 'active'
                 ORDER BY bid_count DESC, a.id ASC
                 LIMIT :limit";
         
@@ -143,8 +156,8 @@ class Auction {
                 FROM auctions a
                 LEFT JOIN categories c ON a.category_id = c.id
                 LEFT JOIN users u ON a.user_id = u.id
-                WHERE a.end_time > NOW() AND a.status = 'active'
-                  AND a.end_time <= DATE_ADD(NOW(), INTERVAL 7 DAY)
+                WHERE a.end_time > {$this->nowExpression()} AND a.status = 'active'
+                  AND a.end_time <= {$this->addDaysExpression(7)}
                 ORDER BY a.end_time ASC
                 LIMIT :limit";
         
@@ -180,7 +193,7 @@ class Auction {
                 FROM auctions a
                 LEFT JOIN categories c ON a.category_id = c.id
                 LEFT JOIN users u ON a.user_id = u.id
-                WHERE a.end_time > NOW() AND a.status = 'active'
+                WHERE a.end_time > {$this->nowExpression()} AND a.status = 'active'
                 ORDER BY a.end_time ASC
                 LIMIT :limit OFFSET :offset";
         
@@ -215,7 +228,7 @@ class Auction {
                 FROM auctions a
                 JOIN categories c ON a.category_id = c.id
                 JOIN users u ON a.user_id = u.id
-                WHERE a.end_time > NOW() AND COALESCE(c.slug, 'other') = :slug AND a.status = 'active'
+                WHERE a.end_time > {$this->nowExpression()} AND COALESCE(c.slug, 'other') = :slug AND a.status = 'active'
                 ORDER BY a.end_time ASC
                 LIMIT :limit OFFSET :offset";
         
@@ -409,7 +422,7 @@ class Auction {
                 FROM auctions a
                 JOIN categories c ON a.category_id = c.id
                 JOIN users u ON a.user_id = u.id
-                WHERE a.end_time > NOW()
+                WHERE a.end_time > {$this->nowExpression()}
                 AND (a.title LIKE :query OR a.description LIKE :query)
                 ORDER BY a.end_time ASC
                 LIMIT :limit OFFSET :offset";
@@ -624,7 +637,7 @@ class Auction {
                     status = :status,
                     location = :location,
                     condition_description = :condition_description,
-                    updated_at = NOW()
+                    updated_at = {$this->nowExpression()}
                 WHERE id = :id";
         
         $stmt = $this->db->prepare($sql);

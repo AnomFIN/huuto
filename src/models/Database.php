@@ -38,13 +38,25 @@ class Database {
                 return;
             }
             
-            // DEVELOPMENT: Try MySQL first, fallback to SQLite if needed
-            try {
-                if (defined('DB_TYPE') && DB_TYPE === 'sqlite') {
-                    throw new Exception('Configured for SQLite');
+            // DEVELOPMENT: Use SQLite only when explicitly configured for it.
+            // Otherwise, require MySQL and fail loudly if it is unavailable.
+            if (defined('DB_TYPE') && strtolower(DB_TYPE) === 'sqlite') {
+                $dbPath = defined('DB_PATH') ? DB_PATH : 'test.db';
+                if ($dbPath[0] !== '/') {
+                    $dbPath = (defined('BASE_PATH') ? BASE_PATH : dirname(__DIR__, 2)) . '/' . $dbPath;
                 }
-                
-                // MySQL connection for development
+
+                $dsn = 'sqlite:' . $dbPath;
+                $options = [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                    PDO::ATTR_EMULATE_PREPARES => false,
+                ];
+
+                $this->pdo = new PDO($dsn, null, null, $options);
+                error_log("Database: Connected to development SQLite successfully because DB_TYPE=sqlite");
+            } else {
+                // MySQL connection for development and production
                 $dsn = sprintf(
                     'mysql:host=%s;dbname=%s;charset=%s',
                     DB_HOST,
@@ -61,26 +73,7 @@ class Database {
                 $this->pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
                 $this->pdo->exec("SET NAMES " . (defined('DB_CHARSET') ? DB_CHARSET : 'utf8mb4'));
                 
-                error_log("Database: Connected to development MySQL successfully");
-                
-            } catch (Exception $mysqlError) {
-                // Fallback to SQLite ONLY in development
-                error_log("Database: MySQL connection failed in development, falling back to SQLite: " . $mysqlError->getMessage());
-                
-                $dbPath = defined('DB_PATH') ? DB_PATH : 'test.db';
-                if ($dbPath[0] !== '/') {
-                    $dbPath = (defined('BASE_PATH') ? BASE_PATH : dirname(__DIR__, 2)) . '/' . $dbPath;
-                }
-                
-                $dsn = 'sqlite:' . $dbPath;
-                $options = [
-                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                    PDO::ATTR_EMULATE_PREPARES => false,
-                ];
-                
-                $this->pdo = new PDO($dsn, null, null, $options);
-                error_log("Database: Connected to SQLite successfully as development fallback");
+                error_log("Database: Connected to MySQL successfully");
             }
             
         } catch (PDOException $e) {
