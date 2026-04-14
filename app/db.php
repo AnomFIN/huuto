@@ -32,8 +32,12 @@ class DB {
                     PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                     PDO::ATTR_EMULATE_PREPARES => false, // Use real prepared statements
-                    PDO::MYSQL_ATTR_INIT_COMMAND => "SET NAMES " . DB_CHARSET
                 ];
+                
+                // Add MySQL init command only if pdo_mysql driver is fully loaded
+                if (extension_loaded('pdo_mysql')) {
+                    $options[PDO::MYSQL_ATTR_INIT_COMMAND] = "SET NAMES " . DB_CHARSET;
+                }
                 
                 $this->pdo = new PDO($dsn, DB_USER, DB_PASS, $options);
             }
