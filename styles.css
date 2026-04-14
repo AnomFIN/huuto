@@ -937,33 +937,33 @@ h3 { font-size: clamp(1.25rem, 2.5vw, 1.75rem); }
 .pill.active { border-color: var(--accent-600); color: var(--accent-600); }
 .show-all { font-weight: 700; color: var(--accent-600); }
 
-.auction-grid { 
-  display: grid; 
-  grid-template-columns: repeat(4, 1fr);
-  gap: 24px;
+.auction-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 20px;
   padding: 8px;
 }
 
-/* PC: 4 per row */ 
+/* PC: 5 per row */
 @media (min-width: 1200px) {
   .auction-grid {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 24px;
-  }
-}
-
-/* Large tablets: 3 per row */
-@media (min-width: 900px) and (max-width: 1199px) {
-  .auction-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 20px;
   }
 }
 
-/* Small tablets: 2 per row */
+/* Large tablets: 4 per row */
+@media (min-width: 900px) and (max-width: 1199px) {
+  .auction-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+  }
+}
+
+/* Small tablets: 3 per row */
 @media (min-width: 600px) and (max-width: 899px) {
   .auction-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 16px;
   }
 }
