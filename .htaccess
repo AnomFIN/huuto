@@ -27,7 +27,7 @@ Options -Indexes
 </Files>
 
 # Allow PHP files to work normally
-# All direct .php files work: index.php, admin.php, auction.php etc.
+# All direct .php files work: index.php, admin.php, auctionPage.php etc.
 
 # Default document
 DirectoryIndex index.php

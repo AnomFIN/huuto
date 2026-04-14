@@ -294,7 +294,7 @@ echo '</div>';
     <ul>
         <li><a href="index.php">🏠 Etusivu (index.php)</a></li>
         <li><a href="category.php">📂 Kategoriat (category.php)</a></li>
-        <li><a href="auction.php?id=1">🏷️ Testauktio (auction.php?id=1)</a></li>
+        <li><a href="auctionPage.php?id=1">🏷️ Testauktio (auctionPage.php?id=1)</a></li>
     </ul>
 </div>
 

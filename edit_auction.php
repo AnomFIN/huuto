@@ -465,7 +465,7 @@ include SRC_PATH . '/views/header.php';
       <?php if ($success): ?>
         <div class="success-notice">
           <strong>Tallennettu!</strong> Kohteen tiedot päivitetty onnistuneesti.
-          <a href="auction.php?id=<?php echo $id; ?>" style="text-decoration: underline; margin-left: 0.5rem;">Näytä kohde</a>
+          <a href="auctionPage.php?id=<?php echo $id; ?>" style="text-decoration: underline; margin-left: 0.5rem;">Näytä kohde</a>
         </div>
       <?php endif; ?>
 
@@ -603,7 +603,7 @@ include SRC_PATH . '/views/header.php';
               <button type="submit" class="btn-primary">
                 Tallenna muutokset
               </button>
-              <a href="auction.php?id=<?php echo $id; ?>" class="btn-secondary" style="text-align: center;">
+              <a href="auctionPage.php?id=<?php echo $id; ?>" class="btn-secondary" style="text-align: center;">
                 Esikatselu
               </a>
             </div>

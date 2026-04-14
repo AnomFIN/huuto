@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🔧 JavaScript Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f0f8ff; }
+        .test-result { margin: 15px 0; padding: 15px; border-radius: 8px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .warning { background: #fff3cd; border: 1px solid #ffeaa7; color: #856404; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+        .console-output { background: #2d3748; color: #e2e8f0; padding: 15px; border-radius: 8px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>🔧 JavaScript byId() Funktiotestu</h1>
+    
+    <div class="test-result success">
+        <h3>✅ Test 1: Olemassa oleva elementti</h3>
+        <p>Testataan elementin "testElement" hakua (pitäisi toimia)</p>
+        <button onclick="testExistingElement()">Testaa olemassa oleva</button>
+        <div id="testElement">Tämä elementti löytyy!</div>
+    </div>
+    
+    <div class="test-result warning">
+        <h3>⚠️ Test 2: Puuttuva elementti</h3>
+        <p>Testataan elementin "puuttuvaaElement" hakua (pitäisi näyttää varoitus)</p>
+        <button onclick="testMissingElement()">Testaa puuttuva</button>
+    </div>
+    
+    <div class="test-result">
+        <h3>🔄 Test 3: Pääsivun lataus</h3>
+        <p>Testaa että pääsivu latautuu ilman JavaScript-virheitä</p>
+        <button onclick="goToMain()">Siirry pääsivulle</button>
+        <button onclick="goToMainNewTab()">Avaa pääsivu uudessa välilehdessä</button>
+    </div>
+    
+    <div class="console-output">
+        <strong>Konsoli-output:</strong><br>
+        <div id="consoleOutput">Avaa selaimen konsoli (F12) nähdäksesi debug-viestit</div>
+    </div>
+    
+    <script>
+        // Override console.warn temporaarilyogollengvat nähdäksemme varoitukset sivulla
+        const originalWarn = console.warn;
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            const output = document.getElementById('consoleOutput');
+            output.innerHTML += '<br>⚠️ ' + args.join(' ');
+        };
+        
+        function testExistingElement() {
+            console.log('🧪 Testataan olemassa olevaa elementtiä...');
+            
+            // Simuloi byId funktiota
+            function testById(id) {
+                const element = document.getElementById(id);
+                if (!element) {
+                    console.warn(`⚠️ DOM-elementti puuttuu id:llä "${id}" - tämä saattaa aiheuttaa ongelmia`);
+                }
+                return element;
+            }
+            
+            const element = testById('testElement');
+            if (element) {
+                element.style.background = '#90EE90';
+                element.textContent = 'Elementti löytyi! ✅';
+                console.log('✅ Elementti löytyi onnistuneesti');
+            }
+        }
+        
+        function testMissingElement() {
+            console.log('🧪 Testataan puuttuvaa elementtiä...');
+            
+            // Simuloi byId funktiota
+            function testById(id) {
+                const element = document.getElementById(id);
+                if (!element) {
+                    console.warn(`⚠️ DOM-elementti puuttuu id:llä "${id}" - tämä saattaa aiheuttaa ongelmia`);
+                }
+                return element;
+            }
+            
+            const element = testById('puuttuvaElementti');
+            console.log('🧪 Tulos:', element === null ? 'null (odotettu)' : element);
+            console.log('✅ Ei kaadutta - vain varoitus näytetty');
+        }
+        
+        function goToMain() {
+            console.log('🏠 Siirrytään pääsivulle...');
+            window.location.href = '/index.php';
+        }
+        
+        function goToMainNewTab() {
+            console.log('🏠 Avataan pääsivu uuteen välilehteen...');
+            window.open('/index.php', '_blank');
+        }
+        
+        // Test automaattisesti kun sivu latautuu
+        window.onload = function() {
+            console.log('🧪 JavaScript debug-testi sivulatautunut');
+            const output = document.getElementById('consoleOutput');
+            output.innerHTML = '✅ JavaScript latautunut onnistuneesti<br>Klikkaa testejä nähdäksesi tulokset';
+        };
+    </script>
+</body>
+</html>

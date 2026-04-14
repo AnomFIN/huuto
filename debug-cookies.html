@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Cookie Issue</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .debug-section { margin: 20px 0; padding: 15px; border: 2px solid #007bff; background: #f8f9fa; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; background: #007bff; color: white; border: none; }
+        .result { margin: 10px 0; padding: 10px; background: #e9ecef; }
+        code { background: #f1f3f4; padding: 2px 5px; }
+    </style>
+</head>
+<body>
+    <h1>🔧 Cookie Debug & Fix</h1>
+    
+    <div class="debug-section">
+        <h3>1. Tarkista localStorage</h3>
+        <button onclick="checkStorage()">Tarkista evästeet</button>
+        <button onclick="clearStorageAndTest()">Tyhjennä evästeet</button>
+        <div id="storageState" class="result"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h3>2. Testaa popup näkyvyys</h3>
+        <button onclick="goToMainPage()">Siirry pääsivulle</button>
+        <button onclick="goToMainPageClear()">Siirry pääsivulle (evästeet tyhjennetty)</button>
+        <p><strong>Ohje:</strong> Jos evästeet on jo tallennettu, popup ei näy lainkaan!</p>
+    </div>
+    
+    <div class="debug-section">
+        <h3>3. Konsoli debug</h3>
+        <p>Avaa selaimen konsoli (F12) ja katso 🍪 viestejä kun:</p>
+        <ol>
+            <li>Sivu latautuu</li>
+            <li>Painat "Tallenna valinnat" nappia</li>
+        </ol>
+    </div>
+    
+    <script>
+        function checkStorage() {
+            const stored = localStorage.getItem('huuto247-cookies');
+            const result = document.getElementById('storageState');
+            
+            if (stored) {
+                try {
+                    const parsed = JSON.parse(stored);
+                    result.innerHTML = `
+                        ✅ <strong>Evästeet löytyi:</strong><br>
+                        <code>${stored}</code><br>
+                        <strong>Tämä tarkoittaa:</strong> Cookie popup EI näy koska evästeet on jo asetettu!
+                    `;
+                } catch (e) {
+                    result.innerHTML = `❌ <strong>Virhe parsinnassa:</strong> ${e.message}`;
+                }
+            } else {
+                result.innerHTML = `
+                    ❌ <strong>Ei tallennettuja evästeitä</strong><br>
+                    Cookie popup pitäisi näkyä kun sivu latautuu.
+                `;
+            }
+        }
+        
+        function clearStorageAndTest() {
+            localStorage.removeItem('huuto247-cookies');
+            document.getElementById('storageState').innerHTML = '✅ <strong>Evästeet tyhjennetty!</strong> Nyt popup pitäisi näkyä pääsivulla.';
+        }
+        
+        function goToMainPage() {
+            window.location.href = '/index.php';
+        }
+        
+        function goToMainPageClear() {
+            localStorage.removeItem('huuto247-cookies');
+            window.location.href = '/index.php';
+        }
+        
+        // Auto-check kun sivu latautuu
+        window.onload = function() {
+            checkStorage();
+        };
+    </script>
+</body>
+</html>

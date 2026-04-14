@@ -985,7 +985,7 @@
             <img src="${escapeHtml(item.imageUrl || IMAGE_FALLBACK)}" alt="${escapeHtml(item.title)}" onerror="this.onerror=null;this.src='${IMAGE_FALLBACK}'" />
             <button class="watch-btn ${favoriteClass}" data-favorite="${item.id}" aria-label="Lisää suosikiksi">♥</button>
           </div>
-          <h3 class="item-title"><a href="auction.php?id=${item.id}" class="auction-link">${escapeHtml(item.title)}</a></h3>
+          <h3 class="item-title"><a href="auctionPage.php?id=${item.id}" class="auction-link">${escapeHtml(item.title)}</a></h3>
           <div class="meta-row"><small>${escapeHtml(item.location)}</small><span class="category-pill">${escapeHtml(item.category)}</span></div>
           <span class="countdown" data-end-time="${item.endTime}">${formatCountdown(item.endTime)}</span>
           <p class="price">Hinta nyt: ${formatPrice(item.priceNow)}</p>
@@ -1163,7 +1163,7 @@
       <p class="subline">Ladataan kohteen lisätietoja…</p>
       <div class="modal-actions">
         <button value="cancel" class="btn-secondary">Sulje</button>
-        <a class="btn-secondary" href="auction.php?id=${item.id}">Avaa kohde</a>
+        <a class="btn-secondary" href="auctionPage.php?id=${item.id}">Avaa kohde</a>
         <button type="button" class="btn-secondary" data-buy-now="${item.id}" ${item.buyNowPrice ? '' : 'disabled'}>
           ${item.buyNowPrice ? `Osta heti ${formatPrice(item.buyNowPrice)}` : 'Osta heti ei käytössä'}
         </button>
@@ -1197,7 +1197,7 @@
         ${bidHistory}
         <div class="modal-actions">
           <button value="cancel" class="btn-secondary">Sulje</button>
-          <a class="btn-secondary" href="auction.php?id=${item.id}">Avaa kohde</a>
+          <a class="btn-secondary" href="auctionPage.php?id=${item.id}">Avaa kohde</a>
           <button type="button" class="btn-secondary" data-buy-now="${item.id}" ${details.buyNowPrice ? '' : 'disabled'}>
             ${details.buyNowPrice ? `Osta heti ${formatPrice(details.buyNowPrice)}` : 'Osta heti ei käytössä'}
           </button>

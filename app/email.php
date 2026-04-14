@@ -171,7 +171,7 @@ class Email {
      * Send notification about outbid
      */
     public function sendOutbidNotification($email, $auctionTitle, $auctionId) {
-        $url = BASE_URL . '/auction.php?id=' . $auctionId;
+        $url = BASE_URL . '/auctionPage.php?id=' . $auctionId;
         
         $subject = 'Sinut on ylitetty - ' . $auctionTitle;
         
@@ -193,7 +193,7 @@ class Email {
      * Send notification about auction ending soon
      */
     public function sendEndingSoonNotification($email, $auctionTitle, $auctionId) {
-        $url = BASE_URL . '/auction.php?id=' . $auctionId;
+        $url = BASE_URL . '/auctionPage.php?id=' . $auctionId;
         
         $subject = 'Huutokauppa päättyy pian - ' . $auctionTitle;
         

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🍪 Cookie Reset & Test</title>
+    <meta charset="UTF-8">
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; 
+            padding: 40px; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+        h1 { text-align: center; margin-bottom: 30px; }
+        .step {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        button {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 5px;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+        }
+        .success { background: #4ecdc4; }
+        .success:hover { background: #26d0ce; }
+        .info {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        .debug-info {
+            font-family: 'Courier New', monospace;
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍪 Cookie Debug & Test</h1>
+        
+        <div class="step">
+            <h3>📋 OHJE: Evästepopup testaus</h3>
+            <div class="info">
+                <strong>Jos "Tallenna valinnat" ei toimi:</strong><br>
+                1. Paina "Tyhjennä evästeet" alla<br>
+                2. Siirry pääsivulle<br>
+                3. Avaa konsoli (F12)<br>
+                4. Katso 🍪🔥 debug-viestejä<br>
+                5. Testaa "Tallenna valinnat" nappia
+            </div>
+        </div>
+        
+        <div class="step">
+            <h3>🧹 1. Tyhjennä Evästeet</h3>
+            <button onclick="clearCookies()">Tyhjennä kaikki evästeet</button>
+            <button onclick="checkCookies()" class="success">Tarkista evästeet</button>
+            <div id="cookieStatus" class="debug-info"></div>
+        </div>
+        
+        <div class="step">
+            <h3>🏠 2. Siirry Testaamaan</h3>
+            <button onclick="goToMain()" class="success">Siirry pääsivulle</button>
+            <button onclick="goToMainClean()" class="success">Siirry pääsivulle (evästeet tyhjennetty)</button>
+        </div>
+        
+        <div class="step">
+            <h3>🔧 3. Debug Info</h3>
+            <div class="info">
+                <strong>Konsoli debug-viestit:</strong><br>
+                • 🍪🔥 = Evästeiden debug<br>
+                • Etsitään "Save cookie settings button clicked!"<br>
+                • Jos ei näy → nappi ei toimi<br>
+                • Jos näkyy → ongelma on piilottamisessa
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        function clearCookies() {
+            // Tyhjennä localStorage
+            localStorage.clear();
+            // Tyhjennä sessionStorage
+            sessionStorage.clear();
+            
+            updateStatus();
+            
+            // Ilmoita käyttäjälle
+            alert('✅ Kaikki evästeet ja tallennukset tyhjennetty!');
+        }
+        
+        function checkCookies() {
+            updateStatus();
+        }
+        
+        function updateStatus() {
+            const huutoCookies = localStorage.getItem('huuto247-cookies');
+            const allKeys = Object.keys(localStorage);
+            
+            document.getElementById('cookieStatus').innerHTML = `
+                <strong>LocalStorage tila:</strong><br>
+                huuto247-cookies: ${huutoCookies ? '✅ LÖYTYI' : '❌ EI LÖYDY'}<br>
+                Kaikki avaimet (${allKeys.length}): ${allKeys.join(', ') || 'Ei mitään'}<br>
+                <br>
+                ${huutoCookies ? `<strong>Evästeen sisältö:</strong><br><code>${huutoCookies}</code>` : '<strong>Popup pitäisi näkyä pääsivulla!</strong>'}
+            `;
+        }
+        
+        function goToMain() {
+            window.location.href = '/index.php';
+        }
+        
+        function goToMainClean() {
+            clearCookies();
+            setTimeout(() => {
+                window.location.href = '/index.php';
+            }, 500);
+        }
+        
+        // Automaattinen tarkistus sivun latautuessa
+        window.onload = function() {
+            updateStatus();
+        };
+    </script>
+</body>
+</html>

@@ -144,7 +144,7 @@ $categoryListingImagePath = static function (?string $path): ?string {
                 $imagePath = trim((string)($categoryListingImagePath((string)($auction['primary_image'] ?? '')) ?? ''));
                 $endTimeIso = date('c', strtotime((string)$auction['end_time']));
             ?>
-            <a href="/auction.php?id=<?php echo (int)$auction['id']; ?>" class="category-card" aria-label="<?php echo htmlspecialchars($auction['title']); ?>">
+            <a href="/auctionPage.php?id=<?php echo (int)$auction['id']; ?>" class="category-card" aria-label="<?php echo htmlspecialchars($auction['title']); ?>">
                 <?php if ($imagePath !== ''): ?>
                     <img src="<?php echo htmlspecialchars($imagePath, ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($auction['title']); ?>" class="category-media" />
                 <?php else: ?>

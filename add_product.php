@@ -345,7 +345,7 @@ include SRC_PATH . '/views/header.php';
         <?php if ($success): ?>
           <div class="success-notice">
             <strong>Onnistui!</strong> Tuote lisätty onnistuneesti. 
-            <a href="/auction.php?id=<?php echo $newAuctionId; ?>" style="text-decoration: underline; font-weight: 600;">Näytä tuote</a>
+            <a href="/auctionPage.php?id=<?php echo $newAuctionId; ?>" style="text-decoration: underline; font-weight: 600;">Näytä tuote</a>
           </div>
         <?php endif; ?>
 

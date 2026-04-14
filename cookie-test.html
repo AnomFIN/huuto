@@ -1,0 +1,88 @@
+<!-- Test Cookie Popup Functionality -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cookie Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .hidden { display: none !important; opacity: 0 !important; pointer-events: none !important; }
+        .cookie-popup { background: #f0f8ff; padding: 20px; border: 2px solid #007bff; margin: 10px 0; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>🍪 Cookie Popup Test</h1>
+    
+    <div class="test-section">
+        <h3>Test 1: .hidden luokka toimii</h3>
+        <div id="testElement" class="cookie-popup">
+            Tämä popup pitäisi piilota kun painat "Piilota" nappia
+        </div>
+        <button onclick="testHidden()">Piilota</button>
+        <button onclick="testShow()">Näytä</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 2: LocalStorage toimii</h3>
+        <button onclick="testStorage()">Tallenna evästeasetukset</button>
+        <button onclick="checkStorage()">Tarkista evästeasetukset</button>
+        <div id="storageResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test 3: Siirry takaisin huuto sivulle</h3>
+        <button onclick="goBack()">Takaisin index.php</button>
+        <button onclick="clearCookies()">Tyhjennä evästeet ja takaisin</button>
+    </div>
+    
+    <script>
+        function testHidden() {
+            const el = document.getElementById('testElement');
+            el.classList.add('hidden');
+            console.log('Added hidden class');
+        }
+        
+        function testShow() {
+            const el = document.getElementById('testElement');
+            el.classList.remove('hidden');
+            console.log('Removed hidden class');
+        }
+        
+        function testStorage() {
+            const cookieData = {
+                necessary: true,
+                analytics: false,
+                marketing: true,
+                timestamp: new Date().toISOString()
+            };
+            localStorage.setItem('huuto247-cookies', JSON.stringify(cookieData));
+            document.getElementById('storageResult').innerHTML = '✓ Evästeasetukset tallennettu!<br>' + JSON.stringify(cookieData, null, 2);
+        }
+        
+        function checkStorage() {
+            const stored = localStorage.getItem('huuto247-cookies');
+            if (stored) {
+                document.getElementById('storageResult').innerHTML = '✓ Löytyi tallennettu data:<br><pre>' + stored + '</pre>';
+            } else {
+                document.getElementById('storageResult').innerHTML = '✗ Ei tallennettuja evästeasetuksia';
+            }
+        }
+        
+        function goBack() {
+            window.location.href = '/index.php';
+        }
+        
+        function clearCookies() {
+            localStorage.removeItem('huuto247-cookies');
+            alert('Evästeet tyhjennetty!');
+            window.location.href = '/index.php';
+        }
+        
+        // Auto-check storage kun sivu latautuu
+        window.onload = function() {
+            checkStorage();
+        };
+    </script>
+</body>
+</html>
