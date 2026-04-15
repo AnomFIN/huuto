@@ -54,17 +54,16 @@ $twitterCard = trim((string)($twitterCardType ?? 'summary_large_image'));
 </head>
 <body>
         <div class="top-bar" role="note" aria-label="Pikatiedotteet">
-                <a href="/info.php?page=myyminen">Myy yrityksesi varasto tehokkaasti!</a>
+		<a href="/info.php?page=myyminen" class="top-bar-link">🔥 Myy yrityksesi varasto tehokkaasti!</a>
         <span class="top-bar-sep" aria-hidden="true">·</span>
-                <a href="/info.php?page=ohjeet">Löydä todellisia löytöjä</a>
-        </div>
+		<a href="/info.php?page=ohjeet" class="top-bar-link">💎 Löydä todellisia löytöjä</a>
 
         <header class="site-header" id="siteHeader">
             <div class="header-row container">
         <div class="header-brand-group">
                 <a class="logo" href="/index.php" aria-label="Huuto247 etusivu">
-                    <span class="logo-mark" aria-hidden="true"></span>
-                    <span>HUUTO247<span class="logo-dot">.fi</span></span>
+                    <span class="logo-icon" aria-hidden="true">H</span>
+                    <span class="logo-text">uuto<span class="logo-247">24<span class="logo-7">/7</span></span><span class="logo-dot">.fi</span></span>
                 </a>
           <div class="header-live-badge" title="Aktiivisia huutoja nyt">
             <span class="header-live-dot" aria-hidden="true"></span>
@@ -108,23 +107,24 @@ $twitterCard = trim((string)($twitterCardType ?? 'summary_large_image'));
                 </form>
 
                 <nav class="header-links" aria-label="Pikalinkit">
-          <a href="#popularSection">Kategoriat</a>
-          <a href="#endingSoonSection">Sulkeutuu pian</a>
-          <button class="icon-pill" aria-label="Suosikit">
+          <a href="/category.php" class="header-nav-link">Kategoriat</a>
+          <button class="favorites-pill" id="headerFavoritesBtn" aria-label="Suosikit">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.2 4.65 12.9a4.6 4.6 0 1 1 6.5-6.5L12 7.25l.85-.85a4.6 4.6 0 1 1 6.5 6.5L12 20.2Z"/></svg>
-          </button>
-          <button class="icon-pill" aria-label="Seuranta">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Zm10 3.8a3.8 3.8 0 1 0 0-7.6 3.8 3.8 0 0 0 0 7.6Z"/></svg>
-          </button>
-          <button class="icon-pill" aria-label="Omat huudot">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5h16v11H4v-11Zm2 2v7h12v-7H6Zm2.5 10h7v1.8h-7V18.5Z"/></svg>
+            <span class="favorites-label">Suosikit</span>
+            <span class="favorites-count" id="headerFavCount">0</span>
           </button>
 
                     <?php if (function_exists('is_logged_in') && is_logged_in()): ?>
                         <span class="user-greeting">Hei, <?php echo htmlspecialchars($headerUserGreeting !== '' ? $headerUserGreeting : 'Käyttäjä', ENT_QUOTES, 'UTF-8'); ?>!</span>
                     <?php else: ?>
-            <a href="/auth/login.php" id="loginLink" class="btn-login">Kirjaudu sisään</a>
-            <a href="/auth/register.php" id="registerLink" class="btn-register">Rekisteröidy</a>
+            <a href="/auth/login.php" id="loginLink" class="btn-login-header">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
+              Kirjaudu
+            </a>
+            <a href="/auth/register.php" id="registerLink" class="btn-register-header">
+              Rekisteröidy
+              <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"/></svg>
+            </a>
                     <?php endif; ?>
                 </nav>
             </div>

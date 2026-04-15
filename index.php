@@ -334,17 +334,17 @@ Performance:
   </head>
   <body>
     <div class="top-bar" role="note" aria-label="Pikatiedotteet">
-      <a href="/info.php?page=myyminen">Myy yrityksesi varasto tehokkaasti!</a>
+      <a href="/info.php?page=myyminen" class="top-bar-link">🔥 Myy yrityksesi varasto tehokkaasti!</a>
       <span class="top-bar-sep" aria-hidden="true">·</span>
-      <a href="/info.php?page=ohjeet">Löydä todellisia löytöjä</a>
+      <a href="/info.php?page=ohjeet" class="top-bar-link">💎 Löydä todellisia löytöjä</a>
     </div>
 
     <header class="site-header" id="siteHeader">
       <div class="header-row container">
         <div class="header-brand-group">
           <a class="logo" href="index.php" aria-label="Huuto247 etusivu">
-            <span class="logo-mark" aria-hidden="true"></span>
-            <span>HUUTO247<span class="logo-dot">.fi</span></span>
+            <span class="logo-icon" aria-hidden="true">H</span>
+            <span class="logo-text">uuto<span class="logo-247">24<span class="logo-7">/7</span></span><span class="logo-dot">.fi</span></span>
           </a>
           <div class="header-live-badge" title="Aktiivisia huutoja nyt">
             <span class="header-live-dot" aria-hidden="true"></span>
@@ -379,22 +379,23 @@ Performance:
         </form>
 
         <nav class="header-links" aria-label="Pikalinkit">
-          <a href="#popularSection">Kategoriat</a>
-          <a href="#endingSoonSection">Sulkeutuu pian</a>
-          <button class="icon-pill" aria-label="Suosikit">
+          <a href="/category.php" class="header-nav-link">Kategoriat</a>
+          <button class="favorites-pill" id="headerFavoritesBtn" aria-label="Suosikit">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.2 4.65 12.9a4.6 4.6 0 1 1 6.5-6.5L12 7.25l.85-.85a4.6 4.6 0 1 1 6.5 6.5L12 20.2Z"/></svg>
-          </button>
-          <button class="icon-pill" aria-label="Seuranta">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Zm10 3.8a3.8 3.8 0 1 0 0-7.6 3.8 3.8 0 0 0 0 7.6Z"/></svg>
-          </button>
-          <button class="icon-pill" aria-label="Omat huudot">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5h16v11H4v-11Zm2 2v7h12v-7H6Zm2.5 10h7v1.8h-7V18.5Z"/></svg>
+            <span class="favorites-label">Suosikit</span>
+            <span class="favorites-count" id="headerFavCount">0</span>
           </button>
           <?php if ($isUserLoggedIn): ?>
             <span id="userGreeting" class="user-greeting">Hei, <?php echo htmlspecialchars($displayFirstName !== '' ? $displayFirstName : 'Käyttäjä', ENT_QUOTES, 'UTF-8'); ?>!</span>
           <?php else: ?>
-            <a href="/auth/login.php" id="loginLink" class="btn-login">Kirjaudu sisään</a>
-            <a href="/auth/register.php" id="registerLink" class="btn-register">Rekisteröidy</a>
+            <a href="/auth/login.php" id="loginLink" class="btn-login-header">
+              <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
+              Kirjaudu
+            </a>
+            <a href="/auth/register.php" id="registerLink" class="btn-register-header">
+              Rekisteröidy
+              <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"/></svg>
+            </a>
           <?php endif; ?>
         </nav>
       </div>
@@ -409,7 +410,7 @@ Performance:
       <?php endif; ?>
 
       <!-- ============================================================
-           HERO SUPER — full-width immersive hero band
+           UNIFIED HERO — 2-column above-the-fold layout
            ============================================================ -->
       <section class="hero-super" aria-label="Tervetuloa Huuto247:ään">
         <!-- Ambient floating orbs (pure CSS animation) -->
@@ -418,97 +419,78 @@ Performance:
         <div class="hero-orb hero-orb-3" aria-hidden="true"></div>
         <div class="hero-orb hero-orb-4" aria-hidden="true"></div>
 
-        <div class="container hero-super-inner">
-          <!-- Live activity strip -->
-          <div class="hero-live-strip" data-hero>
-            <span class="hero-live-ring" aria-hidden="true"></span>
-            <span class="hero-live-dot" aria-hidden="true"></span>
-            <strong>LIVE</strong>&ensp;—&ensp;Tuhansia kohteita huutokaupattavana juuri nyt
+        <div class="container hero-unified">
+
+          <!-- LEFT COLUMN — hero text, CTAs, stats -->
+          <div class="hero-left">
+            <div class="hero-live-strip" data-hero>
+              <span class="hero-live-ring" aria-hidden="true"></span>
+              <span class="hero-live-dot" aria-hidden="true"></span>
+              <strong>LIVE</strong>&ensp;—&ensp;Tuhansia kohteita huutokaupattavana juuri nyt
+            </div>
+
+            <h1 class="hero-headline" data-hero>
+              Suomen <span class="headline-accent">johtava</span><br>huutokauppa
+            </h1>
+
+            <p class="hero-sub" data-hero>
+              Löydä ainutlaatuiset löydöt tai myy kohteesi tuhansille ostajille.<br>
+              Luotettu, nopea ja täysin suomalainen palvelu.
+            </p>
+
+            <div class="hero-cta-row" data-hero>
+              <button class="btn-hero-primary" data-action="scroll-popular">
+                Selaa kohteita
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </button>
+              <button class="btn-hero-secondary" data-action="open-benefit">
+                Myy oma kohteesi
+              </button>
+            </div>
+
+            <div class="hero-stats" data-hero>
+              <div class="hero-stat">
+                <span class="hero-stat-value" data-count data-count-target="14238" data-count-duration="1600">14 238</span>
+                <span class="hero-stat-label">Aktiivista kohdetta</span>
+              </div>
+              <div class="hero-stat-sep" aria-hidden="true"></div>
+              <div class="hero-stat">
+                <span class="hero-stat-value" data-count data-count-target="5" data-count-suffix="M+" data-count-duration="1200">5M+</span>
+                <span class="hero-stat-label">Kuukausivierailua</span>
+              </div>
+              <div class="hero-stat-sep" aria-hidden="true"></div>
+              <div class="hero-stat">
+                <span class="hero-stat-value" data-count data-count-target="98" data-count-suffix="%" data-count-duration="1400">98%</span>
+                <span class="hero-stat-label">Tyytyväisiä asiakkaita</span>
+              </div>
+            </div>
+
+            <!-- Rotating slogan (hidden visually, keeps JS binding alive) -->
+            <p id="rotatingSlogan" class="slogan sr-only" aria-live="polite"></p>
           </div>
 
-          <!-- Main headline -->
-          <h1 class="hero-headline" data-hero>
-            Suomen <span class="headline-accent">johtava</span><br>huutokauppa
-          </h1>
+          <!-- RIGHT COLUMN — carousel + categories (glass panel) -->
+          <div class="hero-right">
+            <article class="hero-carousel-panel" aria-label="Sulkeutuu pian karuselli">
+              <div class="urgent-badge">SULKEUTUU PIAN, TOIMI NYT!</div>
+              <div class="carousel-progress"><span id="carouselProgress"></span></div>
+              <div class="carousel-wrap" id="heroCarousel">
+                <button class="arrow" id="carouselPrev" aria-label="Edellinen">←</button>
+                <div class="carousel-track" id="carouselTrack"></div>
+                <button class="arrow" id="carouselNext" aria-label="Seuraava">→</button>
+              </div>
+              <div class="dots" id="carouselDots"></div>
+            </article>
 
-          <!-- Sub-headline -->
-          <p class="hero-sub" data-hero>
-            Löydä ainutlaatuiset löydöt tai myy kohteesi tuhansille ostajille.<br>
-            Luotettu, nopea ja täysin suomalainen palvelu.
-          </p>
-
-          <!-- CTA row -->
-          <div class="hero-cta-row" data-hero>
-            <button class="btn-hero-primary" data-action="scroll-popular">
-              Selaa kohteita
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-            </button>
-            <button class="btn-hero-secondary" data-action="open-benefit">
-              Myy oma kohteesi
-            </button>
+            <aside class="hero-categories-panel" id="heroCategories">
+              <div class="category-head">Kaikki kategoriat</div>
+              <ul id="categoryList"></ul>
+              <div id="categoryGrid" style="display: none;"></div>
+              <div id="liveAuctionCount" style="display: none;"></div>
+            </aside>
           </div>
 
-          <!-- Trust stats bar -->
-          <div class="hero-stats" data-hero>
-            <div class="hero-stat">
-              <span class="hero-stat-value" data-count data-count-target="14238" data-count-duration="1600">14 238</span>
-              <span class="hero-stat-label">Aktiivista kohdetta</span>
-            </div>
-            <div class="hero-stat-sep" aria-hidden="true"></div>
-            <div class="hero-stat">
-              <span class="hero-stat-value" data-count data-count-target="89200" data-count-duration="1800">89 200</span>
-              <span class="hero-stat-label">Rekisteröitynyttä käyttäjää</span>
-            </div>
-            <div class="hero-stat-sep" aria-hidden="true"></div>
-            <div class="hero-stat">
-              <span class="hero-stat-value" data-count data-count-target="5" data-count-suffix="M+" data-count-duration="1200">5M+</span>
-              <span class="hero-stat-label">Kuukausivierailua</span>
-            </div>
-            <div class="hero-stat-sep" aria-hidden="true"></div>
-            <div class="hero-stat">
-              <span class="hero-stat-value" data-count data-count-target="98" data-count-suffix="%" data-count-duration="1400">98%</span>
-              <span class="hero-stat-label">Tyytyväisiä asiakkaita</span>
-            </div>
-          </div>
         </div>
-      </section>
-
-      <!-- ============================================================
-           HERO GRID — carousel + categories (existing app.js bindings)
-           ============================================================ -->
-      <section class="hero container">
-        <article class="intro-card">
-          <p class="eyebrow" data-hero>UUSIMMAT ILMOITUKSET</p>
-          <h2 class="intro-card-heading" data-hero>Löydä paras tarjous</h2>
-          <p id="rotatingSlogan" class="slogan" aria-live="polite" data-hero></p>
-          <div class="cta-row" data-hero>
-            <button class="btn-primary" data-action="scroll-popular">Ilmoita kohde</button>
-            <button class="btn-secondary" data-action="open-benefit">Ensihuutajan etu</button>
-          </div>
-          <div class="trust-pills" data-hero>
-            <span data-count data-count-target="5" data-count-suffix="M+ vierailua/kk" data-count-duration="1200"></span>
-            <span>Suomalainen palvelu</span>
-            <span>Turvalliset maksut</span>
-          </div>
-        </article>
-
-        <article class="carousel-card" aria-label="Sulkeutuu pian karuselli" data-hero style="transition-delay:200ms">
-          <div class="urgent-badge">SULKEUTUU PIAN, TOIMI NYT!</div>
-          <div class="carousel-progress"><span id="carouselProgress"></span></div>
-          <div class="carousel-wrap" id="heroCarousel">
-            <button class="arrow" id="carouselPrev" aria-label="Edellinen">←</button>
-            <div class="carousel-track" id="carouselTrack"></div>
-            <button class="arrow" id="carouselNext" aria-label="Seuraava">→</button>
-          </div>
-          <div class="dots" id="carouselDots"></div>
-        </article>
-
-        <aside class="category-card" id="heroCategories" data-hero style="transition-delay:340ms">
-          <div class="category-head">Kaikki kategoriat</div>
-          <ul id="categoryList"></ul>
-          <div id="categoryGrid" style="display: none;"></div>
-          <div id="liveAuctionCount" style="display: none;"></div>
-        </aside>
       </section>
       
       <?php if (!empty($featuredUiData)): ?>
@@ -575,8 +557,8 @@ Performance:
         <div class="footer-content">
           <div class="footer-brand">
             <a href="index.php" class="footer-logo">
-              <span class="logo-mark" aria-hidden="true"></span>
-              <span>HUUTO247<span class="logo-dot">.fi</span></span>
+              <span class="logo-icon" aria-hidden="true">H</span>
+              <span class="logo-text">uuto<span class="logo-247">24<span class="logo-7">/7</span></span></span>
             </a>
             <p>Suomen johtava huutokauppapalvelu</p>
           </div>

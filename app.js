@@ -1094,44 +1094,51 @@
 
   function toggleFavorite(itemId) {
     if (!Number.isInteger(itemId) || itemId <= 0) return;
-    if (!state.user.loggedIn) {
-      refs.loginModal.showModal();
-      return;
-    }
 
     const willFavorite = !state.favorites.has(itemId);
     if (willFavorite) state.favorites.add(itemId);
     else state.favorites.delete(itemId);
+    writeJson('huuto247-favorites', [...state.favorites]);
     renderPopular();
     renderEnding();
+    updateHeaderFavCount();
 
-    fetch('/api/toggle_favourite.php', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json'
-      },
-      credentials: 'same-origin',
-      body: JSON.stringify({ auction_id: itemId })
-    })
-      .then((response) => response.json())
-      .then((payload) => {
-        if (!payload || payload.ok !== true) {
-          throw new Error((payload && payload.error) || 'Suosikin tallennus epäonnistui');
-        }
-
-        if (payload.favorited === true) state.favorites.add(itemId);
-        if (payload.favorited === false) state.favorites.delete(itemId);
-        writeJson('huuto247-favorites', [...state.favorites]);
-        renderPopular();
-        renderEnding();
+    // If logged in, also save server-side
+    if (state.user.loggedIn) {
+      fetch('/api/toggle_favourite.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
+        },
+        credentials: 'same-origin',
+        body: JSON.stringify({ auction_id: itemId })
       })
-      .catch(() => {
-        if (willFavorite) state.favorites.delete(itemId);
-        else state.favorites.add(itemId);
-        renderPopular();
-        renderEnding();
-      });
+        .then((response) => response.json())
+        .then((payload) => {
+          if (!payload || payload.ok !== true) {
+            throw new Error((payload && payload.error) || 'Suosikin tallennus epäonnistui');
+          }
+
+          if (payload.favorited === true) state.favorites.add(itemId);
+          if (payload.favorited === false) state.favorites.delete(itemId);
+          writeJson('huuto247-favorites', [...state.favorites]);
+          renderPopular();
+          renderEnding();
+          updateHeaderFavCount();
+        })
+        .catch(() => {
+          // Server failed, but localStorage is already updated - keep local state
+        });
+    }
+  }
+
+  function updateHeaderFavCount() {
+    const countEls = document.querySelectorAll('.favorites-count');
+    countEls.forEach(el => {
+      el.textContent = state.favorites.size > 0 ? state.favorites.size : '';
+      el.setAttribute('data-count', state.favorites.size);
+    });
   }
 
   function placeBid(itemId) {
@@ -1156,7 +1163,9 @@
 
     refs.itemModalContent.innerHTML = `
       <h3>${escapeHtml(item.title)}</h3>
-      <img src="${escapeHtml(item.imageUrl || IMAGE_FALLBACK)}" alt="${escapeHtml(item.title)}" />
+      <div class="modal-img-wrap">
+        <img src="${escapeHtml(item.imageUrl || IMAGE_FALLBACK)}" alt="${escapeHtml(item.title)}" />
+      </div>
       <p class="price">Hinta nyt: ${formatPrice(item.priceNow)}</p>
       <p class="subline">Tarjouksia ${item.bidsCount} • Minikorotus ${formatPrice(item.minIncrement)}</p>
       <p class="trust-line">Myyjä: ${escapeHtml(item.seller)} • ${escapeHtml(item.delivery)} • ${escapeHtml(item.location)}</p>
@@ -1187,7 +1196,9 @@
 
       refs.itemModalContent.innerHTML = `
         <h3>${escapeHtml(cleanDisplayText(details.title || item.title, 160))}</h3>
-        <img src="${escapeHtml(details.imageUrl || item.imageUrl || IMAGE_FALLBACK)}" alt="${escapeHtml(cleanDisplayText(details.title || item.title, 160))}" />
+        <div class="modal-img-wrap">
+          <img src="${escapeHtml(details.imageUrl || item.imageUrl || IMAGE_FALLBACK)}" alt="${escapeHtml(cleanDisplayText(details.title || item.title, 160))}" />
+        </div>
         <p class="price">Hinta nyt: ${formatPrice(details.currentPrice ?? item.priceNow)}</p>
         <p class="subline">Tarjouksia ${Number(details.bidCount ?? item.bidsCount)} • Minikorotus ${formatPrice(details.bidIncrement ?? item.minIncrement)}</p>
         <p class="trust-line">Sijainti: ${escapeHtml(cleanDisplayText(details.location || item.location, 120))} • Myyjä: ${escapeHtml(cleanDisplayText(details.seller || item.seller, 80))}</p>

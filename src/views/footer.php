@@ -81,8 +81,8 @@
         <div class="footer-main">
           <div class="footer-brand">
             <a href="index.php" class="footer-logo">
-              <span class="logo-mark" aria-hidden="true"></span>
-              <span>HUUTO247<span class="logo-dot">.fi</span></span>
+              <span class="logo-icon" aria-hidden="true">H</span>
+              <span class="logo-text">uuto<span class="logo-247">24<span class="logo-7">/7</span></span></span>
             </a>
             <p class="brand-desc">Suomen johtava huutokauppapalvelu vuodesta 2009</p>
             <div class="quality-seals">
@@ -192,5 +192,148 @@
             updateCountdowns();
         </script>
         <script src="/app.js" defer></script>
+
+<!-- Category Mega Menu -->
+<div class="category-mega-menu" id="categoryMegaMenu">
+  <div class="category-mega-backdrop" id="categoryMegaBackdrop"></div>
+  <div class="category-mega-panel">
+    <div class="category-mega-header">
+      <h2>📦 Kaikki kategoriat</h2>
+      <button class="category-mega-close" id="categoryMegaClose" aria-label="Sulje">✕</button>
+    </div>
+    <div class="category-mega-search-wrap">
+      <svg viewBox="0 0 24 24"><path d="M10.5 4a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13Zm0 1.8a4.7 4.7 0 1 0 0 9.4 4.7 4.7 0 0 0 0-9.4Zm5.87 10.6 3.2 3.2-1.28 1.28-3.2-3.2 1.28-1.28Z"/></svg>
+      <input type="text" class="category-mega-search" id="categoryMegaSearch" placeholder="Hae kategoriaa..." autocomplete="off">
+    </div>
+    <div class="category-mega-grid" id="categoryMegaGrid">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // === FAVORITES SYSTEM (Cookie-based, works without login) ===
+  function getCookieFavorites() {
+    try {
+      var stored = localStorage.getItem('huuto247-favorites');
+      return stored ? JSON.parse(stored) : [];
+    } catch(e) { return []; }
+  }
+
+  function updateFavCount() {
+    var favs = getCookieFavorites();
+    var countEls = document.querySelectorAll('.favorites-count');
+    countEls.forEach(function(el) {
+      el.textContent = favs.length > 0 ? favs.length : '';
+      el.setAttribute('data-count', favs.length);
+    });
+  }
+
+  // Favorites button opens category.php?tab=favorites
+  var favBtn = document.getElementById('headerFavoritesBtn');
+  if (favBtn) {
+    favBtn.addEventListener('click', function() {
+      window.location.href = '/category.php?tab=favorites';
+    });
+  }
+
+  updateFavCount();
+  // Listen for storage changes (cross-tab)
+  window.addEventListener('storage', function(e) {
+    if (e.key === 'huuto247-favorites') updateFavCount();
+  });
+
+  // === CATEGORY MEGA MENU ===
+  var categoryIcons = {
+    'Ajoneuvot': '🚗', 'Työkoneet': '🏗️', 'Asunnot': '🏠', 'Vapaa-aika': '⛵',
+    'Piha': '🌿', 'Työkalut': '🔧', 'Rakennus': '🏗️', 'Sisustus': '🛋️',
+    'Elektroniikka': '📱', 'Keräily': '🏆', 'Urheilu': '⚽', 'Vaatteet': '👕',
+    'Taide': '🎨', 'Antiikki': '🏺', 'Kodin tavarat': '🏡', 'Musiikki': '🎵',
+    'Kirjat': '📚', 'Pelit': '🎮', 'Muut': '📦'
+  };
+
+  var megaMenu = document.getElementById('categoryMegaMenu');
+  var megaBackdrop = document.getElementById('categoryMegaBackdrop');
+  var megaClose = document.getElementById('categoryMegaClose');
+  var megaGrid = document.getElementById('categoryMegaGrid');
+  var megaSearch = document.getElementById('categoryMegaSearch');
+  var allCategoryItems = [];
+
+  function openMegaMenu(e) {
+    if (!megaMenu) return;
+    e.preventDefault();
+    // Load categories via AJAX if not loaded
+    if (allCategoryItems.length === 0) {
+      loadCategories();
+    }
+    megaMenu.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    setTimeout(function() { if (megaSearch) megaSearch.focus(); }, 300);
+  }
+
+  function closeMegaMenu() {
+    if (!megaMenu) return;
+    megaMenu.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function loadCategories() {
+    // Get categories from the header select dropdown
+    var selectEl = document.querySelector('#headerSearchCategory, #searchCategory');
+    if (selectEl) {
+      var opts = selectEl.querySelectorAll('option');
+      opts.forEach(function(opt) {
+        var name = opt.textContent.trim();
+        if (name && name !== 'Kaikki kategoriat') {
+          allCategoryItems.push({ name: name, slug: opt.value || name });
+        }
+      });
+    }
+    renderCategories(allCategoryItems);
+  }
+
+  function renderCategories(cats) {
+    if (!megaGrid) return;
+    megaGrid.innerHTML = cats.map(function(cat, idx) {
+      var icon = categoryIcons[cat.name] || '📦';
+      return '<a href="/category.php?slug=' + encodeURIComponent(cat.slug) + '" class="category-mega-item" style="animation-delay:' + (idx * 30) + 'ms">' +
+        '<span class="category-mega-icon">' + icon + '</span>' +
+        '<div class="category-mega-info"><h3>' + cat.name + '</h3><span>Selaa kohteita →</span></div>' +
+      '</a>';
+    }).join('');
+  }
+
+  // Search filter
+  if (megaSearch) {
+    megaSearch.addEventListener('input', function() {
+      var q = this.value.toLowerCase().trim();
+      var filtered = allCategoryItems.filter(function(c) {
+        return c.name.toLowerCase().indexOf(q) !== -1;
+      });
+      renderCategories(filtered);
+    });
+  }
+
+  // Bind open triggers (all "Kategoriat" links in header)
+  document.querySelectorAll('.header-nav-link').forEach(function(link) {
+    if (link.textContent.trim() === 'Kategoriat') {
+      link.addEventListener('click', openMegaMenu);
+    }
+  });
+
+  // Close triggers
+  if (megaBackdrop) megaBackdrop.addEventListener('click', closeMegaMenu);
+  if (megaClose) megaClose.addEventListener('click', closeMegaMenu);
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && megaMenu && megaMenu.classList.contains('open')) {
+      closeMegaMenu();
+    }
+  });
+
+})();
+</script>
 </body>
 </html>
