@@ -823,7 +823,7 @@
             <img src="${escapeHtml(item.imageUrl || IMAGE_FALLBACK)}" alt="${escapeHtml(item.title)}" />
             <div class="carousel-overlay">
               <div class="carousel-content">
-                <span class="countdown-badge" data-end-time="${item.endTime}">${formatCountdown(item.endTime)}</span>
+                <span class="countdown-badge${isCountdownUrgent(item.endTime) ? ' countdown-urgent' : ''}" data-end-time="${item.endTime}">${formatCountdownHTML(item.endTime)}</span>
                 <h3 class="carousel-title">${escapeHtml(item.title)}</h3>
                 <div class="carousel-details">
                   <div class="price">Hinta nyt: ${formatPrice(item.priceNow)}</div>
@@ -1227,7 +1227,12 @@
       if (rect.bottom < 0 || rect.top > viewportH + 80) return;
       const endTime = Number(node.dataset.endTime);
       if (!Number.isFinite(endTime)) return;
-      node.textContent = formatCountdown(endTime);
+      if (node.classList.contains('countdown-badge')) {
+        node.innerHTML = formatCountdownHTML(endTime);
+        node.classList.toggle('countdown-urgent', isCountdownUrgent(endTime));
+      } else {
+        node.textContent = formatCountdown(endTime);
+      }
     });
   }
 
@@ -1326,6 +1331,24 @@
     const minutes = Math.floor((diffSec % 3600) / 60);
     const seconds = diffSec % 60;
     return `${minutes} min ${seconds} s`;
+  }
+
+  function formatCountdownHTML(endTime) {
+    const diffSec = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+    const d = (n) => `<span class="countdown-digits">${String(n).padStart(2, '0')}</span>`;
+    const sep = `<span class="countdown-sep">:</span>`;
+    if (diffSec <= 0) return '<span class="countdown-digits">Sulkeutunut</span>';
+    const days = Math.floor(diffSec / 86400);
+    const hours = Math.floor((diffSec % 86400) / 3600);
+    const minutes = Math.floor((diffSec % 3600) / 60);
+    const seconds = diffSec % 60;
+    if (days > 0) return `${d(days)}${sep}${d(hours)}${sep}${d(minutes)}${sep}${d(seconds)}`;
+    return `${d(hours)}${sep}${d(minutes)}${sep}${d(seconds)}`;
+  }
+
+  function isCountdownUrgent(endTime) {
+    const diffSec = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+    return diffSec > 0 && diffSec < 3600;
   }
 
   function formatPrice(amount) {

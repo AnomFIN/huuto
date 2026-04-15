@@ -11,7 +11,7 @@ $(document).ready(function() {
     // ========================================================================
     
     const App = {
-        currentFilter: 'all',
+        currentFilter: 'home',
         todos: [],
         modal: {
             isOpen: false,
@@ -27,7 +27,9 @@ $(document).ready(function() {
     // ========================================================================
     // INITIALIZATION
     // ========================================================================
-    console.log('🚀 Initializing TODO app...'); // Debug log
+    
+    function init() {
+        console.log('🚀 Initializing TODO app...');
         
         initEventListeners();
         initMobileNavigation();
@@ -36,14 +38,12 @@ $(document).ready(function() {
         loadTodos();
         updateCounts();
         
-        console.log('🚀 TODO app initialization complete!'); // Debug log);
-        loadTodos();
-        updateCounts();
-        
         // Show welcome animation
         if (App.settings.animations) {
             $('.app-container').addClass('fade-in');
         }
+        
+        console.log('🚀 TODO app initialization complete!');
     }
 
     // ========================================================================
@@ -64,32 +64,30 @@ $(document).ready(function() {
         $('#btn-upload-files').on('click', openDirectUpload);
         
         // Todo Cards
-        $(document).on('click', '.todo-card', openTodoModal);
+        $(document).on('click', '.todo-card', handleTodoClick);
         $(document).on('click', '.status-toggle', toggleTodoStatus);
         $(document).on('click', '.card-action-btn.share', shareTodo);
         $(document).on('click', '.card-action-btn.delete', deleteTodo);
         
-        // Modal
-        $(document).on('click', '.modal-overlay', closeModal);
-        $(document).on('click', '.modal-close', closeModal);
-        $(document).on('click', '.modal-content', function(e) {
-            e.stopPropagation();
-        });
+        // Fullscreen Editor
+        $(document).on('click', '#editor-back', closeFullscreenEditor);
+        $(document).on('click', '#editor-save', saveEditorTodo);
+        $(document).on('click', '.panel-header', toggleEditorPanel);
+        $(document).on('click', '#editor-file-zone', function() { $('#editor-file-input').click(); });
+        $(document).on('change', '#editor-file-input', function() { handleFileUpload(Array.from(this.files)); });
+        $(document).on('click', '#editor-delete', deleteEditorTodo);
+        $(document).on('click', '#editor-copy-link', copyEditorShareLink);
+        $(document).on('click', '#editor-status-toggle', function() { $(this).toggleClass('active'); });
+        $(document).on('click', '#editor-public-toggle', function() { $(this).toggleClass('active'); });
+        $(document).on('click', '.toolbar-btn', handleToolbarBtn);
+        $(document).on('change', '#toolbar-font-size', function() { $('#editor-content').css('font-size', $(this).val() + 'px'); });
+        $(document).on('change', '#toolbar-font-family', function() { $('#editor-content').css('font-family', $(this).val()); });
+        $(document).on('input', '#editor-title, #editor-content', autoSaveTodo);
         
-        // Form handling
-        $(document).on('submit', '#todo-form', saveTodo);
-        $(document).on('change', '#todo-title, #todo-content', autoSaveTodo);
-        
-        // File handling
+        // File handling (drag & drop)
         $(document).on('click', '.file-upload-zone', triggerFileSelect);
         $(document).on('change', '#file-input', handleFileSelect);
         $(document).on('click', '.file-action-btn.delete', deleteFile);
-        
-        // Settings
-        $(document).on('change', '.status-toggle', saveTodoStatus);
-        $(document).on('click', '#btn-make-public', togglePublicStatus);
-        $(document).on('click', '#btn-copy-link', copyPublicLink);
-        $(document).on('click', '#btn-delete-todo', deleteTodoModal);
         
         // Logout
         $('.logout-btn').on('click', logout);
@@ -307,8 +305,8 @@ $(document).ready(function() {
                     </div>
                 </div>
                 
-                <div class="todo-title">${escapeHtml(todo.title || 'Uusi tehtävä')}</div>
-                <div class="todo-content">${escapeHtml(todo.content || '').substring(0, 150)}${todo.content && todo.content.length > 150 ? '...' : ''}</div>
+                <div class="todo-title">${escapeHtml((todo.title || 'Uusi tehtävä').replace(/<[^>]*>/g, ''))}</div>
+                <div class="todo-content">${escapeHtml((todo.content || '').replace(/<[^>]*>/g, '').substring(0, 150))}${todo.content && todo.content.replace(/<[^>]*>/g, '').length > 150 ? '...' : ''}</div>
                 
                 ${publicBadge}
                 
@@ -335,226 +333,347 @@ $(document).ready(function() {
     }
     
     function createNewTodo() {
-        console.log('🔧 createNewTodo() called'); // Debug log
-        
-        const newTodo = {
-            id: 'new',
-            title: '',
-            content: '',
-            is_done: false,
-            is_public: false,
-            files: []
-        };
-        
-        console.log('🔧 Opening modal with todo:', newTodo); // Debug log
-        openTodoModal(null, newTodo);
+        $.ajax({
+            url: 'todo.php',
+            method: 'POST',
+            data: { action: 'create_todo', title: 'Uusi tehtävä', content: '', is_done: 0, is_public: 0 },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    openFullscreenEditor({
+                        id: response.todo_id,
+                        title: 'Uusi tehtävä',
+                        content: '',
+                        is_done: 0,
+                        is_public: 0,
+                        files: []
+                    });
+                } else {
+                    showToast('error', 'Virhe luotaessa tehtävää');
+                }
+            },
+            error: function() { showToast('error', 'Verkkovirhe'); }
+        });
     }
     
     function openDirectUpload() {
-        console.log('📎 openDirectUpload() called'); // Debug log
-        
-        // Luo väliaikainen tehtävä tiedostojen lataamiseksi
-        const tempTodo = {
-            id: 'temp-upload',
-            title: 'Tiedostojen lataus',
-            content: 'Latauskansio',
-            is_done: false,
-            is_public: false,
-            files: []
-        };
-        
-        console.log('📎 Opening upload modal with temp todo:', tempTodo); // Debug log
-        openTodoModal(null, tempTodo);
-        
-        // Fokus suoraan file upload -alueeseen
-        setTimeout(() => {
-            $('#file-upload-zone').click();
-        }, 500);
+        $.ajax({
+            url: 'todo.php',
+            method: 'POST',
+            data: { action: 'create_todo', title: 'Tiedostot', content: '', is_done: 0, is_public: 0 },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    openFullscreenEditor({
+                        id: response.todo_id,
+                        title: 'Tiedostot',
+                        content: '',
+                        is_done: 0,
+                        is_public: 0,
+                        files: []
+                    }, 'files');
+                } else {
+                    showToast('error', 'Virhe');
+                }
+            },
+            error: function() { showToast('error', 'Verkkovirhe'); }
+        });
     }
 
     // ========================================================================
-    // MODAL FUNCTIONALITY
+    // FULLSCREEN EDITOR
     // ========================================================================
     
-    function openTodoModal(event, todo = null) {
-        console.log('🔧 openTodoModal() called with event:', event, 'todo:', todo); // Debug log
-        
-        if (event) {
-            event.stopPropagation();
-            
-            // Don't open modal if clicking on action buttons
-            if ($(event.target).closest('.card-action-btn, .status-toggle').length) {
-                console.log('🔧 Ignoring modal open - clicked on action button'); // Debug log
-                return;
-            }
-        }
-        
-        const todoData = todo || getTodoData($(this).data('id'));
-        if (!todoData) {
-            console.log('❌ No todo data found, aborting modal open'); // Debug log
-            return;
-        }
-        
-        console.log('🔧 Setting modal state with todo data:', todoData); // Debug log
-        App.modal.currentTodo = todoData;
+    function handleTodoClick(event) {
+        if ($(event.target).closest('.card-action-btn, .status-toggle').length) return;
+        const todoId = $(this).data('id');
+        const todoData = getTodoData(todoId);
+        if (!todoData) return;
+        openFullscreenEditor(todoData);
+    }
+    
+    function openFullscreenEditor(todo, openPanel) {
         App.modal.isOpen = true;
+        App.modal.currentTodo = todo;
         
-        renderModal(todoData);
+        $('.top-bar').addClass('hidden');
+        $('#todos-grid').addClass('hidden');
         
-        // Smooth modal animation
-        const $overlay = $('.modal-overlay');
-        $overlay.addClass('active');
+        renderFullscreenEditor(todo);
+        $('#fullscreen-editor').removeClass('hidden');
         
-        console.log('🔧 Modal overlay activated, adding animation'); // Debug log
-        
-        if (App.settings.animations) {
-            setTimeout(() => {
-                $('.modal-content').addClass('modal-enter');
-                console.log('🔧 Modal animation completed'); // Debug log
-            }, 50);
+        if (openPanel) {
+            setTimeout(function() {
+                const $panel = $(`.editor-panel[data-panel="${openPanel}"]`);
+                $panel.addClass('open');
+                $panel.find('.panel-body').slideDown(300);
+                if (openPanel === 'files') {
+                    setTimeout(function() { $('#editor-file-input').click(); }, 400);
+                }
+            }, 200);
         }
         
-        // Focus first input
-        setTimeout(() => {
-            $('#todo-title').focus();
-            console.log('🔧 Focused on todo title input'); // Debug log
-        }, 300);
-        
-        // Prevent body scroll
-        $('body').addClass('modal-open');
+        setTimeout(function() { $('#editor-title').focus(); }, 300);
     }
     
-    function closeModal() {
-        if (!App.modal.isOpen) return;
+    function closeFullscreenEditor() {
+        App.modal.isOpen = false;
+        App.modal.currentTodo = null;
         
-        const $overlay = $('.modal-overlay');
+        $('#fullscreen-editor').addClass('hidden').empty();
+        $('.top-bar').removeClass('hidden');
+        $('#todos-grid').removeClass('hidden');
         
-        if (App.settings.animations) {
-            $('.modal-content').removeClass('modal-enter');
+        loadTodos();
+    }
+    
+    function renderFullscreenEditor(todo) {
+        const isNew = !todo.id || todo.id === 'new';
+        const html = `
+            <div class="editor-header">
+                <button class="editor-back" id="editor-back">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                    Takaisin
+                </button>
+                <div class="editor-header-actions">
+                    <span class="editor-autosave" id="editor-autosave"></span>
+                    <button class="btn-primary" id="editor-save">💾 Tallenna</button>
+                </div>
+            </div>
             
-            setTimeout(() => {
-                $overlay.removeClass('active');
-                $('.modal-content').remove();
-                App.modal.isOpen = false;
-                App.modal.currentTodo = null;
-            }, 300);
-        } else {
-            $overlay.removeClass('active');
-            $('.modal-content').remove();
-            App.modal.isOpen = false;
-            App.modal.currentTodo = null;
-        }
-        
-        // Restore body scroll
-        $('body').removeClass('modal-open');
-    }
-    
-    function renderModal(todo) {
-        console.log('🔧 renderModal() called with todo:', todo); // Debug log
-        
-        const isNewTodo = todo.id === 'new' || todo.id === 'temp-upload';
-        const modalTitle = isNewTodo ? (todo.id === 'temp-upload' ? 'Lataa tiedostoja' : 'Uusi tehtävä') : 'Muokkaa tehtävää';
-        
-        console.log('🔧 Modal title will be:', modalTitle); // Debug log
-        
-        const modalHTML = `
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h2 class="modal-title">${modalTitle}</h2>
-                    <button class="modal-close" type="button">×</button>
+            <div class="editor-layout">
+                <div class="editor-main">
+                    <input type="hidden" id="editor-todo-id" value="${todo.id || ''}">
+                    <input type="text" class="editor-title-input" id="editor-title"
+                           value="${escapeHtml(todo.title || '')}"
+                           placeholder="Tehtävän nimi...">
+                    
+                    <div class="editor-toolbar" id="editor-toolbar">
+                        <button class="toolbar-btn" data-cmd="bold" title="Lihavointi"><b>B</b></button>
+                        <button class="toolbar-btn" data-cmd="italic" title="Kursiivi"><i>I</i></button>
+                        <button class="toolbar-btn" data-cmd="underline" title="Alleviivaus"><u>U</u></button>
+                        <div class="toolbar-sep"></div>
+                        <select class="toolbar-select" id="toolbar-font-size" title="Fonttikoko">
+                            <option value="14">14px</option>
+                            <option value="16" selected>16px</option>
+                            <option value="18">18px</option>
+                            <option value="22">22px</option>
+                            <option value="28">28px</option>
+                            <option value="36">36px</option>
+                        </select>
+                        <select class="toolbar-select" id="toolbar-font-family" title="Fontti">
+                            <option value="inherit">Oletus</option>
+                            <option value="Georgia, serif">Georgia</option>
+                            <option value="'Courier New', monospace">Monospace</option>
+                            <option value="'Trebuchet MS', sans-serif">Trebuchet</option>
+                        </select>
+                        <div class="toolbar-sep"></div>
+                        <button class="toolbar-btn" data-cmd="insertUnorderedList" title="Lista">☰</button>
+                        <button class="toolbar-btn" data-cmd="insertOrderedList" title="Numerolista">1.</button>
+                    </div>
+                    
+                    <div class="editor-content" id="editor-content" contenteditable="true"
+                         data-placeholder="Kirjoita sisältö tähän...">${todo.content || ''}</div>
                 </div>
                 
-                <div class="modal-body">
-                    <form id="todo-form">
-                        <input type="hidden" id="todo-id" value="${todo.id}">
-                        
-                        <div class="form-row">
-                            <div class="form-col">
-                                <label for="todo-title" class="form-label">Otsikko</label>
-                                <input type="text" 
-                                       id="todo-title" 
-                                       class="form-input" 
-                                       value="${escapeHtml(todo.title || '')}" 
-                                       placeholder="Anna tehtävälle kuvaava nimi..."
-                                       required>
+                <aside class="editor-sidebar" id="editor-sidebar">
+                    <div class="editor-panel" data-panel="status">
+                        <div class="panel-header">
+                            <span>⚡ Tila</span>
+                            <span class="panel-chevron">›</span>
+                        </div>
+                        <div class="panel-body">
+                            <div class="panel-toggle-row">
+                                <span>Valmis</span>
+                                <div class="status-toggle ${todo.is_done ? 'active' : ''}" id="editor-status-toggle"></div>
                             </div>
                         </div>
-                        
-                        <div class="form-row">
-                            <div class="form-col">
-                                <label for="todo-content" class="form-label">Kuvaus</label>
-                                <textarea id="todo-content" 
-                                          class="form-input-large" 
-                                          placeholder="Kirjoita tarkempi kuvaus tehtävästä...">${escapeHtml(todo.content || '')}</textarea>
+                    </div>
+                    
+                    <div class="editor-panel" data-panel="privacy">
+                        <div class="panel-header">
+                            <span>🌐 Julkisuus</span>
+                            <span class="panel-chevron">›</span>
+                        </div>
+                        <div class="panel-body">
+                            <div class="panel-toggle-row">
+                                <span>Julkinen</span>
+                                <div class="status-toggle ${todo.is_public ? 'active' : ''}" id="editor-public-toggle"></div>
                             </div>
                         </div>
-                        
-                        <div class="form-row">
-                            <div class="form-col">
-                                <label class="form-label">Tiedostot</label>
-                                <div class="file-upload-zone" id="file-upload-zone">
-                                    <div class="upload-icon">📁</div>
-                                    <div class="upload-text">Raahaa tiedostoja tähän tai klikkaa valitaksesi</div>
-                                    <div class="upload-hint">Tuetut: Kuvat, videot, äänitiedostot (max 10MB)</div>
-                                </div>
-                                <input type="file" id="file-input" multiple accept="image/*,video/*,audio/*" style="display:none;">
-                                
-                                <div class="files-list" id="files-list">
-                                    ${renderFilesList(todo.files || [])}
-                                </div>
+                    </div>
+                    
+                    <div class="editor-panel" data-panel="share">
+                        <div class="panel-header">
+                            <span>🔗 Jako</span>
+                            <span class="panel-chevron">›</span>
+                        </div>
+                        <div class="panel-body">
+                            <button class="panel-action-btn" id="editor-copy-link">📋 Kopioi jakolinkki</button>
+                        </div>
+                    </div>
+                    
+                    <div class="editor-panel" data-panel="files">
+                        <div class="panel-header">
+                            <span>📁 Tiedostot <span class="panel-count" id="editor-file-count">${(todo.files||[]).length || ''}</span></span>
+                            <span class="panel-chevron">›</span>
+                        </div>
+                        <div class="panel-body">
+                            <div class="file-upload-zone editor-upload-zone" id="editor-file-zone">
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="17 8 12 3 7 8"/>
+                                    <line x1="12" y1="3" x2="12" y2="15"/>
+                                </svg>
+                                <span>Raahaa tai klikkaa</span>
+                            </div>
+                            <input type="file" id="editor-file-input" multiple accept="image/*,video/*,audio/*" style="display:none;">
+                            <div class="files-list" id="editor-files-list">
+                                ${renderFilesList(todo.files || [])}
                             </div>
                         </div>
-                        
-                        <div class="settings-section">
-                            <h3 class="settings-title">
-                                ⚙️ Asetukset
-                            </h3>
-                            
-                            <div class="settings-row">
-                                <label>Tila</label>
-                                <div class="status-toggle ${todo.is_done ? 'active' : ''}" id="modal-status-toggle">
-                                </div>
-                            </div>
-                            
-                            <div class="settings-row">
-                                <label>Julkinen tehtävä</label>
-                                <div class="status-toggle ${todo.is_public ? 'active' : ''}" id="modal-public-toggle">
-                                </div>
-                            </div>
-                            
-                            ${todo.is_public ? `
-                                <div class="settings-row">
-                                    <label>Julkinen linkki</label>
-                                    <button type="button" class="btn-primary" id="btn-copy-link">
-                                        📋 Kopioi linkki
-                                    </button>
-                                </div>
-                            ` : ''}
-                            
-                            ${!isNewTodo ? `
-                                <div class="settings-row">
-                                    <label>Poista tehtävä</label>
-                                    <button type="button" class="btn-primary" id="btn-delete-todo" style="background: var(--gradient-danger);">
-                                        🗑️ Poista
-                                    </button>
-                                </div>
-                            ` : ''}
+                    </div>
+                    
+                    <div class="editor-panel" data-panel="images">
+                        <div class="panel-header">
+                            <span>🖼️ Kuvat</span>
+                            <span class="panel-chevron">›</span>
                         </div>
-                        
-                        <div class="form-row">
-                            <button type="submit" class="btn-primary">
-                                💾 Tallenna tehtävä
-                            </button>
+                        <div class="panel-body">
+                            <div class="panel-placeholder">Kuvatoiminto tulossa pian</div>
                         </div>
-                    </form>
-                </div>
+                    </div>
+                    
+                    <div class="editor-panel" data-panel="comments">
+                        <div class="panel-header">
+                            <span>💬 Kommentit</span>
+                            <span class="panel-chevron">›</span>
+                        </div>
+                        <div class="panel-body">
+                            <div class="panel-placeholder">Kommenttitoiminto tulossa pian</div>
+                        </div>
+                    </div>
+                    
+                    ${!isNew ? `
+                    <div class="editor-panel danger" data-panel="delete">
+                        <div class="panel-header">
+                            <span>🗑️ Poista tehtävä</span>
+                            <span class="panel-chevron">›</span>
+                        </div>
+                        <div class="panel-body">
+                            <button class="panel-action-btn danger" id="editor-delete">Poista pysyvästi</button>
+                        </div>
+                    </div>
+                    ` : ''}
+                </aside>
             </div>
         `;
         
-        console.log('🔧 Removing existing modal content and adding new HTML'); // Debug log
-        $('.modal-overlay .modal-content').remove();
-        $('.modal-overlay').append(modalHTML);
-        console.log('🔧 Modal HTML added successfully'); // Debug log
+        $('#fullscreen-editor').html(html);
+    }
+    
+    function toggleEditorPanel() {
+        const $panel = $(this).closest('.editor-panel');
+        $panel.toggleClass('open');
+        $panel.find('.panel-body').slideToggle(250);
+    }
+    
+    function handleToolbarBtn() {
+        const cmd = $(this).data('cmd');
+        document.execCommand(cmd, false, null);
+        $(this).toggleClass('active');
+        $('#editor-content').focus();
+    }
+    
+    function saveEditorTodo(e) {
+        if (e) e.preventDefault();
+        
+        const todoId = $('#editor-todo-id').val();
+        const title = $('#editor-title').val().trim();
+        const content = $('#editor-content').html().trim();
+        const isDone = $('#editor-status-toggle').hasClass('active') ? 1 : 0;
+        const isPublic = $('#editor-public-toggle').hasClass('active') ? 1 : 0;
+        
+        if (!title) {
+            showToast('error', 'Otsikko on pakollinen');
+            $('#editor-title').focus();
+            return;
+        }
+        
+        const isNew = !todoId || todoId === 'new';
+        const data = {
+            action: isNew ? 'create_todo' : 'update_todo',
+            title: title,
+            content: content,
+            is_done: isDone,
+            is_public: isPublic
+        };
+        if (!isNew) data.todo_id = todoId;
+        
+        $.ajax({
+            url: 'todo.php',
+            method: 'POST',
+            data: data,
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    if (isNew && response.todo_id) {
+                        $('#editor-todo-id').val(response.todo_id);
+                        App.modal.currentTodo.id = response.todo_id;
+                    }
+                    showToast('success', 'Tallennettu! ✨');
+                } else {
+                    showToast('error', response.error || 'Virhe tallennettaessa');
+                }
+            },
+            error: function() { showToast('error', 'Verkkovirhe'); }
+        });
+    }
+    
+    function deleteEditorTodo() {
+        const todoId = $('#editor-todo-id').val();
+        if (!todoId) return;
+        
+        if (confirm('Haluatko varmasti poistaa tehtävän?')) {
+            $.ajax({
+                url: 'todo.php',
+                method: 'POST',
+                data: { action: 'delete_todo', todo_id: todoId },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        showToast('success', 'Tehtävä poistettu');
+                        closeFullscreenEditor();
+                    }
+                }
+            });
+        }
+    }
+    
+    function copyEditorShareLink() {
+        const todoId = $('#editor-todo-id').val();
+        if (!todoId) return;
+        
+        $.ajax({
+            url: 'todo.php',
+            method: 'POST',
+            data: { action: 'get_share_link', todo_id: todoId },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    const url = window.location.origin + window.location.pathname + '?share=' + response.share_token;
+                    if (navigator.clipboard) {
+                        navigator.clipboard.writeText(url).then(function() {
+                            showToast('success', 'Jakolinkki kopioitu! 📋');
+                        });
+                    } else {
+                        prompt('Kopioi linkki:', url);
+                    }
+                }
+            }
+        });
     }
     
     function renderFilesList(files) {
@@ -606,7 +725,9 @@ $(document).ready(function() {
     }
     
     function triggerFileSelect() {
-        $('#file-input').click();
+        var $input = $('#editor-file-input');
+        if (!$input.length) $input = $('#file-input');
+        $input.click();
     }
     
     function handleFileSelect() {
@@ -617,13 +738,32 @@ $(document).ready(function() {
     }
     
     function handleFileUpload(files) {
-        const todoId = $('#todo-id').val();
+        var todoId = $('#editor-todo-id').val() || $('#todo-id').val();
         
-        if (todoId === 'new') {
-            showToast('warning', 'Tallenna tehtävä ensin ennen tiedostojen lisäämistä');
+        if (!todoId || todoId === 'new') {
+            var title = ($('#editor-title').val() || '').trim() || 'Tiedostot';
+            $.ajax({
+                url: 'todo.php',
+                method: 'POST',
+                data: { action: 'create_todo', title: title, content: '', is_done: 0, is_public: 0 },
+                dataType: 'json',
+                success: function(response) {
+                    if (response.success) {
+                        $('#editor-todo-id').val(response.todo_id);
+                        doFileUpload(response.todo_id, files);
+                    } else {
+                        showToast('error', 'Virhe luotaessa tehtävää');
+                    }
+                },
+                error: function() { showToast('error', 'Verkkovirhe'); }
+            });
             return;
         }
         
+        doFileUpload(todoId, files);
+    }
+    
+    function doFileUpload(todoId, files) {
         const formData = new FormData();
         formData.append('action', 'upload_files');
         formData.append('todo_id', todoId);
@@ -633,7 +773,7 @@ $(document).ready(function() {
                 showToast('error', `Tiedosto ${file.name} on liian suuri (max 10MB)`);
                 return;
             }
-            formData.append(`files[${index}]`, file);
+formData.append('files[]', file);
         });
         
         showFileUploadProgress();
@@ -905,22 +1045,22 @@ $(document).ready(function() {
     // ========================================================================
     
     function autoSaveTodo() {
-        if (!App.settings.autoSave || $('#todo-id').val() === 'new') {
-            return;
-        }
+        if (!App.settings.autoSave || !App.modal.isOpen) return;
+        var todoId = $('#editor-todo-id').val();
+        if (!todoId || todoId === 'new') return;
         
         clearTimeout(App.autoSaveTimer);
-        App.autoSaveTimer = setTimeout(() => {
+        App.autoSaveTimer = setTimeout(function() {
             saveTodoSilent();
         }, 2000);
     }
     
     function saveTodoSilent() {
-        const todoId = $('#todo-id').val();
-        const title = $('#todo-title').val().trim();
-        const content = $('#todo-content').val().trim();
+        var todoId = $('#editor-todo-id').val();
+        var title = ($('#editor-title').val() || '').trim();
+        var content = ($('#editor-content').html() || '').trim();
         
-        if (!title || todoId === 'new') return;
+        if (!title || !todoId || todoId === 'new') return;
         
         $.ajax({
             url: 'todo.php',
@@ -938,6 +1078,110 @@ $(document).ready(function() {
                 }
             }
         });
+    }
+
+    // ========================================================================
+    // MISSING HELPER FUNCTIONS
+    // ========================================================================
+
+    function showFileUploadProgress() {
+        var $zone = $('#editor-file-zone').length ? $('#editor-file-zone') : $('#file-upload-zone');
+        $zone.addClass('uploading');
+        $zone.html(`
+            <div class="upload-progress-container">
+                <div class="upload-progress-ring">
+                    <svg viewBox="0 0 80 80">
+                        <circle class="progress-bg" cx="40" cy="40" r="35" />
+                        <circle class="progress-fill" cx="40" cy="40" r="35" id="upload-progress-circle" />
+                    </svg>
+                    <span class="progress-percent" id="upload-percent">0%</span>
+                </div>
+                <div class="upload-progress-text">Ladataan tiedostoja...</div>
+            </div>
+        `);
+    }
+
+    function updateFileUploadProgress(percent) {
+        var circle = document.getElementById('upload-progress-circle');
+        if (circle) {
+            var circumference = 2 * Math.PI * 35;
+            var offset = circumference - (percent / 100) * circumference;
+            circle.style.strokeDasharray = circumference;
+            circle.style.strokeDashoffset = offset;
+        }
+        $('#upload-percent').text(Math.round(percent) + '%');
+    }
+
+    function hideFileUploadProgress() {
+        var $zone = $('#editor-file-zone').length ? $('#editor-file-zone') : $('#file-upload-zone');
+        $zone.removeClass('uploading');
+        if ($zone.attr('id') === 'editor-file-zone') {
+            $zone.html(`
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="17 8 12 3 7 8"/>
+                    <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                <span>Raahaa tai klikkaa</span>
+            `);
+        } else {
+            $zone.html(`
+                <div class="upload-icon">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="17 8 12 3 7 8"/>
+                        <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                </div>
+                <div class="upload-text">Raahaa tiedostoja tähän tai klikkaa valitaksesi</div>
+                <div class="upload-hint">Kuvat, videot, äänitiedostot &mdash; max 10 MB</div>
+            `);
+        }
+    }
+
+    function loadTodoFiles(todoId) {
+        $.ajax({
+            url: 'todo.php',
+            method: 'POST',
+            data: { action: 'load_todos', filter: 'all' },
+            dataType: 'json',
+            success: function(response) {
+                if (response.success && response.todos) {
+                    var todo = response.todos.find(function(t) { return t.id == todoId; });
+                    if (todo && todo.files) {
+                        var html = renderFilesList(todo.files);
+                        $('#files-list').html(html);
+                        $('#editor-files-list').html(html);
+                        $('#editor-file-count').text(todo.files.length || '');
+                    }
+                }
+            }
+        });
+    }
+
+    function updateTodoFileCount(todoId, count) {
+        var $card = $('.todo-card[data-id="' + todoId + '"]');
+        $card.attr('data-file-count', count);
+        if (count > 0) {
+            var $footer = $card.find('.card-footer');
+            $footer.find('.file-count').remove();
+            $footer.append(
+                '<div class="file-count">' +
+                    '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">' +
+                        '<path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>' +
+                    '</svg>' +
+                    '<span class="file-badge">' + count + '</span>' +
+                '</div>'
+            );
+        }
+    }
+
+    function showAutoSaveIndicator() {
+        var $indicator = $('#editor-autosave');
+        if ($indicator.length) {
+            $indicator.text('✓ Tallennettu').addClass('show');
+            setTimeout(function() { $indicator.removeClass('show'); }, 2000);
+        }
     }
 
     // ========================================================================
@@ -1079,6 +1323,11 @@ $(document).ready(function() {
                 title: 'Ei tehtäviä',
                 message: 'Luo ensimmäinen tehtäväsi aloittaaksesi!'
             },
+            'home': {
+                icon: '🏠',
+                title: 'Tervetuloa!',
+                message: 'Ei tämän päivän tehtäviä — luo uusi aloittaaksesi!'
+            },
             'today': {
                 icon: '📅',
                 title: 'Ei tämän päivän tehtäviä',
@@ -1128,6 +1377,7 @@ $(document).ready(function() {
                     
                     // Update navigation badges with animation
                     $('.nav-item[data-filter="all"] .nav-badge').text(counts.all);
+                    $('.nav-item[data-filter="home"] .nav-badge').text(counts.home || counts.today);
                     $('.nav-item[data-filter="today"] .nav-badge').text(counts.today);
                     $('.nav-item[data-filter="tomorrow"] .nav-badge').text(counts.tomorrow || 0);
                     $('.nav-item[data-filter="completed"] .nav-badge').text(counts.completed);
@@ -1164,15 +1414,15 @@ $(document).ready(function() {
             $('#search-input').focus();
         }
         
-        // Escape = Close modal
+        // Escape = Close editor
         if (e.which === 27 && App.modal.isOpen) {
-            closeModal();
+            closeFullscreenEditor();
         }
         
-        // Ctrl/Cmd + S = Save todo (when modal is open)
+        // Ctrl/Cmd + S = Save todo (when editor is open)
         if ((e.ctrlKey || e.metaKey) && e.which === 83 && App.modal.isOpen) {
             e.preventDefault();
-            $('#todo-form').submit();
+            saveEditorTodo();
         }
     }
 
@@ -1242,7 +1492,10 @@ $(document).ready(function() {
     
     function logout() {
         if (confirm('Haluatko varmasti kirjautua ulos?')) {
-            window.location.href = 'todo.php?action=logout';
+            var $form = $('<form>', { method: 'POST', action: 'todo.php' })
+                .append($('<input>', { type: 'hidden', name: 'action', value: 'logout' }));
+            $('body').append($form);
+            $form.submit();
         }
     }
 
@@ -1360,5 +1613,5 @@ $(document).ready(function() {
 // ============================================================================
 
 window.createNewTodo = function() {
-    $(document).trigger('click', '#btn-new-todo');
+    $('#btn-new-todo').trigger('click');
 };

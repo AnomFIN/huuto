@@ -92,6 +92,13 @@ function sanitizeInput($input) {
     return trim(htmlspecialchars($input, ENT_QUOTES, 'UTF-8'));
 }
 
+function sanitizeContent($html) {
+    $clean = strip_tags($html, '<b><i><u><br><p><strong><em><ul><ol><li><div><span>');
+    $clean = preg_replace('/\s+on\w+\s*=\s*"[^"]*"/i', '', $clean);
+    $clean = preg_replace("/\s+on\w+\s*=\s*'[^']*'/i", '', $clean);
+    return $clean;
+}
+
 function generateShareToken() {
     return bin2hex(random_bytes(32));
 }
@@ -139,6 +146,7 @@ function buildTodoQuery($filter = 'all', $search = '', $countOnly = false) {
     
     // Base filter conditions
     switch ($filter) {
+        case 'home':
         case 'today':
             $conditions[] = "DATE(t.created_at) = DATE('now')";
             $conditions[] = 't.is_deleted = 0';
@@ -212,7 +220,7 @@ function getTodosWithFilter($filter = 'all', $search = '') {
 function getAllFilterCounts() {
     global $pdo;
     
-    $filters = ['all', 'today', 'tomorrow', 'pending', 'completed', 'deleted', 'public', 'files'];
+    $filters = ['all', 'home', 'today', 'tomorrow', 'pending', 'completed', 'deleted', 'public', 'files'];
     $counts = [];
     
     foreach ($filters as $filter) {
@@ -331,7 +339,7 @@ function handleCreateTodo() {
     global $pdo;
     
     $title = sanitizeInput($_POST['title'] ?? '');
-    $content = sanitizeInput($_POST['content'] ?? '');
+    $content = sanitizeContent($_POST['content'] ?? '');
     $isDone = (int)($_POST['is_done'] ?? 0);
     $isPublic = (int)($_POST['is_public'] ?? 0);
     
@@ -357,7 +365,7 @@ function handleUpdateTodo() {
     
     $todoId = (int)($_POST['todo_id'] ?? 0);
     $title = sanitizeInput($_POST['title'] ?? '');
-    $content = sanitizeInput($_POST['content'] ?? '');
+    $content = sanitizeContent($_POST['content'] ?? '');
     $isDone = (int)($_POST['is_done'] ?? 0);
     $isPublic = (int)($_POST['is_public'] ?? 0);
     
@@ -758,8 +766,11 @@ function showLoginPage() {
         <aside class="sidebar">
             <div class="sidebar-header">
                 <div class="sidebar-logo">
-                    <h2>Premium Todo</h2>
-                    <p>Task Management</p>
+                    <img src="todo.png" alt="Todo" class="sidebar-logo-img">
+                    <div>
+                        <h2>Premium Todo</h2>
+                        <p>Task Management</p>
+                    </div>
                 </div>
             </div>
             
@@ -767,7 +778,15 @@ function showLoginPage() {
                 <div class="nav-section">
                     <h3>Tehtävät</h3>
                     
-                    <div class="nav-item active" data-filter="all">
+                    <div class="nav-item active" data-filter="home">
+                        <div class="nav-item-content">
+                            <span class="nav-icon">🏠</span>
+                            <span class="nav-text">Etusivu</span>
+                        </div>
+                        <span class="nav-badge">0</span>
+                    </div>
+                    
+                    <div class="nav-item" data-filter="all">
                         <div class="nav-item-content">
                             <span class="nav-icon">📝</span>
                             <span class="nav-text">Kaikki tehtävät</span>
@@ -851,7 +870,7 @@ function showLoginPage() {
         <!-- Main Content -->
         <main class="main-content">
             <header class="top-bar">
-                <h1 class="page-title">Kaikki tehtävät</h1>
+                <h1 class="page-title">Etusivu</h1>
                 
                 <div class="top-actions">
                     <div class="search-box">
@@ -873,9 +892,10 @@ function showLoginPage() {
             </header>
             
             <div class="content-area">
-                <div class="todos-grid">
+                <div class="todos-grid" id="todos-grid">
                     <!-- Todos will be loaded here by JavaScript -->
                 </div>
+                <div class="fullscreen-editor hidden" id="fullscreen-editor"></div>
             </div>
         </main>
     </div>
