@@ -113,20 +113,33 @@
     </footer>
 
     <script>
-    // Footer accordion on mobile
+    // Footer accordion on mobile — exclusive (one open at a time)
     (function(){
       var toggles = document.querySelectorAll('.footer-col-toggle');
       var mql = window.matchMedia('(max-width: 768px)');
+
+      function collapseAll(except) {
+        toggles.forEach(function(t) {
+          if (t === except) return;
+          t.setAttribute('aria-expanded', 'false');
+          var links = t.nextElementSibling;
+          if (links) links.style.display = 'none';
+        });
+      }
+
       function handleToggle(e) {
         if (!mql.matches) return;
         var btn = e.currentTarget;
         var expanded = btn.getAttribute('aria-expanded') === 'true';
+        collapseAll(expanded ? null : btn);
         btn.setAttribute('aria-expanded', String(!expanded));
         var links = btn.nextElementSibling;
         if (links) links.style.display = expanded ? 'none' : 'block';
       }
+
       toggles.forEach(function(t) { t.addEventListener('click', handleToggle); });
-      function resetOnDesktop() {
+
+      mql.addEventListener('change', function() {
         if (!mql.matches) {
           toggles.forEach(function(t) {
             t.setAttribute('aria-expanded', 'false');
@@ -134,8 +147,7 @@
             if (links) links.style.display = '';
           });
         }
-      }
-      mql.addEventListener('change', resetOnDesktop);
+      });
     })();
     </script>
 

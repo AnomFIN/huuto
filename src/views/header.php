@@ -184,31 +184,63 @@ $twitterCard = trim((string)($twitterCardType ?? 'summary_large_image'));
           var closeBtn = document.getElementById('mobileMenuClose');
           if (!btn || !drawer) return;
 
+          var previousFocus = null;
+          var focusableSelector = 'a[href],button:not([disabled]),input:not([disabled]),[tabindex]:not([tabindex="-1"])';
+
+          function lockScroll() {
+            document.documentElement.style.overflow = 'hidden';
+            document.body.style.overflow = 'hidden';
+          }
+          function unlockScroll() {
+            document.documentElement.style.overflow = '';
+            document.body.style.overflow = '';
+          }
+
           function open() {
+            previousFocus = document.activeElement;
             drawer.classList.add('open');
             backdrop.classList.add('open');
             drawer.setAttribute('aria-hidden', 'false');
             btn.setAttribute('aria-expanded', 'true');
-            document.body.style.overflow = 'hidden';
+            lockScroll();
+            // Move focus into drawer
+            var first = drawer.querySelector(focusableSelector);
+            if (first) first.focus();
           }
           function close() {
             drawer.classList.remove('open');
             backdrop.classList.remove('open');
             drawer.setAttribute('aria-hidden', 'true');
             btn.setAttribute('aria-expanded', 'false');
-            document.body.style.overflow = '';
+            unlockScroll();
+            if (previousFocus) previousFocus.focus();
           }
 
           btn.addEventListener('click', open);
           if (closeBtn) closeBtn.addEventListener('click', close);
           if (backdrop) backdrop.addEventListener('click', close);
-          document.addEventListener('keydown', function(e) { if (e.key === 'Escape') close(); });
+          document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && drawer.classList.contains('open')) { close(); return; }
+            // Trap focus inside drawer when open
+            if (e.key === 'Tab' && drawer.classList.contains('open')) {
+              var focusable = Array.from(drawer.querySelectorAll(focusableSelector));
+              if (!focusable.length) return;
+              var first = focusable[0], last = focusable[focusable.length - 1];
+              if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+              else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+            }
+          });
 
-          // Close drawer when auth modal opens
+          // Close drawer when auth modal or category menu opens
           drawer.addEventListener('click', function(e) {
             if (e.target.closest('[data-auth-modal]') || e.target.closest('[data-action="open-category-menu"]')) {
               close();
             }
+          });
+
+          // Auto-close on resize to desktop
+          window.addEventListener('resize', function() {
+            if (window.innerWidth > 768 && drawer.classList.contains('open')) close();
           });
         })();
         </script>

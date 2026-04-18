@@ -64,7 +64,7 @@ $contentFile = __DIR__ . '/content/' . $page . '.html';
         <!-- Main Content -->
         <div class="info-container">
         <?php if ($page === 'myyminen'): ?>
-            <div class="info-header-banner" style="margin-bottom: 2rem;">
+            <div class="info-header-banner">
                 <a href="/add_product.php" class="btn-ilmoita-kohde">
                     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/></svg>
                     Ilmoita kohde
@@ -114,60 +114,5 @@ $contentFile = __DIR__ . '/content/' . $page . '.html';
     </div>
   </div>
 </div>
-
-<style>
-.info-header-banner {
-    text-align: center;
-    padding: 2rem 0;
-}
-
-.info-content-card {
-    background: var(--surface);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-xl);
-    padding: clamp(24px, 4vw, 48px);
-    box-shadow: var(--shadow-premium);
-}
-
-.info-content-card h1 {
-    font-size: clamp(1.6rem, 3vw, 2.2rem);
-    margin-top: 0;
-    -webkit-text-fill-color: initial;
-    background: none;
-    color: var(--text-900);
-}
-
-.info-content-card h2 {
-    font-size: 1.15rem;
-    margin-top: 2rem;
-    -webkit-text-fill-color: initial;
-    background: none;
-    color: var(--text-900);
-    padding-bottom: 8px;
-    border-bottom: 2px solid var(--line-soft);
-}
-
-.info-lead {
-    color: var(--text-700);
-    font-size: 1.05rem;
-    line-height: 1.6;
-    margin-bottom: 1.5rem;
-}
-
-.info-content-card ul {
-    padding-left: 1.5rem;
-    margin: 1rem 0;
-}
-
-.info-content-card li {
-    margin-bottom: 0.6rem;
-    color: var(--text-700);
-    line-height: 1.6;
-}
-
-.info-content-card li::marker {
-    color: var(--accent-600);
-}
-</style>
 
 <?php include SRC_PATH . '/views/footer.php'; ?>
