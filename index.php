@@ -390,14 +390,14 @@ Performance:
           <?php if ($isUserLoggedIn): ?>
             <span id="userGreeting" class="user-greeting">Hei, <?php echo htmlspecialchars($displayFirstName !== '' ? $displayFirstName : 'Käyttäjä', ENT_QUOTES, 'UTF-8'); ?>!</span>
           <?php else: ?>
-            <a href="/auth/login.php" id="loginLink" class="btn-login-header">
+            <button type="button" id="loginTrigger" class="btn-login-header" data-auth-modal="login">
               <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
               Kirjaudu
-            </a>
-            <a href="/auth/register.php" id="registerLink" class="btn-register-header">
+            </button>
+            <button type="button" id="registerTrigger" class="btn-register-header" data-auth-modal="register">
               Rekisteröidy
               <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"/></svg>
-            </a>
+            </button>
           <?php endif; ?>
         </nav>
       </div>
@@ -693,7 +693,7 @@ Performance:
         </div>
         <div class="register-prompt">
           <p>Puuttuuko käyttäjätunnus?</p>
-          <a href="/auth/register.php" class="register-link">Rekisteröidy tästä →</a>
+          <button type="button" class="register-link" data-auth-modal="register">Rekisteröidy tästä →</button>
         </div>
       </form>
     </dialog>
@@ -914,6 +914,180 @@ Performance:
 
       })();
     </script>
+    
+    <!-- Premium Auth Modal -->
+    <div class="auth-modal-overlay" id="authModalOverlay" aria-hidden="true">
+      <div class="auth-modal" id="authModal" role="dialog" aria-labelledby="authModalTitle">
+        <button class="auth-modal-close" id="authModalClose" aria-label="Sulje">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+        
+        <div class="auth-modal-header">
+          <h2 id="authModalTitle" class="auth-modal-title">Kirjaudu sisään</h2>
+          <p class="auth-modal-subtitle">Tervetuloa takaisin Huuto247:aan</p>
+        </div>
+        
+        <div class="auth-modal-tabs">
+          <button class="auth-tab active" id="loginTab" data-tab="login" type="button">Kirjaudu</button>
+          <button class="auth-tab" id="registerTab" data-tab="register" type="button">Rekisteröidy</button>
+          <div class="auth-tab-indicator" id="authTabIndicator"></div>
+        </div>
+        
+        <div class="auth-forms">
+          <!-- Login Form -->
+          <form class="auth-form active" id="loginForm" data-form="login">
+            <div class="form-group">
+              <label for="loginEmail" class="form-label">Sähköposti</label>
+              <input type="email" id="loginEmail" name="email" class="form-input" required autocomplete="email">
+              <div class="form-error" id="loginEmailError"></div>
+            </div>
+            
+            <div class="form-group">
+              <label for="loginPassword" class="form-label">Salasana</label>
+              <div class="password-input-wrapper">
+                <input type="password" id="loginPassword" name="password" class="form-input" required autocomplete="current-password">
+                <button type="button" class="password-toggle" data-target="loginPassword">
+                  <svg class="password-show" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                  <svg class="password-hide" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                    <line x1="1" y1="1" x2="23" y2="23"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="form-error" id="loginPasswordError"></div>
+            </div>
+            
+            <div class="form-options">
+              <label class="checkbox-wrapper">
+                <input type="checkbox" id="rememberMe" name="remember">
+                <span class="checkmark"></span>
+                <span>Muista minut</span>
+              </label>
+              <button type="button" class="forgot-password">Unohditko salasanan?</button>
+            </div>
+            
+            <button type="submit" class="auth-submit" id="loginSubmit" disabled>
+              <span class="submit-text">Kirjaudu sisään</span>
+              <div class="submit-spinner" style="display:none">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="32">
+                    <animate attributeName="stroke-dashoffset" values="32;0;32" dur="1s" repeatCount="indefinite"/>
+                  </circle>
+                </svg>
+              </div>
+            </button>
+            
+            <div class="form-footer">
+              <p>Ei vielä tiliä? <button type="button" class="switch-form" data-switch="register">Rekisteröidy tästä</button></p>
+            </div>
+          </form>
+          
+          <!-- Register Form -->
+          <form class="auth-form" id="registerForm" data-form="register">
+            <div class="form-group">
+              <label for="registerName" class="form-label">Koko nimi</label>
+              <input type="text" id="registerName" name="full_name" class="form-input" required autocomplete="name">
+              <div class="form-error" id="registerNameError"></div>
+            </div>
+            
+            <div class="form-group">
+              <label for="registerEmail" class="form-label">Sähköposti</label>
+              <input type="email" id="registerEmail" name="email" class="form-input" required autocomplete="email">
+              <div class="form-error" id="registerEmailError"></div>
+            </div>
+            
+            <div class="form-group">
+              <label for="registerPassword" class="form-label">Salasana</label>
+              <div class="password-input-wrapper">
+                <input type="password" id="registerPassword" name="password" class="form-input" required autocomplete="new-password">
+                <button type="button" class="password-toggle" data-target="registerPassword">
+                  <svg class="password-show" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                  <svg class="password-hide" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                    <line x1="1" y1="1" x2="23" y2="23"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="password-strength" id="passwordStrength">
+                <div class="strength-bar">
+                  <div class="strength-fill"></div>
+                </div>
+                <div class="strength-text">Salasanan vahvuus</div>
+              </div>
+              <div class="form-error" id="registerPasswordError"></div>
+            </div>
+            
+            <div class="form-group">
+              <label for="confirmPassword" class="form-label">Vahvista salasana</label>
+              <div class="password-input-wrapper">
+                <input type="password" id="confirmPassword" name="confirm_password" class="form-input" required autocomplete="new-password">
+                <button type="button" class="password-toggle" data-target="confirmPassword">
+                  <svg class="password-show" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                  <svg class="password-hide" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" style="display:none">
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                    <line x1="1" y1="1" x2="23" y2="23"/>
+                  </svg>
+                </button>
+              </div>
+              <div class="form-error" id="confirmPasswordError"></div>
+            </div>
+            
+            <div class="form-group">
+              <label class="checkbox-wrapper">
+                <input type="checkbox" id="acceptTerms" name="terms" required>
+                <span class="checkmark"></span>
+                <span>Hyväksyn <a href="/info.php?page=kayttoehdot" target="_blank">käyttöehdot</a> ja <a href="/info.php?page=tietosuojaseloste" target="_blank">tietosuojaselosteen</a></span>
+              </label>
+              <div class="form-error" id="acceptTermsError"></div>
+            </div>
+            
+            <button type="submit" class="auth-submit" id="registerSubmit" disabled>
+              <span class="submit-text">Luo tili</span>
+              <div class="submit-spinner" style="display:none">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-dashoffset="32">
+                    <animate attributeName="stroke-dashoffset" values="32;0;32" dur="1s" repeatCount="indefinite"/>
+                  </circle>
+                </svg>
+              </div>
+            </button>
+            
+            <div class="form-footer">
+              <p>Onko sinulla jo tili? <button type="button" class="switch-form" data-switch="login">Kirjaudu sisään</button></p>
+            </div>
+          </form>
+        </div>
+        
+        <div class="auth-divider">
+          <span>tai</span>
+        </div>
+        
+        <div class="auth-social">
+          <button type="button" class="social-btn google-btn">
+            <svg viewBox="0 0 24 24" width="18" height="18">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            <span>Jatka Google-tilillä</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    
     <script src="app.js" defer></script>
+    <script src="premium-auth.js" defer></script>
   </body>
 </html>

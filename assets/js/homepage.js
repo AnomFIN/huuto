@@ -433,7 +433,12 @@
   nodes.authAction.addEventListener('click', () => {
     // Delegate authentication to the server-side system.
     if (!state.isLoggedIn) {
-      window.location.href = '/auth/login.php';
+      // Open auth modal instead of redirect
+      if (window.HuutoAuth) {
+        window.HuutoAuth.openModal('login');
+      } else {
+        window.location.href = '/auth/login.php';
+      }
       return;
     }
     window.location.href = '/auth/logout.php';

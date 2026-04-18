@@ -19,73 +19,82 @@ Transform ordinary website sections into premium, investment-grade experiences t
 
 ## Core Principles
 
+**Philosophy**: Build UI that feels alive but restrained. The goal isn't decoration but a sense of quality. Target: "Modern premium marketplace 2025" - trustworthy, fast, and commercially credible.
+
 ### 1. Hierarchy Before Effects
-**CRITICAL**: Solve layout hierarchy, spacing, typography, and contrast FIRST. Never try to fix weak layout with glows, blurs, or bright colors.
+**CRITICAL RULE**: Solve layout hierarchy, spacing, typography, and contrast FIRST.
+- Never try to fix weak layout with glows, blurs, or bright colors
 - Every view must have clear visual focus
-- Information hierarchy = visual hierarchy
-- Typography establishes trust before any effects
-- White/negative space creates premium feel
+- Information hierarchy = visual hierarchy  
+- Each important element gets attention in order of business priority
 
-### 2. Premium Dark UI Guidelines  
-**Theme**: Dark backgrounds without heaviness
-- Create depth through: shadows, transparency, soft borders, subtle glows
-- Avoid: harsh neon effects, excessive blur, multiple accent colors
-- One primary accent (e.g., blue-violet gradient) is sufficient
-- Use glassmorphism sparingly and purposefully
+### 2. Premium Dark UI
+**Dark backgrounds without confusion or heaviness**
+- Create depth with: shadows, transparency, soft borders, subtle glows
+- **AVOID**: harsh neon effects, excessive blur, multiple accent colors
+- **ONE primary accent is sufficient** (e.g., blue-violet)
+- Use glassmorphism sparingly and with purpose
+- Maintain readability - dark doesn't mean invisible
 
-### 3. Product Image Treatment
-**Product visibility is paramount**
-- Never blur entire product images for text readability
+### 3. Image Treatment
+**Product images must remain clear and prominent**
+- **NEVER blur entire product images** for text readability
 - Use gradient overlays at bottom for text areas instead
 - Active cards: image closer, sharper, brighter than inactive
-- Maintain image quality while creating hierarchy
+- **Images are the product** - treat them as the hero, not decoration
 
-### 4. Typography & Number Formatting
-**Human-friendly data presentation**
-- Clear font hierarchy (avoid robotic appearance)
-- Time: "1 h 37 min left" not "01:37:23"
-- Currency: "1 500 €" not "1500 €" (proper spacing)
-- Emphasize most important numbers elegantly, not loudly
-- Price displays should feel premium, not generic
+### 4. Typography and Numbers  
+**Human-friendly, premium data presentation**
+- Clear font hierarchy - avoid robotic appearance
+- **Time formatting**: "1 h 37 min jäljellä" not "01:37:23" 
+- **Currency formatting**: "1 500 €" not "1500 €" (proper spacing)
+- **Most important number gets emphasis** - elegantly, not loudly
+- Price displays should inspire confidence, not look generic
 
-### 5. Carousel Movement & Flow
-**Continuous experience, not box swapping**
-- Active slide: scale 1, opacity 1, clearest shadow
-- Inactive slides: smaller, dimmer, partially visible at edges
-- Smooth transitions: transform, opacity, filter properties
-- Movement should be fluid, not mechanical or bouncy
-- Use cubic-bezier easing for premium feel
+### 5. Carousel Movement
+**Continuous flow, not box-swapping**
+- **Active slide**: scale 1, opacity 1, clearest shadow
+- **Inactive slides**: slightly smaller, dimmer, partially visible at edges  
+- **Smooth transitions**: transform, opacity, filter properties only
+- Movement must be fluid - **not mechanical, not bouncy**
+- Use smooth easing curves for premium feel
 
-### 6. Micro-Interactions & Responsiveness
-**Subtle but noticeable feedback**
-- Hover/active states: slight brightness, lift, or scale changes
-- Images: subtle zoom/parallax on active slides
-- Progress indicators: integrated part of whole, not separate dots
-- Buttons/CTAs: gentle glow or shadow changes on interaction
-- All interactions should feel immediate and smooth
+### 6. Micro-Interactions
+**Subtle but felt feedback on every interaction**
+- **Hover/active states**: gentle brightness, lift, or scale changes
+- **Images**: subtle zoom/parallax on active slides
+- **Progress indicators**: integrated part of design, not separate dots
+- **Buttons/CTAs**: soft glow or shadow changes on interaction
+- All feedback should be **immediate and smooth**
 
-### 7. Code-Based UI Elements
-**Build UI with code, not images**
-- Arrows, borders, glows, gradients, overlays, progress, highlights: CSS/SVG
-- Product images: real photographs only  
+### 7. UI Elements Built with Code
+**Never use images for UI decoration**
+- **CSS/SVG for**: arrows, borders, glows, gradients, overlays, progress, highlights
+- **Real images for**: products, people, actual content only
 - Decorative UI as images looks dated and cheap quickly
-- Maintains crisp appearance at all screen sizes
-- Easier to maintain and customize
+- Code-based UI scales perfectly and loads instantly
 
-### 8. Landing Page Composition
+### 8. Landing Page Composition  
 **Hero sections need unified design language**
-- Left and right sides must feel like same product
-- Right-side components can't look like separate widgets
-- Strong brand message on left = equally polished component on right
-- Maintain visual balance and design system consistency
+- Left and right sides must feel like **the same product**
+- Strong brand message on left = **equally polished component on right**
+- Right-side components can't look like **separate widgets dropped in**
+- Maintain visual balance across the entire hero area
 
-### 9. Code Quality Standards
-**Clean, maintainable premium code**
-- Separate layout, data, and animations concerns
-- Modern transitions and responsive structure  
-- Avoid unnecessary DOM nesting and class spaghetti
+### 9. Code Quality for Premium Feel
+**Clean architecture enables premium experiences**
+- **Separate concerns**: layout, data, animations  
+- Modern transitions and responsive structure
+- **Avoid**: unnecessary DOM nesting, class spaghetti
 - Use CSS custom properties for consistency
 - Component-based architecture for reusability
+
+### 10. Commercial Credibility
+**The final result must inspire trust and purchases**
+- Design should feel **trustworthy, fast, and professionally maintained**  
+- **Alive but not restless** - dynamic without being distracting
+- Every element should contribute to **purchase confidence**
+- Users should feel this is **worth their money and time**
 
 ## Implementation Workflow
 

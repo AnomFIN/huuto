@@ -543,24 +543,18 @@
       // Standard scrolled class for all screen sizes
       refs.header.classList.toggle('scrolled', scrollY > 6);
       
-      // Mobile scroll-hide functionality
+      // Hide header on scroll down, show on scroll up
       if (window.innerWidth <= 1240) {
         const scrollingDown = scrollY > lastScrollY;
-        const scrolledEnough = scrollY > 100; // Start hiding after 100px scroll
+        const scrolledEnough = scrollY > 100;
         
         if (scrollingDown && scrolledEnough) {
-          refs.header.classList.add('scrolled-up', 'mobile-minimal');
+          refs.header.classList.add('scrolled-up');
         } else if (!scrollingDown || scrollY <= 50) {
           refs.header.classList.remove('scrolled-up');
-          
-          // Remove minimal mode when scrolled back to top
-          if (scrollY <= 50) {
-            refs.header.classList.remove('mobile-minimal');
-          }
         }
       } else {
-        // Remove mobile classes on desktop
-        refs.header.classList.remove('scrolled-up', 'mobile-minimal');
+        refs.header.classList.remove('scrolled-up');
       }
       
       lastScrollY = scrollY;
@@ -576,9 +570,8 @@
     
     window.addEventListener('scroll', requestHeaderUpdate, { passive: true });
     window.addEventListener('resize', () => {
-      // Reset mobile classes on resize
       if (window.innerWidth > 1240) {
-        refs.header.classList.remove('scrolled-up', 'mobile-minimal');
+        refs.header.classList.remove('scrolled-up');
       }
     });
 

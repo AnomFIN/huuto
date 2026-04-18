@@ -106,7 +106,8 @@ $twitterCard = trim((string)($twitterCardType ?? 'summary_large_image'));
                     <button type="submit" class="search-submit">Hae</button>
                 </form>
 
-                <nav class="header-links" aria-label="Pikalinkit">
+                <!-- Desktop nav links -->
+                <nav class="header-links header-links--desktop" aria-label="Pikalinkit">
           <button class="header-nav-link" data-action="open-category-menu" aria-label="Avaa kategoriat">
             Kategoriat
           </button>
@@ -119,17 +120,97 @@ $twitterCard = trim((string)($twitterCardType ?? 'summary_large_image'));
                     <?php if (function_exists('is_logged_in') && is_logged_in()): ?>
                         <span class="user-greeting">Hei, <?php echo htmlspecialchars($headerUserGreeting !== '' ? $headerUserGreeting : 'Käyttäjä', ENT_QUOTES, 'UTF-8'); ?>!</span>
                     <?php else: ?>
-            <a href="/auth/login.php" id="loginLink" class="btn-login-header">
+            <button type="button" id="loginTrigger" class="btn-login-header" data-auth-modal="login">
               <svg viewBox="0 0 20 20" fill="currentColor" width="16" height="16"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
               Kirjaudu
-            </a>
-            <a href="/auth/register.php" id="registerLink" class="btn-register-header">
+            </button>
+            <button type="button" id="registerTrigger" class="btn-register-header" data-auth-modal="register">
               Rekisteröidy
               <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"/></svg>
-            </a>
+            </button>
                     <?php endif; ?>
                 </nav>
+
+                <!-- Mobile hamburger -->
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Avaa valikko" aria-expanded="false" aria-controls="mobileMenuDrawer">
+                  <span class="hamburger-line"></span>
+                  <span class="hamburger-line"></span>
+                  <span class="hamburger-line"></span>
+                </button>
             </div>
         </header>
+
+        <!-- Mobile menu drawer -->
+        <div class="mobile-menu-backdrop" id="mobileMenuBackdrop"></div>
+        <nav class="mobile-menu-drawer" id="mobileMenuDrawer" aria-label="Mobiilivalikko" aria-hidden="true">
+          <div class="mobile-menu-header">
+            <a class="logo" href="/index.php" aria-label="Huuto247 etusivu">
+              <span class="logo-icon" aria-hidden="true">H</span>
+              <span class="logo-text">uuto<span class="logo-247">24<span class="logo-7">/7</span></span></span>
+            </a>
+            <button class="mobile-menu-close" id="mobileMenuClose" aria-label="Sulje valikko">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+          </div>
+
+          <form class="mobile-search-form" action="/category.php" method="GET">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="search" name="q" placeholder="Mitä etsit?" autocomplete="off">
+          </form>
+
+          <ul class="mobile-menu-links">
+            <li><button data-action="open-category-menu">Kategoriat</button></li>
+            <li><a href="/category.php?closing_soon=1">Päättyvät pian</a></li>
+            <li><a href="/add_product.php">Myy kohteesi</a></li>
+            <li><a href="/category.php?tab=favorites">Suosikit</a></li>
+          </ul>
+
+          <div class="mobile-menu-auth">
+            <?php if (function_exists('is_logged_in') && is_logged_in()): ?>
+              <span class="user-greeting">Hei, <?php echo htmlspecialchars($headerUserGreeting !== '' ? $headerUserGreeting : 'Käyttäjä', ENT_QUOTES, 'UTF-8'); ?>!</span>
+              <a href="/auth/logout.php" class="mobile-menu-logout">Kirjaudu ulos</a>
+            <?php else: ?>
+              <button type="button" class="mobile-auth-btn mobile-auth-btn--login" data-auth-modal="login">Kirjaudu sisään</button>
+              <button type="button" class="mobile-auth-btn mobile-auth-btn--register" data-auth-modal="register">Luo tili</button>
+            <?php endif; ?>
+          </div>
+        </nav>
+
+        <script>
+        (function(){
+          var btn = document.getElementById('mobileMenuBtn');
+          var drawer = document.getElementById('mobileMenuDrawer');
+          var backdrop = document.getElementById('mobileMenuBackdrop');
+          var closeBtn = document.getElementById('mobileMenuClose');
+          if (!btn || !drawer) return;
+
+          function open() {
+            drawer.classList.add('open');
+            backdrop.classList.add('open');
+            drawer.setAttribute('aria-hidden', 'false');
+            btn.setAttribute('aria-expanded', 'true');
+            document.body.style.overflow = 'hidden';
+          }
+          function close() {
+            drawer.classList.remove('open');
+            backdrop.classList.remove('open');
+            drawer.setAttribute('aria-hidden', 'true');
+            btn.setAttribute('aria-expanded', 'false');
+            document.body.style.overflow = '';
+          }
+
+          btn.addEventListener('click', open);
+          if (closeBtn) closeBtn.addEventListener('click', close);
+          if (backdrop) backdrop.addEventListener('click', close);
+          document.addEventListener('keydown', function(e) { if (e.key === 'Escape') close(); });
+
+          // Close drawer when auth modal opens
+          drawer.addEventListener('click', function(e) {
+            if (e.target.closest('[data-auth-modal]') || e.target.closest('[data-action="open-category-menu"]')) {
+              close();
+            }
+          });
+        })();
+        </script>
 
         <main class="container" style="padding-top:1.5rem; padding-bottom:2rem;">

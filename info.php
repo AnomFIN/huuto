@@ -34,7 +34,35 @@ $contentFile = __DIR__ . '/content/' . $page . '.html';
 ?>
 
 <div class="info-page">
-    <div class="info-container">
+    <div class="info-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="info-sidebar" aria-label="Sivunavigaatio">
+            <nav class="info-nav">
+                <div class="info-nav-group">
+                    <h3>Ohjeet</h3>
+                    <a href="/info.php?page=myyminen" <?php echo $page === 'myyminen' ? 'aria-current="page" class="active"' : ''; ?>>Aloita myyminen</a>
+                    <a href="/info.php?page=ohjeet" <?php echo $page === 'ohjeet' ? 'aria-current="page" class="active"' : ''; ?>>Ohjeet ja vinkit</a>
+                    <a href="/info.php?page=tuki" <?php echo $page === 'tuki' ? 'aria-current="page" class="active"' : ''; ?>>Asiakastuki</a>
+                    <a href="/info.php?page=maksut" <?php echo $page === 'maksut' ? 'aria-current="page" class="active"' : ''; ?>>Maksutavat</a>
+                </div>
+                <div class="info-nav-group">
+                    <h3>Yritys</h3>
+                    <a href="/info.php?page=meista" <?php echo $page === 'meista' ? 'aria-current="page" class="active"' : ''; ?>>Tietoa meistä</a>
+                    <a href="/info.php?page=yhteystiedot" <?php echo $page === 'yhteystiedot' ? 'aria-current="page" class="active"' : ''; ?>>Yhteystiedot</a>
+                    <a href="/info.php?page=rekry" <?php echo $page === 'rekry' ? 'aria-current="page" class="active"' : ''; ?>>Työpaikat</a>
+                </div>
+                <div class="info-nav-group">
+                    <h3>Lakiasiat</h3>
+                    <a href="/info.php?page=kayttoehdot" <?php echo $page === 'kayttoehdot' ? 'aria-current="page" class="active"' : ''; ?>>Käyttöehdot</a>
+                    <a href="/info.php?page=tietosuoja" <?php echo $page === 'tietosuoja' ? 'aria-current="page" class="active"' : ''; ?>>Tietosuoja</a>
+                    <a href="/info.php?page=evasteet" <?php echo $page === 'evasteet' ? 'aria-current="page" class="active"' : ''; ?>>Evästekäytäntö</a>
+                    <a href="/info.php?page=saavutettavuus" <?php echo $page === 'saavutettavuus' ? 'aria-current="page" class="active"' : ''; ?>>Saavutettavuus</a>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="info-container">
         <?php if ($page === 'myyminen'): ?>
             <div class="info-header-banner" style="margin-bottom: 2rem;">
                 <a href="/add_product.php" class="btn-ilmoita-kohde">
@@ -84,15 +112,10 @@ $contentFile = __DIR__ . '/content/' . $page . '.html';
             </article>
         <?php endif; ?>
     </div>
+  </div>
 </div>
 
 <style>
-.info-page {
-    max-width: 800px;
-    margin: 2rem auto;
-    padding: 0 clamp(16px, 3vw, 32px);
-}
-
 .info-header-banner {
     text-align: center;
     padding: 2rem 0;
