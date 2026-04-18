@@ -740,6 +740,14 @@
         state.heroCarouselTickStartMs = performance.now();
         renderHeroCarousel();
       }
+      
+      // Handle new progress segment clicks as well
+      const segment = event.target.closest('.progress-segment');
+      if (segment && segment.dataset.dot) {
+        state.heroCarouselIndex = Number(segment.dataset.dot);
+        state.heroCarouselTickStartMs = performance.now();
+        renderHeroCarousel();
+      }
 
       const pill = event.target.closest('[data-pill]');
       if (pill) {
@@ -817,37 +825,71 @@
 
     refs.carouselTrack.innerHTML = carouselItems.map((item, index) => {
       const pos = classifyCarouselPosition(index, state.heroCarouselIndex, carouselItems.length);
+      const nextBid = formatPremiumPrice(item.priceNow + item.minIncrement);
+      const isActive = index === state.heroCarouselIndex;
+      
       return `
-        <article class="carousel-item ${pos}" data-item-card="${item.id}">
-          <div class="carousel-media">
-            <img src="${escapeHtml(item.imageUrl || IMAGE_FALLBACK)}" alt="${escapeHtml(item.title)}" />
-            <div class="carousel-overlay">
-              <div class="carousel-content">
-                <span class="countdown-badge${isCountdownUrgent(item.endTime) ? ' countdown-urgent' : ''}" data-end-time="${item.endTime}">${formatCountdownHTML(item.endTime)}</span>
-                <h3 class="carousel-title">${escapeHtml(item.title)}</h3>
-                <div class="carousel-details">
-                  <div class="price">Hinta nyt: ${formatPrice(item.priceNow)}</div>
-                  <div class="bids">Tarjouksia: ${item.bidsCount}</div>
-                </div>
-                <div class="carousel-actions">
-                  <button class="bid-btn primary" data-bid="${item.id}">
-                    Huuda ${formatPrice(item.priceNow + item.minIncrement)}
-                  </button>
-                  ${item.buyNowPrice ? `<button class="buy-now-btn secondary" data-buy-now="${item.id}">Osta heti ${formatPrice(item.buyNowPrice)}</button>` : ''}
-                </div>
+        <article class="premium-carousel-item ${pos} ${isActive ? 'active' : ''}" data-item-card="${item.id}">
+          <div class="carousel-image-container">
+            <img src="${escapeHtml(item.imageUrl || IMAGE_FALLBACK)}" 
+                 alt="${escapeHtml(item.title)}" 
+                 class="carousel-product-image" />
+            <div class="carousel-gradient-overlay"></div>
+          </div>
+          
+          <div class="carousel-content-area">
+            <div class="urgency-badge">
+              ${formatPremiumCountdown(item.endTime)}
+            </div>
+            
+            <h3 class="product-title">${escapeHtml(item.title)}</h3>
+            
+            <div class="pricing-hierarchy">
+              <div class="price-label">Nykyinen hinta</div>
+              <div class="current-price">${formatPremiumPrice(item.priceNow)}</div>
+              
+              <div class="bid-meta">
+                ${item.bidsCount} tarjous${item.bidsCount === 1 ? '' : 'ta'} • seuraava huuto ${nextBid}
               </div>
+              
+              ${item.buyNowPrice ? `
+                <div class="buy-now-price">
+                  Osta heti ${formatPremiumPrice(item.buyNowPrice)}
+                </div>
+              ` : ''}
+            </div>
+            
+            <div class="carousel-actions">
+              <button class="premium-bid-btn" data-bid="${item.id}">
+                Huuda ${nextBid}
+              </button>
+              ${item.buyNowPrice ? `
+                <button class="premium-buy-btn" data-buy-now="${item.id}">
+                  Osta heti
+                </button>
+              ` : ''}
             </div>
           </div>
         </article>
       `;
     }).join('');
 
-    refs.carouselDots.innerHTML = carouselItems.map((_, index) => 
-      `<button class="carousel-dot ${index === state.heroCarouselIndex ? 'active' : ''}" 
-               data-dot="${index}" 
-               aria-label="Kohde ${index + 1}">
-       </button>`
-    ).join('');
+    // Premium progress indicator
+    refs.carouselDots.innerHTML = `
+      <div class="premium-carousel-progress">
+        <div class="progress-track">
+          ${carouselItems.map((_, index) => `
+            <div class="progress-segment ${index === state.heroCarouselIndex ? 'active' : ''}"
+                 data-dot="${index}" 
+                 aria-label="Kohde ${index + 1}">
+            </div>
+          `).join('')}
+        </div>
+        <div class="carousel-counter">
+          ${state.heroCarouselIndex + 1} / ${carouselItems.length}
+        </div>
+      </div>
+    `;
   }
 
   function moveHeroCarousel(step) {
@@ -1333,6 +1375,46 @@
     return `${minutes} min ${seconds} s`;
   }
 
+  // Premium human-friendly countdown for carousel
+  function formatPremiumCountdown(endTime) {
+    const diffSec = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+    if (diffSec <= 0) return 'Sulkeutunut';
+    
+    if (diffSec < 3600) {
+      const minutes = Math.floor(diffSec / 60);
+      return `Sulkeutuu ${minutes} min päästä`;
+    }
+    
+    const days = Math.floor(diffSec / 86400);
+    const hours = Math.floor((diffSec % 86400) / 3600);
+    const minutes = Math.floor((diffSec % 3600) / 60);
+    
+    if (days > 0) {
+      return `Sulkeutuu ${days} pv ${hours} h päästä`;
+    }
+    return `Sulkeutuu ${hours} h ${minutes} min päästä`;
+  }
+
+  // Premium human-friendly countdown for carousel
+  function formatPremiumCountdown(endTime) {
+    const diffSec = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
+    if (diffSec <= 0) return 'Sulkeutunut';
+    
+    if (diffSec < 3600) {
+      const minutes = Math.floor(diffSec / 60);
+      return `Sulkeutuu ${minutes} min päästä`;
+    }
+    
+    const days = Math.floor(diffSec / 86400);
+    const hours = Math.floor((diffSec % 86400) / 3600);
+    const minutes = Math.floor((diffSec % 3600) / 60);
+    
+    if (days > 0) {
+      return `Sulkeutuu ${days} pv ${hours} h päästä`;
+    }
+    return `Sulkeutuu ${hours} h ${minutes} min päästä`;
+  }
+
   function formatCountdownHTML(endTime) {
     const diffSec = Math.max(0, Math.floor((endTime - Date.now()) / 1000));
     const d = (n) => `<span class="countdown-digits">${String(n).padStart(2, '0')}</span>`;
@@ -1354,6 +1436,26 @@
   function formatPrice(amount) {
     const numeric = Number(amount);
     return `${Number.isFinite(numeric) ? numeric.toLocaleString('fi-FI') : 0} €`;
+  }
+
+  // Premium price formatting with proper spacing
+  function formatPremiumPrice(amount) {
+    const numeric = Number(amount);
+    if (!Number.isFinite(numeric)) return '0 €';
+    return numeric.toLocaleString('fi-FI', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).replace(/\s/g, ' ') + ' €';
+  }
+
+  // Premium price formatting with proper spacing
+  function formatPremiumPrice(amount) {
+    const numeric = Number(amount);
+    if (!Number.isFinite(numeric)) return '0 €';
+    return numeric.toLocaleString('fi-FI', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).replace(/\s/g, ' ') + ' €';
   }
 
   function sanitizeCategory(value) {

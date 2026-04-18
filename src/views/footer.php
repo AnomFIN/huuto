@@ -94,7 +94,7 @@
           <div class="footer-links">
             <div class="footer-col">
               <h4>🔨 Huutokaupat</h4>
-              <a href="/category.php">Kaikki kategoriat</a>
+              <button class="footer-category-link" data-action="open-category-menu">Kaikki kategoriat</button>
               <a href="/category.php?closing_soon=1">Päättyvät pian</a>
               <a href="/add_product.php">Myy kohteesi</a>
               <a href="/category.php?featured=1">Suositellut</a>
@@ -264,14 +264,17 @@
 
   function openMegaMenu(e) {
     if (!megaMenu) return;
-    e.preventDefault();
+    if (e) e.preventDefault();
+    
     // Load categories via AJAX if not loaded
     if (allCategoryItems.length === 0) {
       loadCategories();
     }
     megaMenu.classList.add('open');
     document.body.style.overflow = 'hidden';
-    setTimeout(function() { if (megaSearch) megaSearch.focus(); }, 300);
+    setTimeout(function() { 
+      if (megaSearch) megaSearch.focus(); 
+    }, 300);
   }
 
   function closeMegaMenu() {
@@ -317,10 +320,14 @@
     });
   }
 
-  // Bind open triggers (all "Kategoriat" links in header)
-  document.querySelectorAll('.header-nav-link').forEach(function(link) {
-    if (link.textContent.trim() === 'Kategoriat') {
-      link.addEventListener('click', openMegaMenu);
+  // Global event delegation for category menu triggers
+  document.addEventListener('click', function(e) {
+    // Check if clicked element or any parent has the category menu trigger
+    var trigger = e.target.closest('[data-action=\"open-category-menu\"]');
+    if (trigger) {
+      e.preventDefault();
+      openMegaMenu(e);
+      return;
     }
   });
 

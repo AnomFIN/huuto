@@ -755,7 +755,14 @@ function showLoginPage() {
 <html lang="fi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="<?php echo APP_NAME; ?>">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#0a0a0a">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="apple-touch-icon" href="todo.png">
     <title><?php echo APP_NAME; ?></title>
     <link rel="stylesheet" href="todo.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

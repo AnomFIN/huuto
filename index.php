@@ -379,7 +379,9 @@ Performance:
         </form>
 
         <nav class="header-links" aria-label="Pikalinkit">
-          <a href="/category.php" class="header-nav-link">Kategoriat</a>
+          <button class="header-nav-link" data-action="open-category-menu" aria-label="Avaa kategoriat">
+            Kategoriat
+          </button>
           <button class="favorites-pill" id="headerFavoritesBtn" aria-label="Suosikit">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.2 4.65 12.9a4.6 4.6 0 1 1 6.5-6.5L12 7.25l.85-.85a4.6 4.6 0 1 1 6.5 6.5L12 20.2Z"/></svg>
             <span class="favorites-label">Suosikit</span>
@@ -552,6 +554,24 @@ Performance:
       </section>
     </main>
 
+    <!-- Category Mega Menu -->
+    <div class="category-mega-menu" id="categoryMegaMenu">
+      <div class="category-mega-backdrop" id="categoryMegaBackdrop"></div>
+      <div class="category-mega-panel">
+        <div class="category-mega-header">
+          <h2>📦 Kaikki kategoriat</h2>
+          <button class="category-mega-close" id="categoryMegaClose" aria-label="Sulje">✕</button>
+        </div>
+        <div class="category-mega-search-wrap">
+          <svg viewBox="0 0 24 24"><path d="M10.5 4a6.5 6.5 0 1 1 0 13 6.5 6.5 0 0 1 0-13Zm0 1.8a4.7 4.7 0 1 0 0 9.4 4.7 4.7 0 0 0 0-9.4Zm5.87 10.6 3.2 3.2-1.28 1.28-3.2-3.2 1.28-1.28Z"/></svg>
+          <input type="text" class="category-mega-search" id="categoryMegaSearch" placeholder="Hae kategoriaa..." autocomplete="off">
+        </div>
+        <div class="category-mega-grid" id="categoryMegaGrid">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
     <footer class="site-footer">
       <div class="container">
         <div class="footer-content">
@@ -566,7 +586,7 @@ Performance:
           <div class="footer-links" id="footerLinks">
             <div class="footer-col">
               <h4>Huutokaupat</h4>
-              <a href="/category.php">Kaikki kategoriat</a>
+              <button class="footer-category-link" data-action="open-category-menu">Kaikki kategoriat</button>
               <a href="/category.php?closing_soon=1">Päättyvät pian</a>
               <a href="/add_product.php">Myy kohteesi</a>
             </div>
@@ -795,6 +815,104 @@ Performance:
           // console.error('app.js failed to load!', e);
         }
       });
+
+      // === CATEGORY MEGA MENU ===
+      (function() {
+        'use strict';
+        
+        var categoryIcons = {
+          'Ajoneuvot': '🚗', 'Työkoneet': '🏗️', 'Asunnot': '🏠', 'Vapaa-aika': '⛵',
+          'Piha': '🌿', 'Työkalut': '🔧', 'Rakennus': '🏗️', 'Sisustus': '🛋️',
+          'Elektroniikka': '📱', 'Keräily': '🏆', 'Urheilu': '⚽', 'Vaatteet': '👕',
+          'Taide': '🎨', 'Antiikki': '🏺', 'Kodin tavarat': '🏡', 'Musiikki': '🎵',
+          'Kirjat': '📚', 'Pelit': '🎮', 'Muut': '📦'
+        };
+
+        var megaMenu = document.getElementById('categoryMegaMenu');
+        var megaBackdrop = document.getElementById('categoryMegaBackdrop');
+        var megaClose = document.getElementById('categoryMegaClose');
+        var megaGrid = document.getElementById('categoryMegaGrid');
+        var megaSearch = document.getElementById('categoryMegaSearch');
+        var allCategoryItems = [];
+
+        function openMegaMenu(e) {
+          if (!megaMenu) return;
+          if (e) e.preventDefault();
+          
+          // Load categories if not loaded
+          if (allCategoryItems.length === 0) {
+            loadCategories();
+          }
+          megaMenu.classList.add('open');
+          document.body.style.overflow = 'hidden';
+          setTimeout(function() { 
+            if (megaSearch) megaSearch.focus(); 
+          }, 300);
+        }
+
+        function closeMegaMenu() {
+          if (!megaMenu) return;
+          megaMenu.classList.remove('open');
+          document.body.style.overflow = '';
+        }
+
+        function loadCategories() {
+          // Get categories from the header select dropdown
+          var selectEl = document.querySelector('#searchCategory');
+          if (selectEl) {
+            var opts = selectEl.querySelectorAll('option');
+            opts.forEach(function(opt) {
+              var name = opt.textContent.trim();
+              if (name && name !== 'Kaikki kategoriat') {
+                allCategoryItems.push({ name: name, slug: opt.value || name });
+              }
+            });
+          }
+          renderCategories(allCategoryItems);
+        }
+
+        function renderCategories(cats) {
+          if (!megaGrid) return;
+          megaGrid.innerHTML = cats.map(function(cat, idx) {
+            var icon = categoryIcons[cat.name] || '📦';
+            return '<a href="/category.php?slug=' + encodeURIComponent(cat.slug) + '" class="category-mega-item" style="animation-delay:' + (idx * 30) + 'ms">' +
+              '<span class="category-mega-icon">' + icon + '</span>' +
+              '<div class="category-mega-info"><h3>' + cat.name + '</h3><span>Selaa kohteita →</span></div>' +
+            '</a>';
+          }).join('');
+        }
+
+        // Search filter
+        if (megaSearch) {
+          megaSearch.addEventListener('input', function() {
+            var q = this.value.toLowerCase().trim();
+            var filtered = allCategoryItems.filter(function(c) {
+              return c.name.toLowerCase().indexOf(q) !== -1;
+            });
+            renderCategories(filtered);
+          });
+        }
+
+        // Global event delegation for category menu triggers
+        document.addEventListener('click', function(e) {
+          var trigger = e.target.closest('[data-action=\"open-category-menu\"]');
+          if (trigger) {
+            e.preventDefault();
+            openMegaMenu(e);
+            return;
+          }
+        });
+
+        // Close triggers
+        if (megaBackdrop) megaBackdrop.addEventListener('click', closeMegaMenu);
+        if (megaClose) megaClose.addEventListener('click', closeMegaMenu);
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape' && megaMenu && megaMenu.classList.contains('open')) {
+            closeMegaMenu();
+          }
+        });
+
+      })();
     </script>
     <script src="app.js" defer></script>
   </body>

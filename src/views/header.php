@@ -107,7 +107,9 @@ $twitterCard = trim((string)($twitterCardType ?? 'summary_large_image'));
                 </form>
 
                 <nav class="header-links" aria-label="Pikalinkit">
-          <a href="/category.php" class="header-nav-link">Kategoriat</a>
+          <button class="header-nav-link" data-action="open-category-menu" aria-label="Avaa kategoriat">
+            Kategoriat
+          </button>
           <button class="favorites-pill" id="headerFavoritesBtn" aria-label="Suosikit">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.2 4.65 12.9a4.6 4.6 0 1 1 6.5-6.5L12 7.25l.85-.85a4.6 4.6 0 1 1 6.5 6.5L12 20.2Z"/></svg>
             <span class="favorites-label">Suosikit</span>

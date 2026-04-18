@@ -31,8 +31,11 @@ $(document).ready(function() {
     function init() {
         console.log('🚀 Initializing TODO app...');
         
+        detectMobileDevice();
         initEventListeners();
         initMobileNavigation();
+        initMobileFAB();
+        initTouchInteractions();
         initDragAndDrop();
         initAnimations();
         loadTodos();
@@ -44,6 +47,197 @@ $(document).ready(function() {
         }
         
         console.log('🚀 TODO app initialization complete!');
+    }
+
+    // ========================================================================
+    // MOBILE DEVICE DETECTION
+    // ========================================================================
+
+    function detectMobileDevice() {
+        const ua = navigator.userAgent;
+        App.isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        App.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) || (window.innerWidth <= 768);
+
+        if (App.isMobile || App.isTouchDevice) {
+            document.body.classList.add('is-mobile');
+        }
+
+        // Re-evaluate on resize (tablet rotation etc.)
+        let resizeTimer;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(function() {
+                const wasMobile = App.isMobile;
+                App.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua) || (window.innerWidth <= 768);
+                if (App.isMobile || App.isTouchDevice) {
+                    document.body.classList.add('is-mobile');
+                } else {
+                    document.body.classList.remove('is-mobile');
+                }
+                // Toggle FAB visibility
+                if (App.isMobile !== wasMobile) {
+                    $('.mobile-fab').toggle(App.isMobile);
+                }
+            }, 150);
+        });
+    }
+
+    // ========================================================================
+    // FLOATING ACTION BUTTON (FAB)
+    // ========================================================================
+
+    function initMobileFAB() {
+        if ($('.mobile-fab').length > 0) return;
+
+        const fab = `
+            <div class="mobile-fab">
+                <div class="fab-option">
+                    <span class="fab-option-label">Lataa tiedosto</span>
+                    <button class="fab-option-btn upload" id="fab-upload" title="Lataa tiedosto">📎</button>
+                </div>
+                <div class="fab-option">
+                    <span class="fab-option-label">Uusi tehtävä</span>
+                    <button class="fab-option-btn new-todo" id="fab-new-todo" title="Uusi tehtävä">✏️</button>
+                </div>
+                <button class="fab-main" id="fab-toggle" title="Valikko">+</button>
+            </div>
+        `;
+        $('body').append(fab);
+
+        // Toggle expand
+        $(document).on('click', '#fab-toggle', function(e) {
+            e.stopPropagation();
+            $(this).toggleClass('open');
+            $('.mobile-fab').toggleClass('expanded');
+        });
+
+        // New todo from FAB
+        $(document).on('click', '#fab-new-todo', function(e) {
+            e.stopPropagation();
+            closeFAB();
+            createNewTodo();
+        });
+
+        // Upload from FAB
+        $(document).on('click', '#fab-upload', function(e) {
+            e.stopPropagation();
+            closeFAB();
+            openDirectUpload();
+        });
+
+        // Close FAB on outside tap
+        $(document).on('click', function() {
+            if ($('.mobile-fab').hasClass('expanded')) {
+                closeFAB();
+            }
+        });
+
+        // Prevent FAB area clicks from propagating
+        $(document).on('click', '.mobile-fab', function(e) {
+            e.stopPropagation();
+        });
+    }
+
+    function closeFAB() {
+        $('#fab-toggle').removeClass('open');
+        $('.mobile-fab').removeClass('expanded');
+    }
+
+    // ========================================================================
+    // TOUCH INTERACTIONS
+    // ========================================================================
+
+    function initTouchInteractions() {
+        if (!App.isTouchDevice) return;
+
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchCard = null;
+        const SWIPE_THRESHOLD = 80;
+
+        $(document).on('touchstart', '.todo-card', function(e) {
+            touchCard = this;
+            const touch = e.originalEvent.touches[0];
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+        });
+
+        $(document).on('touchmove', '.todo-card', function(e) {
+            if (!touchCard) return;
+            const touch = e.originalEvent.touches[0];
+            const dx = touch.clientX - touchStartX;
+            const dy = touch.clientY - touchStartY;
+
+            // Only track horizontal swipes (not scroll)
+            if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 20) {
+                e.preventDefault();
+                const $card = $(touchCard);
+                if (dx < -20) {
+                    $card.addClass('swiping-left').removeClass('swiping-right');
+                } else if (dx > 20) {
+                    $card.addClass('swiping-right').removeClass('swiping-left');
+                }
+                // Visual shift with limit
+                const shift = Math.max(-60, Math.min(60, dx * 0.4));
+                $card.css('transform', `translateX(${shift}px)`);
+            }
+        });
+
+        $(document).on('touchend', '.todo-card', function(e) {
+            if (!touchCard) return;
+            const $card = $(touchCard);
+            const touch = e.originalEvent.changedTouches[0];
+            const dx = touch.clientX - touchStartX;
+
+            $card.css('transform', '').removeClass('swiping-left swiping-right');
+
+            if (dx < -SWIPE_THRESHOLD) {
+                // Swipe left → delete
+                const todoId = $card.data('id');
+                if (todoId && confirm('Poistetaanko tehtävä?')) {
+                    deleteTodoById(todoId);
+                }
+            } else if (dx > SWIPE_THRESHOLD) {
+                // Swipe right → toggle status
+                const $toggle = $card.find('.status-toggle');
+                if ($toggle.length) $toggle.trigger('click');
+            }
+
+            touchCard = null;
+        });
+
+        // Add sheet handle to editor sidebar on mobile
+        addEditorBottomSheetHandle();
+    }
+
+    function addEditorBottomSheetHandle() {
+        // Adding it via JS so it only appears on touch devices
+        const observer = new MutationObserver(function() {
+            const $sidebar = $('.editor-sidebar');
+            if ($sidebar.length && !$sidebar.find('.editor-sidebar-sheet-handle').length) {
+                $sidebar.prepend('<div class="editor-sidebar-sheet-handle"></div>');
+            }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+    }
+
+    function deleteTodoById(todoId) {
+        $.ajax({
+            url: 'todo.php',
+            method: 'POST',
+            data: { action: 'delete', todo_id: todoId },
+            success: function() {
+                $(`.todo-card[data-id="${todoId}"]`).slideUp(300, function() {
+                    $(this).remove();
+                    App.todos = App.todos.filter(t => t.id != todoId);
+                    updateCounts();
+                });
+                showToast('Tehtävä poistettu', 'success');
+            },
+            error: function() {
+                showToast('Poistaminen epäonnistui', 'error');
+            }
+        });
     }
 
     // ========================================================================
@@ -105,17 +299,32 @@ $(document).ready(function() {
         if ($('.mobile-header').length === 0) {
             const mobileHeader = `
                 <div class="mobile-header">
-                    <div class="mobile-logo">Premium Todo</div>
-                    <button class="hamburger-menu" id="hamburger-toggle">
-                        <span class="hamburger-line"></span>
-                        <span class="hamburger-line"></span>
-                        <span class="hamburger-line"></span>
-                    </button>
+                    <div class="mobile-logo">
+                        <img src="todo.png" alt="Todo" class="mobile-logo-img" onerror="this.style.display='none'">
+                        <span class="mobile-logo-text">Todo</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:4px">
+                        <button class="mobile-search-toggle" id="mobile-search-toggle" title="Haku">🔍</button>
+                        <button class="hamburger-menu" id="hamburger-toggle">
+                            <span class="hamburger-line"></span>
+                            <span class="hamburger-line"></span>
+                            <span class="hamburger-line"></span>
+                        </button>
+                    </div>
                 </div>
                 <div class="mobile-overlay" id="mobile-overlay"></div>
             `;
             $('body').prepend(mobileHeader);
         }
+
+        // Mobile search toggle
+        $(document).on('click', '#mobile-search-toggle', function() {
+            const $searchBox = $('.search-box');
+            $searchBox.slideToggle(200);
+            if ($searchBox.is(':visible')) {
+                setTimeout(() => $searchBox.find('input').focus(), 210);
+            }
+        });
         
         // Hamburger menu toggle
         $(document).on('click', '#hamburger-toggle', function() {
